@@ -1,0 +1,8 @@
+env = Environment(
+	CCFLAGS = "-std=c++11 -Wall -pedantic -O2 -pthread",
+	CPPPATH = ['/usr/include/eigen3', '/usr/include/pcl-1.7'],
+	LIBS = ["unittest", 'pthread', 'pcl_common', 'ppf']
+)
+
+tests = [Glob('units/*.cpp')]
+env.Program('test', ['test.cpp']+tests)
