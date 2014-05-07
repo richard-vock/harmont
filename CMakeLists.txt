@@ -13,7 +13,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 	add_definitions(-fPIC)
 	add_definitions(-O3)
 	add_definitions(-g)
-	add_definitions(-std=c++11)
+	add_definitions(-std=c++1y)
 endif()
 
 find_package(Eigen)
