@@ -21,7 +21,7 @@
 
 namespace harmont {
 
-typedef enum {STATIC_ACCESS = GL_STATIC_DRAW, DYNAMIC_ACCESS = GL_DYNAMIC_DRAW} access_t;
+typedef enum {STATIC_ACCESS = GL_STATIC_DRAW, DYNAMIC_ACCESS = GL_DYNAMIC_DRAW, STREAM_ACCESS = GL_STREAM_DRAW} access_t;
 
 template <class Type>
 class data_buffer {
