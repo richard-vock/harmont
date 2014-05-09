@@ -17,6 +17,8 @@
 #include "data_buffer.hpp"
 #include <Eigen/Dense>
 
+#include <damogran/colors.hpp>
+
 namespace harmont {
 
 template <class Type, int Dim>
@@ -30,6 +32,9 @@ class vertex_buffer : public data_buffer<Type> {
 
 		void set(const std::vector<vec_t>& data);
 		void add(const std::vector<vec_t>& data);
+
+		void set(const std::vector<damogran::RGBA<Type>>& colors);
+		void add(const std::vector<damogran::RGBA<Type>>& colors);
 
 		void upload(access_t access);
 

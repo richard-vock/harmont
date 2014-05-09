@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.8)
-project(libharmont)
+project(harmont)
 
-set (libharmont_VERSION_MAJOR 0)
-set (libharmont_VERSION_MINOR 1)
+set (harmont_VERSION_MAJOR 0)
+set (harmont_VERSION_MINOR 1)
 
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
@@ -33,7 +33,7 @@ if (GLEW_FOUND AND Boost_FOUND AND EIGEN_FOUND) # AND Boost_FOUND AND PCL_FOUND 
 	add_definitions(-Dprotected=public)
 	add_definitions(-DTESTING)
 	add_executable(test "test/test.cpp" ${units})
-	target_link_libraries(test harmont ${GLEW_LIBRARIES} "dl" "pthread" "unittest")
+	target_link_libraries(test harmont ${GLEW_LIBRARIES} "dl" "pthread" "unittest" "damogran")
 
 	# install binary
 	install (TARGETS harmont DESTINATION lib)
