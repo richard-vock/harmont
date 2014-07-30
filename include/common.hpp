@@ -17,6 +17,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <assert>
 
 // common includes
 #include <GL/glew.h>
@@ -25,5 +26,22 @@
 
 // common macros
 #define SPOT (std::string(" (@__FILE__:__LINE__)."))
+
+#ifdef NDEBUG
+#define ASSERTS(expr, msg)
+#else
+#define ASSERTS(expr, msg)                      \
+		if (!(expr)) {                              \
+	 		std::cout << (msg) << SPOT << std::endl; \
+			std::abort();                          \
+		}
+#endif
+
+namespace harmont {
+
+template<typename T>
+struct gl_type_enum;
+
+} // harmont
 
 #endif /* HARMONT_COMMON_HPP_ */

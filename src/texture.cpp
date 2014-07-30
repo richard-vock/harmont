@@ -12,107 +12,254 @@
  */
 
 #include <texture.hpp>
+#include "common.hpp"
+
+#include <stdexcept>
+#include <assert>
 
 
 namespace harmont {
 
-
-texture::texture() : id_(0) {
-	glGenTextures(1, &id_);
+static GLenum infer_targets(int dim) {
+	switch(dim) {
+		case 1: return GL_TEXTURE1D; break;
+		case 2: return GL_TEXTURE2D; break;
+		case 3: return GL_TEXTURE3D; break;
+		default: throw std::runtime_error("texture: Invalid texture dimension. Must be in either 1, 2 or 3.");
+	}
 }
 
-texture::texture(GLenum iformat, int width, int height, GLfloat *pixels) : id_(0), bound_to_rb_(false) {
-	glGenTextures(1, &id_);
+static GLenum infer_internal_format(int channels) {
+	switch(channels) {
+		case 1: return GL_RED; break;
+		case 2: return GL_RG; break;
+		case 3: return GL_RGB; break;
+		case 4: return GL_RGBA; break;
+		default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
+	}
+}
+
+
+template <typename Scalar>
+texture::ptr texture::texture_1d(int width, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
+	GLenum scalar_type = gl_type_enum<Scalar>::type;
+	GLenum internal_format = infer_internal_format(channels);
+	parameters_t_ params = { min_filter, mag_filter, wrap_s, wrap_t };
+	return std::make_shared<texture>(scalar_type, internal_format, width, 0, 0, data, params);
+}
+
+template <typename Scalar>
+texture::ptr texture::texture_2d(int width, int height, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
+	GLenum scalar_type = gl_type_enum<Scalar>::type;
+	GLenum internal_format = infer_internal_format(channels);
+	parameters_t_ params = { min_filter, mag_filter, wrap_s, wrap_t };
+	return std::make_shared<texture>(scalar_type, internal_format, width, height, 0, data, params);
+}
+
+template <typename Scalar>
+texture::ptr texture::texture_3d(int width, int height, int depth, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
+	GLenum scalar_type = gl_type_enum<Scalar>::value;
+	GLenum internal_format = infer_internal_format(channels);
+	parameters_t_ params = { min_filter, mag_filter, wrap_s, wrap_t };
+	return std::make_shared<texture>(scalar_type, internal_format, width, height, depth, data, params);
+}
+
+template <typename Scalar>
+texture::ptr texture::depth_texture(int width, int height) {
+	GLenum scalar_type = gl_type_enum<Scalar>::value;
+	return std::make_shared<texture>(scalar_type, GL_DEPTH_COMPONENT32, width, height, depth, data, params, true);
+}
+
+texture::~texture();
+
+GLuint texture::handle() const {
+	return handle_;
+}
+
+int texture::width() const {
+	return width_;
+}
+
+int texture::height() const {
+	return height_;
+}
+
+int texture::depth() const {
+	return depth_;
+}
+
+int texture::dim() const {
+	return dims_;
+}
+
+int texture::size() const {
+	return width * (height_ ? height_ : 1) * (depth_ ? depth_ : 1);
+}
+
+bool texture::is_depth_attachment() const {
+	return is_depth_attachment_;
+}
+
+void texture::resize(int width, int height, int depth) {
+	int dims = !!width + !!height + !!depth;
+	ASSERTS(dims == dims_, "texture::resize: Invalid argument count. Must match texture dimension"+SPOT)
+
 	bind();
-	load_(iformat, width, height, pixels);
+	width_ = width;
+	height_ = height;
+	depth_ = depth;
+	switch (dims) {
+		case 1: glTexImage1D(target_, 0, internal_format_, width_, 0, format, scalar_type_, nullptr); break;
+		case 2: glTexImage2D(target_, 0, internal_format_, width_, height_, 0, format, scalar_type_, nullptr); break;
+		case 3: glTexImage3D(target_, 0, internal_format_, width_, height_, depth_, 0, format, scalar_type_, nullptr); break;
+		default: break;
+	}
+	release();
 }
 
-texture::texture(GLenum iformat, int width, int height, GLubyte *pixels) : id_(0) {
-	glGenTextures(1, &id_);
-	bind();
-	load_(iformat, width, height, pixels);
+void texture::set_min_filter(GLenum filter) {
+	if (filter != GL_NEAREST && filter != GL_LINEAR && filter != GL_NEAREST_MIPMAP_NEAREST && filter != GL_LINEAR_MIPMAP_NEAREST && filter != GL_NEAREST_MIPMAP_LINEAR && filter != GL_LINEAR_MIPMAP_LINEAR) {
+		throw std::runtime_error("texture::set_min_filter: Invalid filter method");
+	}
+	glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, filter);
+	params_.min_filter = filter;
 }
 
-texture::~texture() {
-	if (bound_to_rb_) glDeleteRenderbuffers(1, &id_);
-	glDeleteTextures(1, &id_);
+void texture::set_mag_filter(GLenum filter) {
+	if (filter != GL_NEAREST && filter != GL_LINEAR && filter != GL_NEAREST_MIPMAP_NEAREST && filter != GL_LINEAR_MIPMAP_NEAREST && filter != GL_NEAREST_MIPMAP_LINEAR && filter != GL_LINEAR_MIPMAP_LINEAR) {
+		throw std::runtime_error("texture::set_mag_filter: Invalid filter method");
+	}
+	glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, filter);
+	params_.mag_filter = filter;
 }
 
-void texture::set_filtering(GLenum filter) {
-	bind();
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+void texture::set_filter(GLenum filter) {
+	if (filter != GL_NEAREST && filter != GL_LINEAR && filter != GL_NEAREST_MIPMAP_NEAREST && filter != GL_LINEAR_MIPMAP_NEAREST && filter != GL_NEAREST_MIPMAP_LINEAR && filter != GL_LINEAR_MIPMAP_LINEAR) {
+		throw std::runtime_error("texture::set_filter: Invalid filter method");
+	}
+	glTexParameteri(target_, GL_TEXTURE_MIN_FILTER, filter);
+	glTexParameteri(target_, GL_TEXTURE_MAG_FILTER, filter);
+	params_.min_filter = filter;
+	params_.mag_filter = filter;
+}
+
+void texture::set_wrap_s(GLenum mode) {
+	if (mode != GL_CLAMP_TO_EDGE && mode != GL_CLAMP_TO_BORDER && mode != GL_MIRRORED_REPEAT && mode != GL_REPEAT) {
+		throw std::runtime_error("texture::set_wrap_s: Invalid wrap mode");
+	}
+	glTexParameteri(target_, GL_TEXTURE_WRAP_S, mode);
+	params_.wrap_s = mode;
+}
+
+void texture::set_wrap_t(GLenum mode) {
+	if (mode != GL_CLAMP_TO_EDGE && mode != GL_CLAMP_TO_BORDER && mode != GL_MIRRORED_REPEAT && mode != GL_REPEAT) {
+		throw std::runtime_error("texture::set_wrap_t: Invalid wrap mode");
+	}
+	glTexParameteri(target_, GL_TEXTURE_WRAP_T, mode);
+	params_.wrap_t = mode;
+}
+
+void texture::set_wrap(GLenum mode) {
+	if (mode != GL_CLAMP_TO_EDGE && mode != GL_CLAMP_TO_BORDER && mode != GL_MIRRORED_REPEAT && mode != GL_REPEAT) {
+		throw std::runtime_error("texture::set_wrap: Invalid wrap mode");
+	}
+	glTexParameteri(target_, GL_TEXTURE_WRAP_S, mode);
+	glTexParameteri(target_, GL_TEXTURE_WRAP_T, mode);
+	params_.wrap_s = mode;
+	params_.wrap_t = mode;
+}
+
+template <typename Scalar>
+void texture::set_data(const Scalar* data) {
+	GLenum format = internal_format_;
+	if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_COMPONENT16 || format == GL_DEPTH_COMPONENT32) format = GL_RED;
+	switch (dims_) {
+		case 1: glTexSubImage1D(target_, 0, 0, width_, format, scalar_type_, reinterpret_cast<void*>(data)); break;
+		case 2: glTexSubImage2D(target_, 0, 0, 0, width_, height_, format, scalar_type_, reinterpret_cast<void*>(data)); break;
+		case 3: glTexSubImage3D(target_, 0, 0, 0, 0, width_, height_, depth_, format, scalar_type_, reinterpret_cast<void*>(data)); break;
+		default: break;
+	}
 }
 
 void texture::bind() {
-	glBindTexture(GL_TEXTURE_2D, id_);
+	glBindTexture(target_, handle_);
 }
 
-void texture::unbind() {
-	glBindTexture(GL_TEXTURE_2D, 0);
+void texture::release() {
+	glBindTexture(target_, 0);
 }
 
-void texture::bind_to_renderbuffer(GLuint attachment) {
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, GL_TEXTURE_2D, id_, 0);
-	bound_to_rb_ = true;
+GLint texture::active_unit() {
+	GLint unit;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &unit);
+	return unit;
 }
 
-GLuint texture::id() const {
-	return id_;
+GLint texture::active_texture(GLenum target, GLenum unit) {
+	GLint active = active_unit();
+	if (active != unit) glActiveTexture(unit);
+
+	GLenum binding;
+	switch (target) {
+		case GL_TEXTURE_1D: binding = GL_TEXTURE_BINDING_1D; break;
+		case GL_TEXTURE_2D: binding = GL_TEXTURE_BINDING_2D; break;
+		case GL_TEXTURE_3D: binding = GL_TEXTURE_BINDING_3D; break;
+		default: throw std::runtime_error("texture::active_texture: Invalid target.");
+	}
+
+	GLint handle;
+	glGetInteger(binding, &handle);
+
+
+	if (active != unit) glActiveTexture(active);
+
+	ASSERTS(handle >= 0, "texture::active_texture: Negative handle for active texture"+SPOT);
+	return static_cast<GLuint>(handle);
 }
 
-void texture::load_(GLenum iformat, int width, int height, GLfloat *pixels) {
-	GLenum format;
+template <typename Scalar>
+texture::texture(GLenum scalar_type, GLenum internal_format, int width, int height, int depth, const Scalar* data, parameters_t_ params, bool is_depth_attachment) :
+	scalar_type_(scalar_type),
+	internal_format_(internal_format),
+	width_(width),
+	height_(height),
+	depth_(depth),
+	params_(params),
+	is_depth_attachment_(is_depth_attachment) {
+	dims_ = !!width_ + !!height_ + !!depth_;
+	target_ = infer_targets();
+	handle_ = glGenTextures(1);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	if (iformat == GL_RGB16F || iformat == GL_RGB32F) {
-		format = GL_RGB;
-	}
-	else if (iformat == GL_RGBA16F || iformat == GL_RGBA32F) {
-		format = GL_RGBA;
-	}
-	else if (iformat == GL_RGBA8 || iformat == GL_RGBA || iformat == 4) {
-		format = GL_RGBA;
-	}
-	else if (iformat == GL_RGB8 || iformat == GL_RGB || iformat == 3) {
-		format = GL_RGB;
-	}
-	else if (iformat == GL_LUMINANCE8_ALPHA8 || iformat == GL_LUMINANCE_ALPHA || iformat == 2) {
-		format = GL_LUMINANCE_ALPHA;
-	}
-	else if (iformat == GL_LUMINANCE8 || iformat == GL_LUMINANCE || iformat == 1) {
-		format = GL_LUMINANCE;
-	}
-	else if (iformat == GL_DEPTH_COMPONENT || iformat == GL_DEPTH_COMPONENT16 ||
-		iformat == GL_DEPTH_COMPONENT24 || iformat == GL_DEPTH_COMPONENT32 || iformat == GL_DEPTH_COMPONENT32F) {
-		format = GL_DEPTH_COMPONENT;
-	}
-	else {
-		throw std::invalid_argument("texture::load_: Unknown internal format"+SPOT);
-	}
-
-	glTexImage2D(GL_TEXTURE_2D, 0, iformat, width, height, 0, format, GL_FLOAT, pixels);
+	bind();
+	set_min_filter(params.min_filter);
+	set_mag_filter(params.mag_filter);
+	set_wrap_s(params.wrap_s);
+	set_wrap_t(params.wrap_t);
+	allocate_();
+	if (data) set_data(data);
+	release();
 }
 
-void texture::load_(GLenum iformat, int width, int height, GLubyte *pixels) {
-	GLenum format;
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	if (iformat == GL_RGB8) {
-		format = GL_RGB;
+void texture::allocate_() {
+	GLenum format = internal_format_;
+	if (format == GL_DEPTH_COMPONENT || format == GL_DEPTH_COMPONENT16 || format == GL_DEPTH_COMPONENT32) format = GL_DEPTH_COMPONENT;
+	switch (dims_) {
+		case 1: glTexImage1D(target_, 0, internal_format_, width_, 0, format, scalar_type_, nullptr); break;
+		case 2: glTexImage2D(target_, 0, internal_format_, width_, height_, 0, format, scalar_type_, nullptr); break;
+		case 3: glTexImage3D(target_, 0, internal_format_, width_, height_, depth_, 0, format, scalar_type_, nullptr); break;
+		default: break;
 	}
-	else if (iformat == GL_RGBA8) {
-		format = GL_RGBA;
-	}
-	else {
-		throw std::invalid_argument("texture::load_: Unknown internal format"+SPOT);
-	}
-
-	glTexImage2D(GL_TEXTURE_2D, 0, iformat, width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
 }
+
+
+#define TEXTURE_SCALAR_INSTANTIATE(type) \
+	template texture::ptr texture::texture_1d(int width, int channels, const type* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
+	template texture::ptr texture::texture_2d(int width, int height, int channels, const type* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
+	template texture::ptr texture::texture_3d(int width, int height, int depth, int channels, const type* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
+	template texture::ptr texture::depth_texture(int width, int height); \
+	template texture::texture(GLenum scalar_type, GLenum internal_format, int width, int height, int depth, const type* data, parameters_t_ params, bool is_depth_attachment); \
+	template void texture::set_data(const type* data);
+#include "texture_scalars.def"
 
 
 } // harmont
