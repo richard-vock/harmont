@@ -54,6 +54,7 @@ class texture {
 		int width() const;
 		int height() const;
 		int depth() const;
+        GLenum target() const;
 		int dim() const;
 		int size() const;
 		bool is_depth_attachment() const;
@@ -99,7 +100,7 @@ class texture {
 		GLenum        scalar_type_;
 		GLenum        internal_format_;
 		GLenum        target_;
-		GLenum        dims_;
+		int           dims_;
 		parameters_t_ params_;
 		bool          is_depth_attachment_;
 };

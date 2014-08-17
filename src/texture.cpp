@@ -88,6 +88,10 @@ int texture::depth() const {
 	return depth_;
 }
 
+GLenum texture::target() const {
+	return target_;
+}
+
 int texture::dim() const {
 	return dims_;
 }

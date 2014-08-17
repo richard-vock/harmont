@@ -18,42 +18,44 @@
 #include <vector>
 #include "common.hpp"
 
+#include "texture.hpp"
 
 namespace harmont {
 
 class framebuffer {
 	public:
-		typedef std::shared_ptr<framebuffer> ptr;
-		typedef std::weak_ptr<framebuffer>   wptr;
+		typedef std::shared_ptr<framebuffer>       ptr;
+		typedef std::weak_ptr<framebuffer>         wptr;
 		typedef std::shared_ptr<const framebuffer> const_ptr;
 		typedef std::weak_ptr<const framebuffer>   const_wptr;
+        typedef std::vector<texture::ptr>          textures;
+        typedef std::pair<texture::ptr, GLuint>    named_texture;
+        typedef std::vector<named_texture>         named_textures;
 
 	public:
-		framebuffer();
-		framebuffer(int width, int height);
+		framebuffer(const textures& output_textures = textures(), texture::ptr depth_texture = nullptr);
 		~framebuffer();
 
-		void resize(int width, int height);
-		void attach_render(GLenum iformat);
-		void attach_texture(GLenum iformat, GLint filter = GL_LINEAR);
-		void bind_input();
-		void bind_output();
-		void bind_tex(int num = 0);
-		void blit_to(framebuffer *dest, GLbitfield mask, GLenum filter = GL_LINEAR);
-		void check();
+        GLuint handle() const;
 
-		static void unbind();
+        textures outputs();
+        const textures& outputs() const;
+
+        textures::ptr depth_texture();
+        textures::const_ptr depth_texture() const;
+
+        void bind(const named_textures& input_textures = named_textures(), bool only_bind_input = false);
+        void release();
+
+    protected:
+        static void bind_texture_(texture::const_ptr tex, GLenum attachment);
+        static void check_();
 
 	protected:
-		int width_;
-		int height_;
-		GLuint frame_id_;
-		GLuint depth_id_;
-		GLuint stencil_id_;
-		std::vector<GLuint> tex_id_;
-		GLenum* buffers_;
-
-		int max_color_attachments_;
+        textures        output_;
+        texture::ptr    depth_;
+        GLuint          handle_;
+        named_textures  last_inputs_;
 };
 
 
