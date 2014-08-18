@@ -16,47 +16,74 @@
 namespace harmont {
 
 
-template <typename Type, int Dim>
-vertex_buffer<Type,Dim>::vertex_buffer() : data_buffer<Type>() {}
-
-template <typename Type, int Dim>
-vertex_buffer<Type,Dim>::~vertex_buffer() {}
-
-template <typename Type, int Dim>
-void vertex_buffer<Type,Dim>::set(const std::vector<vec_t>& data) {
-	unsigned int data_size = static_cast<unsigned int>(Dim * data.size());
-	if (data_size != this->data_size_) this->alloc_(data_size);
-	for (unsigned int i=0; i < data.size(); ++i) {
-		for (unsigned int d=0; d < Dim; ++d) {
-			this->data_[i*Dim + d] = data[i][d];
-		}
-	}
+template <typename Scalar, GLenum Target>
+vertex_buffer<Scalar, Target>::vertex_buffer(uint32_t element_count, GLenum usage) : element_count_(element_count), usage_(usage), data_size_(element_count * sizeof(Scalar)) {
+    handle_ = glGenBuffers(1);
 }
 
-template <typename Type, int Dim>
-void vertex_buffer<Type,Dim>::add(const std::vector<vec_t>& data) {
-	unsigned int data_size = static_cast<unsigned int>(Dim * data.size());
-	unsigned int start_index = this->alloc_additional_(data_size);
-	for (unsigned int i=0; i < data.size(); ++i) {
-		for (unsigned int d=0; d < Dim; ++d) {
-			this->data_[start_index + i*Dim + d] = data[i][d];
-		}
-	}
+template <typename Scalar, GLenum Target>
+vertex_buffer<Scalar, Target>::~vertex_buffer() {
 }
 
-template <typename Type, int Dim>
-void vertex_buffer<Type,Dim>::upload(access_t access) {
-	this->upload_data_(GL_ARRAY_BUFFER, access);
+template <typename Scalar, GLenum Target>
+ptr vertex_buffer<Scalar, Target>::from_layout(const layout_t& layout) {
 }
 
-template <typename Type, int Dim>
-void vertex_buffer<Type,Dim>::bind() {
-	glBindBuffer(GL_ARRAY_BUFFER, this->id_);
+template <typename Scalar, GLenum Target>
+ptr vertex_buffer<Scalar, Target>::from_data(const Scalar* data, uint32_t element_count) {
 }
 
-template <typename Type, int Dim>
-void vertex_buffer<Type,Dim>::release() {
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+template <typename Scalar, GLenum Target>
+GLuint vertex_buffer<Scalar, Target>::handle() const {
+    return handle_;
+}
+
+template <typename Scalar, GLenum Target>
+GLenum vertex_buffer<Scalar, Target>::usage() const {
+    return usage_;
+}
+
+template <typename Scalar, GLenum Target>
+uint32_t vertex_buffer<Scalar, Target>::element_count() const {
+    return element_count_;
+}
+
+template <typename Scalar, GLenum Target>
+uint32_t vertex_buffer<Scalar, Target>::data_size() const {
+    return data_size_;
+}
+
+template <typename Scalar, GLenum Target>
+bool vertex_buffer<Scalar, Target>::bound() const {
+    return bound_buffer() == handle_;
+}
+
+template <typename Scalar, GLenum Target>
+GLuint vertex_buffer<Scalar, Target>::bound_buffer() {
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::bind() {
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::release() {
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::bind_to_array(const layout& layout, shader_program::ptr program) {
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::bind_to_array(const layout& layout, render_pass::ptr pass) {
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::set_data(const Scalar* data, uint32_t element_count) {
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::get_data(Scalar* data) {
 }
 
 

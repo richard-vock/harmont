@@ -14,33 +14,99 @@
 #ifndef HARMONT_VERTEX_BUFFER_H_
 #define HARMONT_VERTEX_BUFFER_H_
 
-#include "data_buffer.hpp"
 #include <Eigen/Dense>
 
-#include <damogran/colors.hpp>
+#include "render_pass.hpp"
 
 namespace harmont {
 
-template <class Type, int Dim>
-class vertex_buffer : public data_buffer<Type> {
+template <typename Scalar, GLenum Target = GL_ARRAY_BUFFER>
+class vertex_buffer {
 	public:
-		typedef Eigen::Matrix<Type,Dim,1> vec_t;
+		typedef std::shared_ptr<vertex_buffer>        ptr;
+		typedef std::weak_ptr<vertex_buffer>          wptr;
+		typedef std::shared_ptr<const vertex_buffer>  const_ptr;
+		typedef std::weak_ptr<const vertex_buffer>    const_wptr;
+        typedef std::pair<std::string, uint32_t>      layout_element_t;
+        typedef std::vector<layout_element>           layout_t;
+        template <typename S, int Dim>
+        using eigen_vector = Eigen::Matrix<S, Dim, 1>;
 
 	public:
-		vertex_buffer();
+		vertex_buffer(uint32_t element_count, GLenum usage = GL_STATIC_DRAW);
 		virtual ~vertex_buffer();
 
-		void set(const std::vector<vec_t>& data);
-		void add(const std::vector<vec_t>& data);
+        static ptr from_layout(const layout_t& layout);
 
-		void set(const std::vector<damogran::RGBA<Type>>& colors);
-		void add(const std::vector<damogran::RGBA<Type>>& colors);
+        static ptr from_data(const Scalar* data, uint32_t element_count);
+        template <template <typename, typename> class C, template <typename> class A>
+        static ptr from_data(const C<Scalar, A<Scalar>>& sequence);
+        template <template <typename, typename> class C, typename S, template <typename> class A>
+        static ptr from_data(const C<S, A<S>>& sequence);
+        template <int Dim, template <typename, typename> class C, template <typename> class A>
+        static ptr from_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence);
+        template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
+        static ptr from_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence);
+        template <int Rows, int Cols, int Options>
+        static ptr from_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
+        template <typename S, int Rows, int Cols, int Options>
+        static ptr from_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix);
 
-		void upload(access_t access);
+        GLuint handle() const;
+        static constexpr target() { return Target; }
+        GLenum usage() const;
+        uint32_t element_count() const;
+        uint32_t data_size() const;
+        bool bound() const;
 
-		void bind();
-		void release();
+        static GLuint bound_buffer();
+
+        void bind();
+        void release();
+
+        static void bind_to_array(const layout& layout, shader_program::ptr program);
+        static void bind_to_array(const layout& layout, render_pass::ptr pass);
+
+        void set_data(const Scalar* data, uint32_t element_count);
+        template <template <typename, typename> class C, template <typename> class A>
+        void set_data(const C<Scalar, A<Scalar>>& sequence);
+        template <template <typename, typename> class C, typename S, template <typename> class A>
+        void set_data(const C<S, A<S>>& sequence);
+        template <int Dim, template <typename, typename> class C, template <typename> class A>
+        void set_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence);
+        template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
+        void set_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence);
+        template <int Rows, int Cols, int Options>
+        void set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
+        template <typename S, int Rows, int Cols, int Options>
+        void set_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix);
+
+        void get_data(Scalar* data);
+        template <template <typename, typename> class C, typename S, template <typename> class A>
+        void get_data(C<S, A<S>>& sequence);
+        template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
+        void get_data(C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence);
+        template <typename S, int Rows, int Cols, int Options>
+        void get_data(Eigen::Matrix<S, Rows, Cols, Options>& matrix);
+
+
+    protected:
+        void allocate_();
+
+    protected:
+        uint32_t element_count_;
+        GLenum   usage_;
+        uint32_t data_size_;
+        GLuint   handle_;
 };
+
+#include "vertex_buffer.ipp"
+
+template <typename Scalar>
+using index_buffer = vertex_buffer<Scalar, GL_ELEMENT_ARRAY_BUFFER>;
+
+template <typename Scalar>
+using texture_buffer = vertex_buffer<Scalar, GL_TEXTURE_BUFFER>;
 
 
 } // harmont
