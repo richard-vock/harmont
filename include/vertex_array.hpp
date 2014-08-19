@@ -23,17 +23,13 @@ class vertex_array {
 		vertex_array();
 		virtual ~vertex_array();
 
-		void init();
+        GLuint handle() const;
 
 		void bind() const;
 		void release() const;
 
-		void set(GLuint pos, GLuint dim, GLuint type = GL_FLOAT) const;
-		void enable(int pos) const;
-		void disable(int pos) const;
-
 	protected:
-		GLuint  id_;
+		GLuint  handle_;
 };
 
 } // harmont

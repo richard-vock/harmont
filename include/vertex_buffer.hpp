@@ -31,6 +31,7 @@ class vertex_buffer {
         typedef std::vector<layout_element>           layout_t;
         template <typename S, int Dim>
         using eigen_vector = Eigen::Matrix<S, Dim, 1>;
+        constexpr std::size scalar_size = sizeof(Scalar);
 
 	public:
 		vertex_buffer(uint32_t element_count, GLenum usage = GL_STATIC_DRAW);
@@ -38,19 +39,19 @@ class vertex_buffer {
 
         static ptr from_layout(const layout_t& layout);
 
-        static ptr from_data(const Scalar* data, uint32_t element_count);
+        static ptr from_data(const Scalar* data, uint32_t element_count, GLenum usage = GL_STATIC_DRAW);
         template <template <typename, typename> class C, template <typename> class A>
-        static ptr from_data(const C<Scalar, A<Scalar>>& sequence);
+        static ptr from_data(const C<Scalar, A<Scalar>>& sequence, GLenum usage = GL_STATIC_DRAW);
         template <template <typename, typename> class C, typename S, template <typename> class A>
-        static ptr from_data(const C<S, A<S>>& sequence);
+        static ptr from_data(const C<S, A<S>>& sequence, GLenum usage = GL_STATIC_DRAW);
         template <int Dim, template <typename, typename> class C, template <typename> class A>
-        static ptr from_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence);
+        static ptr from_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence, GLenum usage = GL_STATIC_DRAW);
         template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
-        static ptr from_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence);
+        static ptr from_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence, GLenum usage = GL_STATIC_DRAW);
         template <int Rows, int Cols, int Options>
-        static ptr from_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
+        static ptr from_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix, GLenum usage = GL_STATIC_DRAW);
         template <typename S, int Rows, int Cols, int Options>
-        static ptr from_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix);
+        static ptr from_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix, GLenum usage = GL_STATIC_DRAW);
 
         GLuint handle() const;
         static constexpr target() { return Target; }
@@ -64,8 +65,8 @@ class vertex_buffer {
         void bind();
         void release();
 
-        static void bind_to_array(const layout& layout, shader_program::ptr program);
-        static void bind_to_array(const layout& layout, render_pass::ptr pass);
+        void bind_to_array(const layout& layout, shader_program::ptr program);
+        void bind_to_array(const layout& layout, render_pass::ptr pass);
 
         void set_data(const Scalar* data, uint32_t element_count);
         template <template <typename, typename> class C, template <typename> class A>

@@ -42,6 +42,10 @@ namespace harmont {
 template<typename T>
 struct gl_type_enum;
 
+typedef std::function<void (GLuint, GLint, GLenum, GLsizei, const GLvoid*)> gl_attrib_func_t;
+template<typename T>
+struct gl_attrib_func;
+
 } // harmont
 
 #endif /* HARMONT_COMMON_HPP_ */

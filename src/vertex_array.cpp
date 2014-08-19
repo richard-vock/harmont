@@ -17,20 +17,19 @@
 namespace harmont {
 
 
-vertex_array::vertex_array() : id_(0) {
+vertex_array::vertex_array() {
+    glGenVertexArrays(1, &handle_);
 }
 
 vertex_array::~vertex_array() {
-	if (id_) glDeleteVertexArrays(1, &id_);
-	id_ = 0;
 }
 
-void vertex_array::init() {
-	glGenVertexArrays(1, &id_);
+GLuint vertex_array::handle() const {
+    return handle_;
 }
 
 void vertex_array::bind() const {
-	glBindVertexArray(id_);
+	glBindVertexArray(handle_);
 }
 
 void vertex_array::release() const {
@@ -39,16 +38,6 @@ void vertex_array::release() const {
 
 void vertex_array::set(GLuint pos, GLuint dim, GLuint type) const {
 	glVertexAttribPointer(pos, dim, type, GL_FALSE, 0, 0);
-}
-
-void vertex_array::enable(int pos) const {
-	if (pos < 0) throw std::runtime_error("vertex_array::enable: Invalid attribe index");
-	glEnableVertexAttribArray((GLuint)pos);
-}
-
-void vertex_array::disable(int pos) const {
-	if (pos < 0) throw std::runtime_error("vertex_array::disable: Invalid attribe index");
-	glDisableVertexAttribArray((GLuint)pos);
 }
 
 
