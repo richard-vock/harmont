@@ -51,8 +51,6 @@ class shader {
 	protected:
 		shader(std::string source, bool compile_now);
 
-		void read_source_(std::string filename);
-		void create_();
 		void compile_();
 		void print_log_();
 

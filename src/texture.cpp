@@ -70,7 +70,8 @@ texture::ptr texture::depth_texture(int width, int height) {
 	return std::make_shared<texture>(scalar_type, GL_DEPTH_COMPONENT32, width, height, depth, data, params, true);
 }
 
-texture::~texture();
+texture::~texture() {
+}
 
 GLuint texture::handle() const {
 	return handle_;

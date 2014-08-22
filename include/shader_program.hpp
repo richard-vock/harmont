@@ -15,14 +15,10 @@
 #define HARMONT_SHADERPROGRAM_H_
 
 #include <map>
-#include <vector>
-
-#include <boost/optional.hpp>
-#include <boost/none.hpp>
-
-#include "shader.hpp"
 
 #include "common.hpp"
+#include "shader.hpp"
+
 
 namespace harmont {
 
@@ -32,39 +28,87 @@ class shader_program {
 		typedef std::weak_ptr<shader_program>          wptr;
 		typedef std::shared_ptr<const shader_program>  const_ptr;
 		typedef std::weak_ptr<const shader_program>    const_wptr;
+        typedef enum {ATTRIBUTE, UNIFORM}              variable_type;
+        class variable;
+        std::shared_ptr<variable>                      variable_ptr;
+        typedef std::map<std::string, variable_ptr>    variables;
 
 	public:
-		shader_program();
+		shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, bool link_now = true);
+		shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, bool link_now = true);
+        virtual ~shader_program();
 
-		template <int Stage>
-		void add_shader(typename shader<Stage>::ptr shader);
-		void add_shaders(std::string v_shader, std::string f_shader, std::string g_shader = "");
+        GLuint handle() const;
 
-		void link(boost::optional<std::map<int, std::string>> output_map = boost::none);
-		void use();
+        void link();
+        bool linked() const;
 
-		void bind_attrib(GLuint pos, const GLchar* name);
-		template <typename T>
-		void set_uniform(const GLchar* name, const T& value);
-		template <typename Scalar>
-		void set_uniform(const GLchar* name, GLsizei count, const Scalar* values);
-		void set_uniform_var1i(const GLchar* name, GLsizei count, const int* values);
-		void set_texture(const GLchar* name, int unit);
+        void bind();
+        void release();
+        bool bound() const;
 
-		bool linked() const;
+        variable_ptr operator[](std::string name);
 
 	protected:
-		GLint uniform_location_(const GLchar* name);
+        template <int Stage>
+        void attach_shader_(shader<Stage>::ptr shader);
 
 		void print_log_();
 
 	protected:
-		GLuint                ref_;
-		vertex_shader::ptr    v_shader_;
-		fragment_shader::ptr  f_shader_;
-		geometry_shader::ptr  g_shader_;
+		GLuint                handle_;
+		vertex_shader::ptr    vs_;
+		fragment_shader::ptr  fs_;
+		geometry_shader::ptr  gs_;
 		GLint                 link_status_;
+        variables             uniforms_;
+        variables             attributes_;
 };
+
+class shader_program::variable {
+    public:
+        typedef std::shared_ptr<variable> Ptr;
+        typedef std::weak_ptr<variable> WPtr;
+        typedef std::shared_ptr<const variable> ConstPtr;
+        typedef std::weak_ptr<const variable> ConstWPtr;
+        typedef std::tuple<std::string, GLenum, GLint> description_t;
+
+    public:
+        variable(GLuint program, const description_t& desc, variable_type var_type);
+        virtual ~variable();
+
+        variable_type variable_type() const;
+        const std::string& name() const;
+        GLenum data_type() const;
+        GLint size() const;
+
+        bool is_uniform() const;
+        bool is_attribute() const;
+
+        GLuint location() const;
+
+        template <typename T>
+        void set(T&& value);
+
+        template <typename T>
+        T get() const;
+
+    protected:
+        template <typename T>
+        void set_(T&& value);
+
+        template <typename T>
+        T get_() const;
+
+    protected:
+        GLuint        program_;
+        description_t desc_;
+        variable_type var_type_;
+        std::string   name_;
+        GLenum        data_type_;
+        GLint         size_;
+};
+
 
 
 } // harmont
