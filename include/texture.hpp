@@ -27,13 +27,12 @@ class texture {
 		typedef std::shared_ptr<const texture>  const_ptr;
 		typedef std::weak_ptr<const texture>    const_wptr;
 
-
 	public:
 		template <typename Scalar>
 		static ptr texture_1d(int width, int channels, const Scalar* data = nullptr, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
 
 		template <typename Scalar, int Dim, int Options>
-		static ptr texture_1d(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, const Scalar* data = nullptr, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
+		static ptr texture_1d(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
 
 		template <typename Scalar>
 		static ptr texture_2d(int width, int height, int channels, const Scalar* data = nullptr, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
@@ -59,7 +58,7 @@ class texture {
 		int size() const;
 		bool is_depth_attachment() const;
 
-		void resize(int width, int height = 0, int depth = 0)
+		void resize(int width, int height = 0, int depth = 0);
 
 		void set_min_filter(GLenum filter);
 		void set_mag_filter(GLenum filter);
@@ -75,10 +74,10 @@ class texture {
 		void set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
 
 		void bind();
-		static void release();
+		void release();
 
 		static GLint  active_unit();
-		static GLuint active_texture(GLenum target, GLenum unit);
+		static GLint  active_texture(GLenum target, GLenum unit);
 
 	protected:
 		struct parameters_t_ {

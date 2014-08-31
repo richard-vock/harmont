@@ -1,6 +1,6 @@
 template <typename Scalar, int Dim, int Options>
-inline texture::ptr texture::texture_1d(const Eigen::Matrix<Scalar, Rows, 1, Options>& vector, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
-	GLenum scalar_type = typename gl_type<Scalar>::type;
+inline texture::ptr texture::texture_1d(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
+	GLenum scalar_type = gl_type_enum<Scalar>::value;
 	GLenum internal_format = GL_RED;
 	parameters_t_ params = { min_filter, mag_filter, wrap_s, wrap_t };
 	return std::make_shared<texture>(scalar_type, internal_format, width, 0, 0, vector.data(), params);
@@ -8,10 +8,10 @@ inline texture::ptr texture::texture_1d(const Eigen::Matrix<Scalar, Rows, 1, Opt
 
 template <typename Scalar, int Rows, int Cols, int Options>
 inline texture::ptr texture::texture_2d(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
-	GLenum scalar_type = typename gl_type<Scalar>::type;
+	GLenum scalar_type = gl_type_enum<Scalar>::value;
 	GLenum internal_format = GL_RED;
 	parameters_t_ params = { min_filter, mag_filter, wrap_s, wrap_t };
-	if (Options & Eigen::RowMajor) return std::make_shared<texture>(scalar_type, internal_format, width, height, 0, data.data(), params);
+	if (Options & Eigen::RowMajor) return std::make_shared<texture>(scalar_type, internal_format, width, height, 0, matrix.data(), params);
 	Eigen::Matrix<Scalar, Rows, Cols, Eigen::RowMajor> copy = matrix;
 	return std::make_shared<texture>(scalar_type, internal_format, width, height, 0, copy.data(), params);
 }

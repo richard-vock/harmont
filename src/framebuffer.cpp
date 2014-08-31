@@ -20,19 +20,19 @@ namespace harmont {
 
 static std::function<void (GLenum, GLenum, GLenum, GLuint)> attach_func(int dim) {
 	switch(dim) {
-        case 1: return std::bind(&glFramebufferTexture1D, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, 0); break;
-        case 2: return std::bind(&glFramebufferTexture2D, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, 0); break;
-        case 3: return std::bind(&glFramebufferTexture3D, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, 0, 0); break;
+        case 1: return [&] (GLenum target, GLenum attach, GLenum tex_target, GLuint tex) { glFramebufferTexture1D(target, attach, tex_target, tex, 0); }; break;
+        case 2: return [&] (GLenum target, GLenum attach, GLenum tex_target, GLuint tex) { glFramebufferTexture2D(target, attach, tex_target, tex, 0); }; break;
+        case 3: return [&] (GLenum target, GLenum attach, GLenum tex_target, GLuint tex) { glFramebufferTexture3D(target, attach, tex_target, tex, 0, 0); }; break;
 		default: throw std::runtime_error("attach_func: Invalid texture dimension. Must be in [1,3]"+SPOT);
 	}
 }
 
 
 framebuffer::framebuffer(const textures& output_textures, texture::ptr depth_texture) : outputs_(output_textures), depth_(depth_texture) {
-    handle_ = glGenFramebuffers(1);
+    glGenFramebuffers(1, &handle_);
     bind();
-    for (uint32_t index = 0; index < output_.size(); ++index) {
-        bind_texture_(output_[i], GL_COLOR_ATTACHMENT0 + index);
+    for (uint32_t index = 0; index < outputs_.size(); ++index) {
+        bind_texture_(outputs_[index], GL_COLOR_ATTACHMENT0 + index);
     }
     if (depth_ != nullptr) {
         bind_texture_(depth_, GL_DEPTH_ATTACHMENT);
@@ -48,19 +48,19 @@ GLuint framebuffer::handle() const {
     return handle_;
 }
 
-textures framebuffer::outputs() {
+framebuffer::textures& framebuffer::outputs() {
     return outputs_;
 }
 
-const textures& framebuffer::outputs() const {
+const framebuffer::textures& framebuffer::outputs() const {
     return outputs_;
 }
 
-textures::ptr framebuffer::depth_texture() {
+texture::ptr framebuffer::depth_texture() {
     return depth_;
 }
 
-textures::const_ptr framebuffer::depth_texture() const {
+texture::const_ptr framebuffer::depth_texture() const {
     return depth_;
 }
 
@@ -75,11 +75,11 @@ void framebuffer::bind(const named_textures& input_textures, bool only_bind_inpu
     }
 
     if (use_output) {
-        GLenum buffers = new GLenum(outputs_.size());
+        GLenum* buffers = new GLenum[outputs_.size()];
         for (uint32_t i = 0; i < outputs_.size(); ++i) {
             buffers[i] = GL_COLOR_ATTACHMENT0 + i;
         }
-        glDrawBuffers(buffers, outputs_.size());
+        glDrawBuffers(outputs_.size(), buffers);
         delete buffers;
     }
 
@@ -96,12 +96,12 @@ void framebuffer::bind(const named_textures& input_textures, bool only_bind_inpu
 
 void framebuffer::release() {
     for (const auto& named_tex : last_inputs_) {
-        named_tex.first->releas();
+        named_tex.first->release();
     }
     for (const auto& tex : outputs_) {
         tex->release();
     }
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0)
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void framebuffer::bind_texture_(texture::const_ptr tex, GLenum attachment) {
@@ -114,13 +114,10 @@ void framebuffer::check_() {
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
     if (status == GL_FRAMEBUFFER_COMPLETE) {
-        return
+        return;
     }
     if (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) {
         throw std::runtime_error("framebuffer::check: Incomplete attachment"+SPOT);
-    }
-    if (status == GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS) {
-        throw std::runtime_error("framebuffer::check: Inconsistent attachment sizes"+SPOT);
     }
     if (status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) {
         throw std::runtime_error("framebuffer::check: Missing attachments"+SPOT);

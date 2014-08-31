@@ -14,7 +14,7 @@ inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>
 template <typename Scalar, GLenum Target>
 template <int Dim, template <typename, typename> class C, template <typename> class A>
 inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence, GLenum usage) {
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vertex_sequence.size(), Dim);
+    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vector_sequence.size(), Dim);
     for (uint32_t i = 0; i < vector_sequence.size(); ++i) {
         matrix.row(i) = vector_sequence[i].transpose();
     }
@@ -24,7 +24,7 @@ inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>
 template <typename Scalar, GLenum Target>
 template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
 inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence, GLenum usage) {
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vertex_sequence.size(), Dim);
+    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vector_sequence.size(), Dim);
     for (uint32_t i = 0; i < vector_sequence.size(); ++i) {
         matrix.row(i) = vector_sequence[i].transpose().template cast<Scalar>();
     }
@@ -37,8 +37,7 @@ inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>
     if (Options & Eigen::RowMajor) {
         return vertex_buffer<Scalar, Target>::from_data(matrix.data(), matrix.rows() * matrix.cols(), usage);
     }
-    int TransOptions = Options ^ Eigen::ColMajor;
-    Eigen::Matrix<Scalar, Rows, Cols, TransOptions> data_transposed = matrix;
+    Eigen::Matrix<Scalar, Rows, Cols, (Options ^ Eigen::ColMajor) | Eigen::RowMajor> data_transposed = matrix;
     return vertex_buffer<Scalar, Target>::from_data(data_transposed.data(), matrix.rows() * matrix.cols(), usage);
 }
 
@@ -64,7 +63,7 @@ inline void vertex_buffer<Scalar, Target>::set_data(const C<S, A<S>>& sequence) 
 template <typename Scalar, GLenum Target>
 template <int Dim, template <typename, typename> class C, template <typename> class A>
 inline void vertex_buffer<Scalar, Target>::set_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence) {
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vertex_sequence.size(), Dim);
+    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vector_sequence.size(), Dim);
     for (uint32_t i = 0; i < vector_sequence.size(); ++i) {
         matrix.row(i) = vector_sequence[i].transpose();
     }
@@ -74,7 +73,7 @@ inline void vertex_buffer<Scalar, Target>::set_data(const C<eigen_vector<Scalar,
 template <typename Scalar, GLenum Target>
 template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
 inline void vertex_buffer<Scalar, Target>::set_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence) {
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vertex_sequence.size(), Dim);
+    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> matrix(vector_sequence.size(), Dim);
     for (uint32_t i = 0; i < vector_sequence.size(); ++i) {
         matrix.row(i) = vector_sequence[i].transpose().template cast<Scalar>();
     }
@@ -87,8 +86,7 @@ inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, 
     if (Options & Eigen::RowMajor) {
         return vertex_buffer<Scalar, Target>::from_data(matrix.data(), matrix.rows() * matrix.cols());
     }
-    int TransOptions = Options ^ Eigen::ColMajor;
-    Eigen::Matrix<Scalar, Rows, Cols, TransOptions> data_transposed = matrix;
+    Eigen::Matrix<Scalar, Rows, Cols, (Options ^ Eigen::ColMajor) | Eigen::RowMajor> data_transposed = matrix;
     set_data(data_transposed.data(), matrix.rows() * matrix.cols());
 }
 

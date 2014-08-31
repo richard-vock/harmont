@@ -14,8 +14,6 @@
 #ifndef HARMONT_VERTEX_BUFFER_H_
 #define HARMONT_VERTEX_BUFFER_H_
 
-#include <Eigen/Dense>
-
 #include "render_pass.hpp"
 
 namespace harmont {
@@ -28,10 +26,10 @@ class vertex_buffer {
 		typedef std::shared_ptr<const vertex_buffer>  const_ptr;
 		typedef std::weak_ptr<const vertex_buffer>    const_wptr;
         typedef std::pair<std::string, uint32_t>      layout_element_t;
-        typedef std::vector<layout_element>           layout_t;
+        typedef std::vector<layout_element_t>         layout_t;
         template <typename S, int Dim>
         using eigen_vector = Eigen::Matrix<S, Dim, 1>;
-        constexpr std::size scalar_size = sizeof(Scalar);
+        static constexpr std::size_t scalar_size = sizeof(Scalar);
 
 	public:
 		vertex_buffer(uint32_t element_count, GLenum usage = GL_STATIC_DRAW);
@@ -54,7 +52,7 @@ class vertex_buffer {
         static ptr from_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix, GLenum usage = GL_STATIC_DRAW);
 
         GLuint handle() const;
-        static constexpr target() { return Target; }
+        static constexpr GLenum target() { return Target; }
         GLenum usage() const;
         uint32_t element_count() const;
         uint32_t data_size() const;
@@ -65,8 +63,8 @@ class vertex_buffer {
         void bind();
         void release();
 
-        void bind_to_array(const layout& layout, shader_program::ptr program);
-        void bind_to_array(const layout& layout, render_pass::ptr pass);
+        void bind_to_array(const layout_t& layout, shader_program::ptr program);
+        void bind_to_array(const layout_t& layout, render_pass::ptr pass);
 
         void set_data(const Scalar* data, uint32_t element_count);
         template <template <typename, typename> class C, template <typename> class A>

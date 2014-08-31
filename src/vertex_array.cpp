@@ -36,9 +36,5 @@ void vertex_array::release() const {
 	glBindVertexArray(0);
 }
 
-void vertex_array::set(GLuint pos, GLuint dim, GLuint type) const {
-	glVertexAttribPointer(pos, dim, type, GL_FALSE, 0, 0);
-}
-
 
 } // harmont

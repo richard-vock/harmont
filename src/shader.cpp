@@ -32,12 +32,12 @@ namespace harmont {
 
 template <int Stage>
 typename shader<Stage>::ptr shader<Stage>::from_file(std::string filename, bool compile_now) {
-    return from_source(load_file_(filename, compile_now));
+    return from_source(load_file_(filename), compile_now);
 }
 
 template <int Stage>
 typename shader<Stage>::ptr shader<Stage>::from_source(std::string source, bool compile_now) {
-    return std::make_shared<shader<Stage>>(source, compile_now);
+    return ptr(new shader<Stage>(source, compile_now));
 }
 
 #ifdef USE_PLUSTACHE
@@ -69,7 +69,8 @@ shader<Stage>::shader(std::string source, bool compile_now) : handle_(0), source
 template <int Stage>
 void shader<Stage>::compile_() {
 	handle_ = glCreateShader(Stage);
-	glShaderSource(handle_, 1, source_.c_str(), NULL);
+    const char* src = source_.c_str();
+	glShaderSource(handle_, 1, &src, NULL);
 	glCompileShader(handle_);
 	glGetShaderiv(handle_, GL_COMPILE_STATUS, &compile_status_);
 	print_log_();
@@ -109,7 +110,7 @@ std::string shader<Stage>::load_file_(const std::string& filename) {
     if (!in.good()) {
         throw std::runtime_error("shader::load_file_: Unable to open file \"" + filename + "\" for reading" + SPOT);
     }
-    return str((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
 

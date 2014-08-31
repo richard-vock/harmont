@@ -23,13 +23,14 @@ class render_pass {
         typedef framebuffer::textures                textures;
         typedef std::pair<texture::ptr, std::string> named_texture;
         typedef std::vector<named_texture>           named_textures;
-        typedef shader_program::variable             shader_variable;
+        typedef shader_program::variable_t           shader_variable;
         template <typename T>
         using named_uniform = std::pair<std::string, T>;
 
 
     public:
-        render_pass(const shader_sources& sources, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
+        render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
+        render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
         virtual ~render_pass();
 
         shader_program::ptr program();
@@ -41,8 +42,8 @@ class render_pass {
         texture::ptr depth_texture();
         texture::const_ptr depth_texture() const;
 
-        framebuffer::ptr framebuffer();
-        framebuffer::const_ptr framebuffer() const;
+        framebuffer::ptr fbo();
+        framebuffer::const_ptr fbo() const;
 
         template <typename Func>
         void render(Func&& draw_call, const named_textures& inputs = named_textures(), bool clear_depth_buffer = true);
@@ -50,15 +51,16 @@ class render_pass {
         void bind_program();
         void release_program();
 
-        shader_variable::ptr operator[](std::string name);
+        shader_variable operator[](std::string name);
+        shader_variable variable(std::string name);
 
         template <typename... Args>
-        set_uniforms(named_uniform<Args>... uniforms);
+        void set_uniforms(named_uniform<Args>... uniforms);
 
     protected:
         template <typename Arg, typename... Args>
-        set_uniforms(named_uniform<Arg> uniform, named_uniform<Args>... uniforms);
-        set_uniforms();
+        void set_uniforms_(named_uniform<Arg> uniform, named_uniform<Args>... uniforms);
+        void set_uniforms_();
 
     protected:
         shader_program::ptr  program_;

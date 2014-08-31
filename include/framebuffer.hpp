@@ -38,11 +38,11 @@ class framebuffer {
 
         GLuint handle() const;
 
-        textures outputs();
+        textures& outputs();
         const textures& outputs() const;
 
-        textures::ptr depth_texture();
-        textures::const_ptr depth_texture() const;
+        texture::ptr depth_texture();
+        texture::const_ptr depth_texture() const;
 
         void bind(const named_textures& input_textures = named_textures(), bool only_bind_input = false);
         void release();
@@ -52,7 +52,7 @@ class framebuffer {
         static void check_();
 
 	protected:
-        textures        output_;
+        textures        outputs_;
         texture::ptr    depth_;
         GLuint          handle_;
         named_textures  last_inputs_;

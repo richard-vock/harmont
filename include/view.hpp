@@ -14,8 +14,6 @@
 #ifndef HARMONT_VIEW_HPP_
 #define HARMONT_VIEW_HPP_
 
-#include <Eigen/Dense>
-
 #include "common.hpp"
 
 namespace harmont {

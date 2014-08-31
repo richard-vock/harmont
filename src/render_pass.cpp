@@ -4,63 +4,64 @@
 
 namespace harmont {
 
-render_pass(const shader_sources& sources, const textures& outputs, texture::ptr depth_texture) {
-    if (sources.size == 2) {
-        program_ = std::make_shared<shader_program>(vertex_shader(sources[0]), fragment_shader(sources[1]), false);
-    } else if (sources.size() == 3) {
-        program_ = std::make_shared<shader_program>(vertex_shader(sources[0]), fragment_shader(sources[1]), geometry_shader(sources[2]), false);
-    } else {
-        throw std::runtime_error("render_pass::render_pass: Invalid number of shader sources" + SPOT);
-    }
+render_pass::render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, const textures& outputs, texture::ptr depth_texture) : render_pass(vs, fs, nullptr, outputs, depth_texture) {
+}
+
+render_pass::render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, const textures& outputs, texture::ptr depth_texture) {
+    program_ = std::make_shared<shader_program>(vs, fs, gs, false);
     program_->link();
-    fbo_ = std::make_shared<framebuffer>(outputs, depth_tex);
+    fbo_ = std::make_shared<framebuffer>(outputs, depth_texture);
 }
 
-~render_pass() {
+render_pass::~render_pass() {
 }
 
-shader_program::ptr program() {
+shader_program::ptr render_pass::program() {
     return program_;
 }
 
-shader_program::const_ptr program() const {
+shader_program::const_ptr render_pass::program() const {
     return program_;
 }
 
-textures& outputs() {
+render_pass::textures& render_pass::outputs() {
     return fbo_->outputs();
 }
 
-const textures& outputs() const {
+const render_pass::textures& render_pass::outputs() const {
     return fbo_->outputs();
 }
 
-texture::ptr depth_texture() {
+texture::ptr render_pass::depth_texture() {
     return fbo_->depth_texture();
 }
 
-texture::const_ptr depth_texture() const {
+texture::const_ptr render_pass::depth_texture() const {
     return fbo_->depth_texture();
 }
 
-framebuffer::ptr framebuffer() {
+framebuffer::ptr render_pass::fbo() {
     return fbo_;
 }
 
-framebuffer::const_ptr framebuffer() const {
+framebuffer::const_ptr render_pass::fbo() const {
     return fbo_;
 }
 
-void bind_program() {
+void render_pass::bind_program() {
     program_->bind();
 }
 
-void release_program() {
+void render_pass::release_program() {
     program_->release();
 }
 
-shader_variable operator[](std::string name) {
-    return (*program)[name];
+render_pass::shader_variable render_pass::operator[](std::string name) {
+    return (*program_)[name];
+}
+
+render_pass::shader_variable render_pass::variable(std::string name) {
+    return (*program_)[name];
 }
 
 } // harmont

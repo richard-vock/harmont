@@ -13,47 +13,39 @@
 
 #include <shader_program.hpp>
 
-#include <tuple>
 #include <vector>
-#include <Eigen/Dense>
-using namespace Eigen;
-
-
-using boost::optional;
-using boost::none;
-
 
 namespace harmont {
 
 
-shader_program::variable::description_t variable_for_index(GLuint program, GLuint index, variable_type type) {
+shader_program::variable_t::description_t variable_for_index(GLuint program, GLuint index, shader_program::variable_type type) {
     GLchar c_name[64];
     GLsizei length, buf_size = 64;
-    GLenum type;
+    GLenum var_type;
     GLint size;
     switch (type) {
-        case ATTRIBUTE: glGetActiveAttrib(program, index, buf_size, length, size, type, name); break;
-        default: glGetActiveUniform(program, index, buf_size, &length, &size, &type, c_name);
+        case shader_program::ATTRIBUTE: glGetActiveAttrib(program, index, buf_size, &length, &size, &var_type, c_name); break;
+        default: glGetActiveUniform(program, index, buf_size, &length, &size, &var_type, c_name);
     }
-    return std::make_tuple(std::string(c_name, c_name+length), type, size);
+    return std::make_tuple(std::string(c_name, c_name+length), var_type, size);
 }
 
-std::vector<shader_program::variable::description_t> program_variables(GLuint program, variable_type type) {
+std::vector<shader_program::variable_t::description_t> program_variables(GLuint program, shader_program::variable_type type) {
     GLint num_variables;
-    glGetProgramiv(program, type == ATTRIBUTE ? GL_ACTIVE_ATTRIBUTES : GL_ACTIVE_UNIFORMS, &num_variables);
-    std::vector<shader_program::variable::description_t> variables;
+    glGetProgramiv(program, type == shader_program::ATTRIBUTE ? GL_ACTIVE_ATTRIBUTES : GL_ACTIVE_UNIFORMS, &num_variables);
+    std::vector<shader_program::variable_t::description_t> variables;
     for (GLint i = 0; i < num_variables; ++i) {
         variables.push_back(variable_for_index(program, i, type));
     }
     return variables;
 }
 
-shader_program::variable::description_t variable_for_name(GLuint program, std::string name, variable_type type) {
+shader_program::variable_t::description_t variable_for_name(GLuint program, std::string name, shader_program::variable_type type) {
     auto variables = program_variables(program, type);
     for (const auto& v : variables) {
         if (std::get<0>(v) == name) return v;
     }
-    throw std::runtime_error("no " + (type == ATTRIBUTE ? "attribute" : "uniform") + " named \"" + name + "\"");
+    throw std::runtime_error(std::string("no ") + (type == shader_program::ATTRIBUTE ? "attribute" : "uniform") + " named \"" + name + "\"");
 }
 
 shader_program::shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, bool link_now) : shader_program(vs, fs, nullptr, link_now) {
@@ -62,9 +54,9 @@ shader_program::shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, b
 shader_program::shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, bool link_now) : handle_(0), vs_(vs), fs_(fs), gs_(gs), link_status_(0) {
     handle_ = glCreateProgram();
 
-    if (vs_) attach_shader_(vs_);
-    if (fs_) attach_shader_(fs_);
-    if (gs_) attach_shader_(gs_);
+    if (vs_) attach_shader_<GL_VERTEX_SHADER>(vs_);
+    if (fs_) attach_shader_<GL_FRAGMENT_SHADER>(fs_);
+    if (gs_) attach_shader_<GL_GEOMETRY_SHADER>(gs_);
 
     if (link_now) link();
 }
@@ -87,11 +79,11 @@ void shader_program::link() {
 
     auto descs = program_variables(handle_, UNIFORM);
     for (const auto& d : descs) {
-        uniforms_[std::get<0>(d)] = std::make_shared<variable>(handle_, d, UNIFORM);
+        uniforms_[std::get<0>(d)] = variable_t(handle_, d, UNIFORM);
     }
     descs = program_variables(handle_, ATTRIBUTE);
     for (const auto& d : descs) {
-        attributes_[std::get<0>(d)] = std::make_shared<variable>(handle_, d, ATTRIBUTE);
+        attributes_[std::get<0>(d)] = variable_t(handle_, d, ATTRIBUTE);
     }
 }
 
@@ -108,21 +100,25 @@ void shader_program::release() {
 }
 
 bool shader_program::bound() const {
-    GLuint crt;
+    GLint crt;
     glGetIntegerv(GL_CURRENT_PROGRAM, &crt);
     return crt == handle_;
 }
 
-shader_program::variable_ptr shader_program::operator[](std::string name) {
-    auto found = variables_.find(name);
-    if (found == variables_.end()) {
-        throw std::runtime_error("shader_program::operator[](): No variable named \""+name+"\""+SPOT);
-    }
-    return *found;
+shader_program::variable_t shader_program::operator[](std::string name) {
+    return variable(name);
+}
+
+shader_program::variable_t shader_program::variable(std::string name) {
+    auto found = uniforms_.find(name);
+    if (found != uniforms_.end()) return found->second;
+    found = attributes_.find(name);
+    if (found != attributes_.end()) return found->second;
+    throw std::runtime_error("shader_program::variable_t(): No variable named \""+name+"\""+SPOT);
 }
 
 template <int Stage>
-void attach_shader_(shader<Stage>::ptr shader) {
+void shader_program::attach_shader_(typename shader<Stage>::ptr shader) {
     if (!shader) return;
     glAttachShader(handle_, shader->handle());
     print_log_();
@@ -133,7 +129,7 @@ void shader_program::print_log_() {
 	int charsWritten  = 0;
 	GLchar *infoLog;
 
-	glGetProgramiv(ref_, GL_INFO_LOG_LENGTH, &infologLength);
+	glGetProgramiv(handle_, GL_INFO_LOG_LENGTH, &infologLength);
 
 	if (infologLength > 1) {
 		infoLog = (GLchar *)malloc(infologLength);
@@ -141,15 +137,97 @@ void shader_program::print_log_() {
 			std::cout << "Could not allocate InfoLog buffer" << std::endl;
 			return;
 		}
-		glGetProgramInfoLog(ref_, infologLength, &charsWritten, infoLog);
+		glGetProgramInfoLog(handle_, infologLength, &charsWritten, infoLog);
 		std::cout << "Program InfoLog:\n"+std::string(infoLog) << std::endl;
 		free(infoLog);
 	}
 }
 
 
-} // harmont
+shader_program::variable_t::variable_t() {
+}
 
+shader_program::variable_t::variable_t(GLuint program, const description_t& desc, variable_type var_type) : program_(program), desc_(desc), var_type_(var_type), name_(std::get<0>(desc)), data_type_(std::get<1>(desc)), size_(std::get<2>(desc)) {
+    if (var_type == UNIFORM) {
+        location_ = glGetUniformLocation(program_, name_.c_str());
+    } else {
+        location_ = glGetAttribLocation(program_, name_.c_str());
+    }
+}
+
+shader_program::variable_t::variable_t(const variable_t& other) {
+    program_ = other.program_;
+    desc_ = other.desc_;
+    var_type_ = other.var_type_;
+    name_ = other.name_;
+    data_type_ = other.data_type_;
+    size_ = other.size_;
+    location_ = other.location_;
+}
+
+shader_program::variable_t& shader_program::variable_t::operator=(const variable_t& other) {
+    program_ = other.program_;
+    desc_ = other.desc_;
+    var_type_ = other.var_type_;
+    name_ = other.name_;
+    data_type_ = other.data_type_;
+    size_ = other.size_;
+    location_ = other.location_;
+    return *this;
+}
+
+shader_program::variable_t& shader_program::variable_t::operator=(variable_t&& other) {
+    program_ = other.program_;
+    desc_ = other.desc_;
+    var_type_ = other.var_type_;
+    name_ = other.name_;
+    data_type_ = other.data_type_;
+    size_ = other.size_;
+    location_ = other.location_;
+    return *this;
+}
+
+shader_program::variable_t::~variable_t() {
+}
+
+shader_program::variable_type shader_program::variable_t::type() const {
+    return var_type_;
+}
+
+const std::string& shader_program::variable_t::name() const {
+    return name_;
+}
+
+GLenum shader_program::variable_t::data_type() const {
+    return data_type_;
+}
+
+GLint shader_program::variable_t::size() const {
+    return size_;
+}
+
+bool shader_program::variable_t::is_uniform() const {
+    return var_type_ == UNIFORM;
+}
+
+bool shader_program::variable_t::is_attribute() const {
+    return var_type_ == ATTRIBUTE;
+}
+
+GLuint shader_program::variable_t::location() const {
+    return location_;
+}
+
+//template <typename T>
+//T shader_program::variable_t::get() const {
+    //if (var_type_ == ATTRIBUTE) {
+        //throw std::runtime_error("shader_program::variable_t::get(): Vertex attribute variable values cannot be queried. Use vertex buffer objects instead"+SPOT);
+    //}
+    //return uniform_dispatch<data_type>::get<T>(location_);
+//}
+
+
+} // harmont
 
 template void harmont::shader_program::attach_shader_<GL_VERTEX_SHADER>(typename shader<GL_VERTEX_SHADER>::ptr shader);
 template void harmont::shader_program::attach_shader_<GL_FRAGMENT_SHADER>(typename shader<GL_FRAGMENT_SHADER>::ptr shader);
