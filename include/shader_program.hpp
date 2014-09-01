@@ -113,7 +113,7 @@ class shader_program::variable_t {
         GLint         location_;
 };
 
-#include "shader_program.ipp"
+#include <shader_program.ipp>
 
 } // harmont
 

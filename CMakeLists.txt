@@ -7,6 +7,7 @@ set (harmont_VERSION_MINOR 1)
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}/inline")
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -14,7 +15,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 	add_definitions(-O3)
 	add_definitions(-g)
 	add_definitions(-std=c++1y)
-#	add_definitions(-Wno-pointer-arith)
+    add_definitions(-Wall)
 endif()
 
 find_package(Eigen)
@@ -37,5 +38,6 @@ if (GLEW_FOUND AND EIGEN_FOUND)
 	install (TARGETS harmont DESTINATION lib)
 	# install header
 	install (DIRECTORY include/ DESTINATION include/harmont)
+	install (DIRECTORY inline/ DESTINATION include/harmont)
 endif()
 

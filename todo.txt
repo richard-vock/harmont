@@ -1,2 +1,1 @@
-no -Wno-pointer-arith
 no default constructor for shader_program::variable_t

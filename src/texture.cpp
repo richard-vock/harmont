@@ -276,7 +276,7 @@ void texture::allocate_() {
 	template texture::ptr texture::depth_texture<type>(int width, int height); \
 	template texture::texture(GLenum scalar_type, GLenum internal_format, int width, int height, int depth, const type* data, parameters_t_ params, bool is_depth_attachment); \
 	template void texture::set_data(const type* data);
-#include "texture_scalars.def"
+#include <texture_scalars.def>
 
 
 } // harmont

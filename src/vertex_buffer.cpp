@@ -13,7 +13,7 @@
 
 #include <vertex_buffer.hpp>
 
-#define HARMONT_BUFFER_OFFSET(i) ((const GLvoid*)NULL + (i))
+#define HARMONT_BUFFER_OFFSET(i) ((const GLvoid*)((const GLchar*)NULL + (i)))
 
 namespace harmont {
 
@@ -156,4 +156,4 @@ void vertex_buffer<Scalar, Target>::allocate_() {
     template class harmont::vertex_buffer<scalar, GL_ARRAY_BUFFER>; \
     template class harmont::vertex_buffer<scalar, GL_ELEMENT_ARRAY_BUFFER>; \
     template class harmont::vertex_buffer<scalar, GL_TEXTURE_BUFFER>;
-#include "vbo_instantiate.def"
+#include <vbo_instantiate.def>

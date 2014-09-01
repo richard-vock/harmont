@@ -99,7 +99,7 @@ class vertex_buffer {
         GLuint   handle_;
 };
 
-#include "vertex_buffer.ipp"
+#include <vertex_buffer.ipp>
 
 template <typename Scalar>
 using index_buffer = vertex_buffer<Scalar, GL_ELEMENT_ARRAY_BUFFER>;
