@@ -44,11 +44,7 @@ template <typename Scalar>
 texture::ptr texture::texture_1d(int width, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
 	GLenum internal_format = infer_internal_format(channels);
-	parameters_t_ params;
-    params.min_filter = min_filter;
-    params.mag_filter = mag_filter;
-    params.wrap_s = wrap_s;
-    params.wrap_t = wrap_t;
+	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
     return ptr(new texture(scalar_type, internal_format, width, 0, 0, data, params));
 }
 
@@ -56,11 +52,7 @@ template <typename Scalar>
 texture::ptr texture::texture_2d(int width, int height, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
 	GLenum internal_format = infer_internal_format(channels);
-	parameters_t_ params;
-    params.min_filter = min_filter;
-    params.mag_filter = mag_filter;
-    params.wrap_s = wrap_s;
-    params.wrap_t = wrap_t;
+	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
     return ptr(new texture(scalar_type, internal_format, width, height, 0, data, params));
 }
 
@@ -68,11 +60,7 @@ template <typename Scalar>
 texture::ptr texture::texture_3d(int width, int height, int depth, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
 	GLenum internal_format = infer_internal_format(channels);
-	parameters_t_ params;
-    params.min_filter = min_filter;
-    params.mag_filter = mag_filter;
-    params.wrap_s = wrap_s;
-    params.wrap_t = wrap_t;
+	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
     return ptr(new texture(scalar_type, internal_format, width, height, depth, data, params));
 }
 
@@ -214,7 +202,7 @@ GLint texture::active_unit() {
 
 GLint texture::active_texture(GLenum target, GLenum unit) {
 	GLint active = active_unit();
-	if (active != unit) glActiveTexture(unit);
+	if (active != static_cast<GLint>(unit)) glActiveTexture(unit);
 
 	GLenum binding;
 	switch (target) {
@@ -228,7 +216,7 @@ GLint texture::active_texture(GLenum target, GLenum unit) {
 	glGetIntegerv(binding, &handle);
 
 
-	if (active != unit) glActiveTexture(active);
+	if (active != static_cast<GLint>(unit)) glActiveTexture(active);
 
 	ASSERTS(handle >= 0, "texture::active_texture: Negative handle for active texture"+SPOT);
 	return static_cast<GLuint>(handle);
@@ -236,11 +224,11 @@ GLint texture::active_texture(GLenum target, GLenum unit) {
 
 template <typename Scalar>
 texture::texture(GLenum scalar_type, GLenum internal_format, int width, int height, int depth, const Scalar* data, parameters_t_ params, bool is_depth_attachment) :
-	scalar_type_(scalar_type),
-	internal_format_(internal_format),
 	width_(width),
 	height_(height),
 	depth_(depth),
+	scalar_type_(scalar_type),
+	internal_format_(internal_format),
 	params_(params),
 	is_depth_attachment_(is_depth_attachment) {
 	dims_ = !!width_ + !!height_ + !!depth_;

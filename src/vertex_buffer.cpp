@@ -31,7 +31,12 @@ vertex_buffer<Scalar, Target>::~vertex_buffer() {
 }
 
 template <typename Scalar, GLenum Target>
-typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_layout(const layout_t& layout) {
+typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_layout(const layout_t& layout, GLenum usage) {
+    uint32_t element_count = 0;
+    for (const auto& el : layout) {
+        element_count += el.second;
+    }
+    return ptr(new vertex_buffer<Scalar, Target>(element_count, usage));
 }
 
 template <typename Scalar, GLenum Target>

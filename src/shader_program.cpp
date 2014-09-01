@@ -79,11 +79,11 @@ void shader_program::link() {
 
     auto descs = program_variables(handle_, UNIFORM);
     for (const auto& d : descs) {
-        uniforms_[std::get<0>(d)] = variable_t(handle_, d, UNIFORM);
+        uniforms_[std::get<0>(d)] = variable_ptr(new variable_t(handle_, d, UNIFORM));
     }
     descs = program_variables(handle_, ATTRIBUTE);
     for (const auto& d : descs) {
-        attributes_[std::get<0>(d)] = variable_t(handle_, d, ATTRIBUTE);
+        attributes_[std::get<0>(d)] = variable_ptr(new variable_t(handle_, d, ATTRIBUTE));
     }
 }
 
@@ -102,18 +102,18 @@ void shader_program::release() {
 bool shader_program::bound() const {
     GLint crt;
     glGetIntegerv(GL_CURRENT_PROGRAM, &crt);
-    return crt == handle_;
+    return crt == static_cast<GLint>(handle_);
 }
 
-shader_program::variable_t shader_program::operator[](std::string name) {
+const shader_program::variable_t& shader_program::operator[](std::string name) const {
     return variable(name);
 }
 
-shader_program::variable_t shader_program::variable(std::string name) {
+const shader_program::variable_t& shader_program::variable(std::string name) const {
     auto found = uniforms_.find(name);
-    if (found != uniforms_.end()) return found->second;
+    if (found != uniforms_.end()) return *(found->second);
     found = attributes_.find(name);
-    if (found != attributes_.end()) return found->second;
+    if (found != attributes_.end()) return *(found->second);
     throw std::runtime_error("shader_program::variable_t(): No variable named \""+name+"\""+SPOT);
 }
 
@@ -143,9 +143,6 @@ void shader_program::print_log_() {
 	}
 }
 
-
-shader_program::variable_t::variable_t() {
-}
 
 shader_program::variable_t::variable_t(GLuint program, const description_t& desc, variable_type var_type) : program_(program), desc_(desc), var_type_(var_type), name_(std::get<0>(desc)), data_type_(std::get<1>(desc)), size_(std::get<2>(desc)) {
     if (var_type == UNIFORM) {
@@ -217,14 +214,6 @@ bool shader_program::variable_t::is_attribute() const {
 GLuint shader_program::variable_t::location() const {
     return location_;
 }
-
-//template <typename T>
-//T shader_program::variable_t::get() const {
-    //if (var_type_ == ATTRIBUTE) {
-        //throw std::runtime_error("shader_program::variable_t::get(): Vertex attribute variable values cannot be queried. Use vertex buffer objects instead"+SPOT);
-    //}
-    //return uniform_dispatch<data_type>::get<T>(location_);
-//}
 
 
 } // harmont

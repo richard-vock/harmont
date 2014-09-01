@@ -1,5 +1,5 @@
 template <typename T>
-inline void shader_program::variable_t::set(T&& value) {
+inline void shader_program::variable_t::set(T&& value) const {
     if (var_type_ == ATTRIBUTE) {
         throw std::runtime_error("shader_program::variable_t::set(): Vertex attribute variable values cannot be set. Use vertex buffer objects instead"+SPOT);
     }
@@ -31,6 +31,6 @@ inline void shader_program::variable_t::set(T&& value) {
 }
 
 template <typename T>
-inline void shader_program::variable_t::operator=(T&& value) {
+inline void shader_program::variable_t::operator=(T&& value) const {
     set(std::forward<T>(value));
 }

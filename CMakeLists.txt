@@ -16,6 +16,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 	add_definitions(-g)
 	add_definitions(-std=c++1y)
     add_definitions(-Wall)
+    add_definitions(-Wno-unused-function)
 endif()
 
 find_package(Eigen)

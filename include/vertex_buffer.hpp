@@ -35,7 +35,7 @@ class vertex_buffer {
 		vertex_buffer(uint32_t element_count, GLenum usage = GL_STATIC_DRAW);
 		virtual ~vertex_buffer();
 
-        static ptr from_layout(const layout_t& layout);
+        static ptr from_layout(const layout_t& layout, GLenum usage = GL_STATIC_DRAW);
 
         static ptr from_data(const Scalar* data, uint32_t element_count, GLenum usage = GL_STATIC_DRAW);
         template <template <typename, typename> class C, template <typename> class A>

@@ -14,7 +14,7 @@
 #ifndef HARMONT_VERTEX_ARRAY_H_
 #define HARMONT_VERTEX_ARRAY_H_
 
-#include "data_buffer.hpp"
+#include "common.hpp"
 
 namespace harmont {
 

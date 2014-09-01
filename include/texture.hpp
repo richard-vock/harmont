@@ -81,13 +81,13 @@ class texture {
 
 	protected:
 		struct parameters_t_ {
-			GLenum min_filter = GL_NEAREST;
-			GLenum mag_filter = GL_NEAREST;
-			GLenum wrap_s = GL_CLAMP_TO_EDGE;
-			GLenum wrap_t = GL_CLAMP_TO_EDGE;
+			GLenum min_filter;
+			GLenum mag_filter;
+			GLenum wrap_s;
+			GLenum wrap_t;
 		};
 		template <typename Scalar>
-		texture(GLenum scalar_type, GLenum internal_format, int width, int height = 0, int depth = 0, const Scalar* data = nullptr, parameters_t_ params = parameters_t_(), bool is_depth_attachment = false);
+		texture(GLenum scalar_type, GLenum internal_format, int width, int height = 0, int depth = 0, const Scalar* data = nullptr, parameters_t_ params = {GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE}, bool is_depth_attachment = false);
 
 		void allocate_();
 

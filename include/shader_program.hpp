@@ -32,8 +32,8 @@ class shader_program {
 		typedef std::weak_ptr<const shader_program>    const_wptr;
         typedef enum {ATTRIBUTE, UNIFORM}              variable_type;
         class variable_t;
-        //std::shared_ptr<variable>                      variable_ptr;
-        typedef std::map<std::string, variable_t>      variables;
+        typedef std::shared_ptr<variable_t>            variable_ptr;
+        typedef std::map<std::string, variable_ptr>    variables;
 
 	public:
 		shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, bool link_now = true);
@@ -49,8 +49,8 @@ class shader_program {
         void release();
         bool bound() const;
 
-        variable_t operator[](std::string name);
-        variable_t variable(std::string name);
+        const variable_t& operator[](std::string name) const;
+        const variable_t& variable(std::string name) const;
 
 	protected:
         template <int Stage>
@@ -77,7 +77,6 @@ class shader_program::variable_t {
         typedef std::tuple<std::string, GLenum, GLint> description_t;
 
     public:
-        variable_t();
         variable_t(GLuint program, const description_t& desc, variable_type var_type);
         variable_t(const variable_t& other);
         variable_t& operator=(const variable_t& other);
@@ -95,10 +94,10 @@ class shader_program::variable_t {
         GLuint location() const;
 
         template <typename T>
-        void set(T&& value);
+        void set(T&& value) const;
 
         template <typename T>
-        void operator =(T&& value);
+        void operator =(T&& value) const;
 
         //template <typename T>
         //T get() const;
