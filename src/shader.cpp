@@ -113,6 +113,17 @@ std::string shader<Stage>::load_file_(const std::string& filename) {
     return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
+#ifdef USE_PLUSTACHE
+template <int Stage>
+std::string shader<Stage>::render_source_(const std::string& source, const parameters_t& params) {
+    PlustacheTypes::ObjectType ctx;
+    for (const auto& param : params) {
+        ctx[param.first] = param.second;
+    }
+    Plustache::template_t t;
+    return t.render(source, ctx);
+}
+#endif // USE_PLUSTACHE
 
 } // harmont
 

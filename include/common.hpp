@@ -40,6 +40,16 @@
 
 namespace harmont {
 
+template <typename Scalar>
+Scalar eps() {
+    return Eigen::NumTraits<Scalar>::epsilon();
+}
+
+template <typename Scalar>
+Scalar tiny() {
+    return Eigen::NumTraits<Scalar>::dummy_precision();
+}
+
 template<typename T>
 struct gl_type_enum;
 

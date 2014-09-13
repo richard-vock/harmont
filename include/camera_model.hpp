@@ -48,12 +48,15 @@ class camera_model {
 
     protected:
         vec3_t position_ = -vec3_t::UnitZ();
-        vec3_t look_at_ = vec3_t::Zero();
-        mat4_t trans_ = mat4_t::Identity();
-        mat3_t normal_ = mat3_t::Identity();
+        vec3_t look_at_  = vec3_t::Zero();
+        vec3_t up_       = vec3_t::UnitY();
+        mat4_t trans_    = mat4_t::Identity();
+        mat3_t normal_   = mat3_t::Identity();
+        mat4_t math_to_opengl_;
+        mat4_t opengl_to_math_;
 };
 
-#include <camera_model.ipp>
+#include "camera_model.ipp"
 
 } // harmont
 

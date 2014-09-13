@@ -61,12 +61,12 @@ class camera {
 
     protected:
         camera_model::ptr model_;
-        bool              ortho_;
         int               width_;
         int               height_;
         float             fov_;
         float             near_;
         float             far_;
+        bool              ortho_;
         mat4_t            projection_;
 };
 

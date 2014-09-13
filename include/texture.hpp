@@ -104,7 +104,7 @@ class texture {
 		bool          is_depth_attachment_;
 };
 
-#include <texture.ipp>
+#include "texture.ipp"
 
 } // harmont
 

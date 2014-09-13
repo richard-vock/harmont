@@ -67,7 +67,7 @@ class render_pass {
         framebuffer::ptr     fbo_;
 };
 
-#include <render_pass.ipp>
+#include "render_pass.ipp"
 
 } // harmont
 

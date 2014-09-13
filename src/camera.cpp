@@ -1,5 +1,7 @@
 #include <camera.hpp>
 
+#include <view.hpp>
+
 namespace harmont {
 
 camera::camera(camera_model::ptr model, int width, int height, float fov, float near, float far, bool ortho) : model_(model), width_(width), height_(height), fov_(fov), near_(near), far_(far), ortho_(ortho) {
@@ -117,12 +119,12 @@ bool camera::ortho() const {
 
 void camera::set_ortho(bool state) {
     ortho_ = state;
-    set_projection_();
+    reshape(width_, height_);
 }
 
 void camera::toggle_ortho() {
     ortho_ = !ortho_;
-    set_projection_();
+    reshape(width_, height_);
 }
 
 camera::ray_t camera::pick_ray(int x, int y) const {
@@ -137,22 +139,22 @@ camera::ray_t camera::pick_ray(int x, int y) const {
 void camera::reshape(int width, int height) {
     float aspect = std::max(width, height) / std::min(width, height);
 	projection_ = perspective(fov_, aspect, near_, far_);
-    view_mat = model_->view_matrix();
-	if (ortho) {
+    mat4_t view_mat = model_->view_matrix();
+	if (ortho_) {
 		Eigen::Vector4f look_at;
 		look_at << model_->look_at(), 1.f;
-		look_at = view_matrix() * look_at;
-		Eigen::Vector4f right = lookAt;
+		look_at = view_mat * look_at;
+		Eigen::Vector4f right = look_at;
 		right[0] += 1.f;
 
 		float factor = static_cast<float>(tan(fov_ * M_PI / 180.f) * 20.0);
-		mat4_t ortho = ortho(-aspect*factor, aspect*factor, -factor, factor, near_, far_);
-		Eigen::Vector4f p0 = pr*look_at, p1 = pr*right, o0 = ortho*look_at, o1 = ortho*right;
+		mat4_t ortho_mat = harmont::ortho(-aspect*factor, aspect*factor, -factor, factor, near_, far_);
+		Eigen::Vector4f p0 = projection_*look_at, p1 = projection_*right, o0 = ortho_mat*look_at, o1 = ortho_mat*right;
 		p0.head(3) /= p0[3]; p1.head(3) /= p1[3];
 		float scale = (p1.head(3)-p0.head(3)).norm() / (o1.head(3)-o0.head(3)).norm();
 		mat4_t scale_mat = mat4_t::Identity();
 		scale_mat.block<3,3>(0,0) *= scale;
-		projection_ = ortho * scale_mat;
+		projection_ = ortho_mat * scale_mat;
 	}
 }
 
