@@ -137,7 +137,7 @@ camera::ray_t camera::pick_ray(int x, int y) const {
 }
 
 void camera::reshape(int width, int height) {
-    float aspect = std::max(width, height) / std::min(width, height);
+    float aspect = static_cast<float>(std::max(width, height)) / std::min(width, height);
 	projection_ = perspective(fov_, aspect, near_, far_);
     mat4_t view_mat = model_->view_matrix();
 	if (ortho_) {

@@ -1,1 +1,5 @@
 build
+*.dblite
+*.o
+*.so
+examples/simple_application/simple_application

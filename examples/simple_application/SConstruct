@@ -1,0 +1,8 @@
+env = Environment(
+    CCFLAGS="-std=c++11 -g -Wall -O0",
+    CPPPATH=["/usr/include/eigen3", "/usr/local/include"],
+    LIBPATH=[],
+    LIBS=["GL", "glut", "GLEW", "harmont"]
+)
+
+env.Program("simple_application", "simple_application.cpp")
