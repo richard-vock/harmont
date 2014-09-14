@@ -81,7 +81,7 @@ GLuint vertex_buffer<Scalar, Target>::bound_buffer() {
         default: query = GL_ARRAY_BUFFER_BINDING; break;
     }
     glGetIntegerv(query, &buffer);
-    return query;
+    return buffer;
 }
 
 template <typename Scalar, GLenum Target>

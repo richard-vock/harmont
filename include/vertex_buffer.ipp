@@ -84,7 +84,7 @@ template <typename Scalar, GLenum Target>
 template <int Rows, int Cols, int Options>
 inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix) {
     if (Options & Eigen::RowMajor) {
-        return vertex_buffer<Scalar, Target>::from_data(matrix.data(), matrix.rows() * matrix.cols());
+        this->set_data(matrix.data(), matrix.rows() * matrix.cols());
     }
     Eigen::Matrix<Scalar, Rows, Cols, (Options ^ Eigen::ColMajor) | Eigen::RowMajor> data_transposed = matrix;
     set_data(data_transposed.data(), matrix.rows() * matrix.cols());
@@ -93,7 +93,7 @@ inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, 
 template <typename Scalar, GLenum Target>
 template <typename S, int Rows, int Cols, int Options>
 inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix) {
-    return vertex_buffer<Scalar, Target>(matrix.template cast<Scalar>());
+    this->set_data(matrix.template cast<Scalar>());
 }
 
 template <typename Scalar, GLenum Target>

@@ -99,9 +99,6 @@ class shader_program::variable_t {
         template <typename T>
         void operator =(T&& value) const;
 
-        //template <typename T>
-        //T get() const;
-
     protected:
         GLuint        program_;
         description_t desc_;

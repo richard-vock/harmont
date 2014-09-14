@@ -12,5 +12,7 @@
 #include "vertex_array.hpp"
 #include "vertex_buffer.hpp"
 #include "view.hpp"
+#include "application.hpp"
+#include "freeglut_application.hpp"
 
 #endif /* HARMONT_HPP_ */

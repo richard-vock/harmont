@@ -5,7 +5,9 @@ inline camera_model::ptr camera_model::looking_at(const vec3_t& position, const 
     if (fabs(up.dot((look_at - position).normalized())) > 0.99) {
         up = vec3_t::UnitX();
     }
-    model->set_parameters(position, look_at, up);
+    model->set_position(position);
+    model->set_look_at(look_at);
+    model->set_up(up);
     return model;
 }
 

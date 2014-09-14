@@ -41,13 +41,42 @@
 namespace harmont {
 
 template <typename Scalar>
-Scalar eps() {
+inline Scalar eps() {
     return Eigen::NumTraits<Scalar>::epsilon();
 }
 
 template <typename Scalar>
-Scalar tiny() {
+inline Scalar tiny() {
     return Eigen::NumTraits<Scalar>::dummy_precision();
+}
+
+inline std::string gl_type_name(GLenum type) {
+    switch (type) {
+        case GL_FLOAT: return "GL_FLOAT"; break;
+        case GL_FLOAT_VEC2: return "GL_FLOAT_VEC2"; break;
+        case GL_FLOAT_VEC3: return "GL_FLOAT_VEC3"; break;
+        case GL_FLOAT_VEC4: return "GL_FLOAT_VEC4"; break;
+        case GL_INT: return "GL_INT"; break;
+        case GL_INT_VEC2: return "GL_INT_VEC2"; break;
+        case GL_INT_VEC3: return "GL_INT_VEC3"; break;
+        case GL_INT_VEC4: return "GL_INT_VEC4"; break;
+        case GL_UNSIGNED_INT: return "GL_UNSIGNED_INT"; break;
+        case GL_UNSIGNED_INT_VEC2: return "GL_UNSIGNED_INT_VEC2"; break;
+        case GL_UNSIGNED_INT_VEC3: return "GL_UNSIGNED_INT_VEC3"; break;
+        case GL_UNSIGNED_INT_VEC4: return "GL_UNSIGNED_INT_VEC4"; break;
+        case GL_UNSIGNED_INT_ATOMIC_COUNTER: return "GL_UNSIGNED_INT_ATOMIC_COUNTER"; break;
+        case GL_FLOAT_MAT2: return "GL_FLOAT_MAT2"; break;
+        case GL_FLOAT_MAT3: return "GL_FLOAT_MAT3"; break;
+        case GL_FLOAT_MAT4: return "GL_FLOAT_MAT4"; break;
+        case GL_FLOAT_MAT2x3: return "GL_FLOAT_MAT2x3"; break;
+        case GL_FLOAT_MAT2x4: return "GL_FLOAT_MAT2x4"; break;
+        case GL_FLOAT_MAT3x2: return "GL_FLOAT_MAT3x2"; break;
+        case GL_FLOAT_MAT3x4: return "GL_FLOAT_MAT3x4"; break;
+        case GL_FLOAT_MAT4x2: return "GL_FLOAT_MAT4x2"; break;
+        case GL_FLOAT_MAT4x3: return "GL_FLOAT_MAT4x3"; break;
+        default: break;
+    }
+    return "UNKNOWN_TYPE";
 }
 
 template<typename T>
@@ -168,6 +197,23 @@ struct gl_attrib_func<double> {
         };
     }
 };
+
+template <typename T, template <typename> class... Tests>
+struct logical_and;
+
+template <typename T, template <typename> class Test>
+struct logical_and<T, Test> {
+    static constexpr bool value = Test<T>::value;
+};
+
+template <typename T, template <typename> class Test, template <typename> class... Tests>
+struct logical_and<T, Test, Tests...> {
+    static constexpr bool value = Test<T>::value && logical_and<T, Tests...>::value;
+};
+
+template <typename T, template <typename> class... Tests>
+using require = typename std::enable_if<logical_and<T, Tests...>::value>::type;
+
 
 } // harmont
 

@@ -66,11 +66,11 @@ float camera::fov() const {
     return fov_;
 }
 
-const camera::mat4_t& camera::view_matrix() const {
+camera::mat4_t camera::view_matrix() const {
     return model_->view_matrix();
 }
 
-const camera::mat3_t& camera::view_normal_matrix() const {
+camera::mat3_t camera::view_normal_matrix() const {
     return model_->view_normal_matrix();
 }
 

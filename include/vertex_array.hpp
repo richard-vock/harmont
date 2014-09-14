@@ -19,6 +19,12 @@
 namespace harmont {
 
 class vertex_array {
+    public:
+        typedef std::shared_ptr<vertex_array>       ptr;
+        typedef std::weak_ptr<vertex_array>         wptr;
+        typedef std::shared_ptr<const vertex_array> const_ptr;
+        typedef std::weak_ptr<const vertex_array>   const_wptr;
+
 	public:
 		vertex_array();
 		virtual ~vertex_array();

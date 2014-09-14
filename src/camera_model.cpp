@@ -26,12 +26,12 @@ camera_model::vec3_t camera_model::right() const {
     return opengl_to_math_.block<3,3>(0, 0) * trans_.block<1,3>(0, 0).transpose().normalized();
 }
 
-const camera_model::mat4_t& camera_model::view_matrix() const {
-    return trans_;
+camera_model::mat4_t camera_model::view_matrix() const {
+    return trans_ * math_to_opengl_;
 }
 
-const camera_model::mat3_t& camera_model::view_normal_matrix() const {
-    return normal_;
+camera_model::mat3_t camera_model::view_normal_matrix() const {
+    return normal_ * math_to_opengl_.block<3,3>(0,0);
 }
 
 void camera_model::set_position(const vec3_t& position) {
@@ -81,5 +81,6 @@ camera_model::camera_model() {
 	                    0.f, 1.f, 0.f, 0.f,
 	                    0.f, 0.f, 0.f, 1.f;
 }
+
 
 } // harmont
