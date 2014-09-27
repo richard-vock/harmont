@@ -43,42 +43,6 @@ void init_geometry() {
     vao->release();
 }
 
-//void init_geometry() {
-    //vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 3}};
-    //Eigen::Matrix<float, 24, 6> data;
-    //data <<
-        //0.f, 0.f, 0.f, 1.f, 0.f, 0.f,
-        //1.f, 0.f, 0.f, 1.f, 0.f, 0.f,
-        //0.f, 0.f, 0.f, 0.f, 1.f, 0.f,
-        //0.f, 1.f, 0.f, 0.f, 1.f, 0.f,
-        //0.f, 0.f, 0.f, 0.f, 0.f, 1.f,
-        //0.f, 0.f, 1.f, 0.f, 0.f, 1.f,
-        //2.f, 0.f, 0.f, 1.f, 0.f, 0.f,
-        //3.f, 0.f, 0.f, 1.f, 0.f, 0.f,
-        //2.f, 0.f, 0.f, 0.f, 1.f, 0.f,
-        //2.f, 1.f, 0.f, 0.f, 1.f, 0.f,
-        //2.f, 0.f, 0.f, 0.f, 0.f, 1.f,
-        //2.f, 0.f, 1.f, 0.f, 0.f, 1.f,
-        //0.f, 2.f, 0.f, 1.f, 0.f, 0.f,
-        //1.f, 2.f, 0.f, 1.f, 0.f, 0.f,
-        //0.f, 2.f, 0.f, 0.f, 1.f, 0.f,
-        //0.f, 3.f, 0.f, 0.f, 1.f, 0.f,
-        //0.f, 2.f, 0.f, 0.f, 0.f, 1.f,
-        //0.f, 2.f, 1.f, 0.f, 0.f, 1.f,
-        //0.f, 0.f, 2.f, 1.f, 0.f, 0.f,
-        //1.f, 0.f, 2.f, 1.f, 0.f, 0.f,
-        //0.f, 0.f, 2.f, 0.f, 1.f, 0.f,
-        //0.f, 1.f, 2.f, 0.f, 1.f, 0.f,
-        //0.f, 0.f, 2.f, 0.f, 0.f, 1.f,
-        //0.f, 0.f, 3.f, 0.f, 0.f, 1.f;
-
-    //vao = std::make_shared<vertex_array>();
-    //vao->bind();
-    //vbo = vertex_buffer<float>::from_data(data);
-    //vbo->bind_to_array(vbo_layout, main_pass);
-    //vao->release();
-//}
-
 void init() {
     glClearColor(.2f, .2f, .2f, 1.f);
     main_pass = std::make_shared<render_pass>(vertex_shader::from_file("simple.vert"), fragment_shader::from_file("simple.frag"));
@@ -89,7 +53,6 @@ void render_geometry(shader_program::ptr) {
     glEnable(GL_DEPTH_TEST);
     vao->bind();
     glDrawArrays(GL_QUADS, 0, 24);
-    //glDrawArrays(GL_LINES, 0, 24);
     vao->release();
 }
 
