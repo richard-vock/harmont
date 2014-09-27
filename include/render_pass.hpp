@@ -54,13 +54,8 @@ class render_pass {
         shader_variable operator[](std::string name);
         shader_variable variable(std::string name);
 
-        template <typename... Args>
-        void set_uniforms(named_uniform<Args>... uniforms);
-
-    protected:
-        template <typename Arg, typename... Args>
-        void set_uniforms_(named_uniform<Arg> uniform, named_uniform<Args>... uniforms);
-        void set_uniforms_();
+        template <typename T>
+        void set_uniform(const std::string& name, T&& value);
 
     protected:
         shader_program::ptr  program_;

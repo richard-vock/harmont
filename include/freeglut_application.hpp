@@ -28,9 +28,21 @@ class freeglut_application : public application {
 
         void init_(int argc, char* argv[], std::string title);
         void display_();
+        void mouse_(int button, int state, int x, int y);
+        void motion_(int x, int y);
 
         static void glut_display_(freeglut_application* self);
         static void glut_reshape_(freeglut_application* self, int width, int height);
+        static void glut_mouse_(freeglut_application* self, int button, int state, int x, int y);
+        static void glut_mouse_move_(freeglut_application* self, int x, int y);
+
+    protected:
+        screen_pos_t  last_pos_ = screen_pos_t(0, 0);
+        screen_pos_t  drag_start_ = screen_pos_t(0, 0);
+        bool          dragging_ = false;
+        bool          left_down_ = false;
+        bool          right_down_ = false;
+        bool          middle_down_ = false;
 };
 
 #include "freeglut_application.ipp"

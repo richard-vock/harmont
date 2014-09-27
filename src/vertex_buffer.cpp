@@ -42,7 +42,9 @@ typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_
 template <typename Scalar, GLenum Target>
 typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Scalar* data, uint32_t element_count, GLenum usage) {
     ptr vbo = std::make_shared<vertex_buffer<Scalar, Target>>(element_count, usage);
+    vbo->bind();
     vbo->set_data(data, element_count);
+    vbo->release();
     return vbo;
 }
 
@@ -100,8 +102,9 @@ void vertex_buffer<Scalar, Target>::release() {
 
 template <typename Scalar, GLenum Target>
 void vertex_buffer<Scalar, Target>::bind_to_array(const layout_t& layout, shader_program::ptr program) {
-    if (!bound()) {
-        throw std::runtime_error("vertex_buffer::bind_to_array(): Buffer not bound." + SPOT);
+    bool was_bound = bound();
+    if (!was_bound) {
+        bind();
     }
     int offset = 0;
     int size = 0;
@@ -115,6 +118,9 @@ void vertex_buffer<Scalar, Target>::bind_to_array(const layout_t& layout, shader
         gl_attrib_func_t func = gl_attrib_func<Scalar>::get_functor();
         func(location, field.second, size, HARMONT_BUFFER_OFFSET(offset));
         offset += field.second * scalar_size;
+    }
+    if (!was_bound) {
+        release();
     }
 }
 

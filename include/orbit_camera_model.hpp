@@ -13,8 +13,15 @@ class orbit_camera_model : public camera_model {
         typedef std::weak_ptr<const orbit_camera_model>   const_wptr;
 
     public:
+        static ptr from_looking_at(const vec3_t& position, const vec3_t& look_at);
         orbit_camera_model();
         virtual ~orbit_camera_model();
+
+        vec3_t position() const;
+        vec3_t look_at() const;
+
+        void move_to(camera_model::ptr other);
+        void move_to(orbit_camera_model::ptr other);
 
     protected:
         void update_(vec3_t translational, vec3_t rotational, bool ortho_projection);
@@ -26,10 +33,11 @@ class orbit_camera_model : public camera_model {
         void determine_matrix_();
 
     protected:
-        float scale_  = 1.f;
-        float phi_    = 0.f;
-        float theta_  = 0.f;
-        float psi_    = 0.f;
+        vec3_t look_at_  = vec3_t::Zero();
+        float  phi_      = 0.f;
+        float  theta_    = 0.f;
+        float  psi_      = 0.f;
+        float  radius_   = 20.f;
 };
 
 

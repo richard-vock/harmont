@@ -5,52 +5,102 @@ using namespace harmont;
 
 vertex_array::ptr vao;
 vertex_buffer<float>::ptr vbo;
-shader_program::ptr program;
+render_pass::ptr main_pass;
+typedef application::screen_pos_t px;
 
 void init_geometry() {
+    vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 3}};
+    Eigen::Matrix<float, 24, 6> data;
+    data <<
+        -1.f, -1.f, -1.f, 1.f, 0.f, 0.f, // front
+         1.f, -1.f, -1.f, 1.f, 0.f, 0.f,
+         1.f, -1.f,  1.f, 1.f, 0.f, 0.f,
+        -1.f, -1.f,  1.f, 1.f, 0.f, 0.f,
+        -1.f,  1.f, -1.f, 1.f, 0.f, 0.f, // back
+        -1.f,  1.f,  1.f, 1.f, 0.f, 0.f,
+         1.f,  1.f,  1.f, 1.f, 0.f, 0.f,
+         1.f,  1.f, -1.f, 1.f, 0.f, 0.f,
+        -1.f, -1.f, -1.f, 0.f, 1.f, 0.f, // left
+        -1.f,  1.f, -1.f, 0.f, 1.f, 0.f,
+        -1.f,  1.f,  1.f, 0.f, 1.f, 0.f,
+        -1.f, -1.f,  1.f, 0.f, 1.f, 0.f,
+         1.f, -1.f, -1.f, 0.f, 1.f, 0.f, // right
+         1.f,  1.f, -1.f, 0.f, 1.f, 0.f,
+         1.f,  1.f,  1.f, 0.f, 1.f, 0.f,
+         1.f, -1.f,  1.f, 0.f, 1.f, 0.f,
+        -1.f, -1.f,  1.f, 0.f, 0.f, 1.f, // top
+         1.f, -1.f,  1.f, 0.f, 0.f, 1.f,
+         1.f,  1.f,  1.f, 0.f, 0.f, 1.f,
+        -1.f,  1.f,  1.f, 0.f, 0.f, 1.f,
+        -1.f, -1.f, -1.f, 0.f, 0.f, 1.f, // bottom
+        -1.f,  1.f, -1.f, 0.f, 0.f, 1.f,
+         1.f,  1.f, -1.f, 0.f, 0.f, 1.f,
+         1.f, -1.f, -1.f, 0.f, 0.f, 1.f;
     vao = std::make_shared<vertex_array>();
     vao->bind();
-    vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 3}};
-    vbo = vertex_buffer<float>::from_layout(vbo_layout);
-    vbo->bind();
-    Eigen::Matrix<float, 6, 6> data;
-    data <<
-        0.f, 0.f, 0.f, 1.f, 0.f, 0.f,
-        1.f, 0.f, 0.f, 1.f, 0.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 1.f, 0.f,
-        0.f, 1.f, 0.f, 0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f, 0.f, 0.f, 1.f,
-        0.f, 0.f, 1.f, 0.f, 0.f, 1.f;
-    vbo->set_data(data);
-    vbo->bind_to_array(vbo_layout, program);
-    vbo->release();
+    vbo = vertex_buffer<float>::from_data(data);
+    vbo->bind_to_array(vbo_layout, main_pass);
     vao->release();
 }
 
-void init() {
-    program = std::make_shared<shader_program>(
-        vertex_shader::from_file("simple.vert"),
-        fragment_shader::from_file("simple.frag")
-    );
+//void init_geometry() {
+    //vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 3}};
+    //Eigen::Matrix<float, 24, 6> data;
+    //data <<
+        //0.f, 0.f, 0.f, 1.f, 0.f, 0.f,
+        //1.f, 0.f, 0.f, 1.f, 0.f, 0.f,
+        //0.f, 0.f, 0.f, 0.f, 1.f, 0.f,
+        //0.f, 1.f, 0.f, 0.f, 1.f, 0.f,
+        //0.f, 0.f, 0.f, 0.f, 0.f, 1.f,
+        //0.f, 0.f, 1.f, 0.f, 0.f, 1.f,
+        //2.f, 0.f, 0.f, 1.f, 0.f, 0.f,
+        //3.f, 0.f, 0.f, 1.f, 0.f, 0.f,
+        //2.f, 0.f, 0.f, 0.f, 1.f, 0.f,
+        //2.f, 1.f, 0.f, 0.f, 1.f, 0.f,
+        //2.f, 0.f, 0.f, 0.f, 0.f, 1.f,
+        //2.f, 0.f, 1.f, 0.f, 0.f, 1.f,
+        //0.f, 2.f, 0.f, 1.f, 0.f, 0.f,
+        //1.f, 2.f, 0.f, 1.f, 0.f, 0.f,
+        //0.f, 2.f, 0.f, 0.f, 1.f, 0.f,
+        //0.f, 3.f, 0.f, 0.f, 1.f, 0.f,
+        //0.f, 2.f, 0.f, 0.f, 0.f, 1.f,
+        //0.f, 2.f, 1.f, 0.f, 0.f, 1.f,
+        //0.f, 0.f, 2.f, 1.f, 0.f, 0.f,
+        //1.f, 0.f, 2.f, 1.f, 0.f, 0.f,
+        //0.f, 0.f, 2.f, 0.f, 1.f, 0.f,
+        //0.f, 1.f, 2.f, 0.f, 1.f, 0.f,
+        //0.f, 0.f, 2.f, 0.f, 0.f, 1.f,
+        //0.f, 0.f, 3.f, 0.f, 0.f, 1.f;
 
+    //vao = std::make_shared<vertex_array>();
+    //vao->bind();
+    //vbo = vertex_buffer<float>::from_data(data);
+    //vbo->bind_to_array(vbo_layout, main_pass);
+    //vao->release();
+//}
+
+void init() {
+    glClearColor(.2f, .2f, .2f, 1.f);
+    main_pass = std::make_shared<render_pass>(vertex_shader::from_file("simple.vert"), fragment_shader::from_file("simple.frag"));
     init_geometry();
 }
 
-void render(camera::ptr cam) {
-    program->bind();
-    program->variable("modelview_matrix") = cam->view_matrix();
+void render_geometry(shader_program::ptr) {
+    glEnable(GL_DEPTH_TEST);
     vao->bind();
-
-    glDrawArrays(GL_LINES, 0, 6);
-
+    glDrawArrays(GL_QUADS, 0, 24);
+    //glDrawArrays(GL_LINES, 0, 24);
     vao->release();
-    program->release();
+}
+
+void render(camera::ptr cam) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    main_pass->set_uniform("modelview_matrix", cam->view_matrix());
+    main_pass->render(&render_geometry);
 }
 
 void reshape(camera::ptr cam) {
-    program->bind();
-    program->variable("projection_matrix") = cam->projection_matrix();
-    program->release();
+    main_pass->set_uniform("projection_matrix", cam->projection_matrix());
 }
 
 int main (int argc, char* argv[]) {

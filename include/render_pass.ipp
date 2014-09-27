@@ -7,8 +7,8 @@ inline void render_pass::render(Func&& draw_call, const named_textures& inputs, 
     std::transform( inputs.begin(),
                     inputs.end(),
                     textures.begin(),
-                    [&] (auto tex) {
-                        return std::make_pair(tex.first, (*this)[tex.second]->location());
+                    [&] (const named_texture& tex) {
+                        return std::make_pair(tex.first, (*this)[tex.second].location());
                     }
     );
     fbo_->bind(textures);
@@ -20,24 +20,14 @@ inline void render_pass::render(Func&& draw_call, const named_textures& inputs, 
     program_->release();
 }
 
-template <typename... Args>
-inline void render_pass::set_uniforms(named_uniform<Args>... uniforms) {
+template <typename T>
+inline void render_pass::set_uniform(const std::string& name, T&& value) {
     bool release = !(program_->bound());
     program_->bind();
 
-    set_uniforms_(uniforms...);
+    ((*this)[name]).set(std::forward<T>(value));
 
     if (release) {
         program_->release();
     }
-}
-
-
-template <typename Arg, typename... Args>
-inline void render_pass::set_uniforms_(named_uniform<Arg> uniform, named_uniform<Args>... uniforms) {
-    ((*this)[uniform.first])->set(uniform.second);
-    set_uniforms_(uniforms...);
-}
-
-inline void render_pass::set_uniforms_() {
 }

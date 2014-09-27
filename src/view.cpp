@@ -38,20 +38,28 @@ Matrix4f ortho(float left, float right, float bottom, float top) {
 	return result;
 }
 
-Matrix4f perspective(float fovy, float aspect,	float zNear, float zFar) {
-	float range = static_cast<float>(std::tan((fovy / 2.f) * M_PI / 180.f) * zNear);	
-	float left = -range * aspect;
-	float right = range * aspect;
-	float bottom = -range;
-	float top = range;
+Matrix4f perspective(float fovy, float aspect,	float near, float far) {
+    //float f = 1.f / std::tan(fovy * static_cast<float>(M_PI) / 360.f);
+	//Matrix4f result = Matrix4f::Zero();
+	//result(0,0) = f / aspect;
+	//result(1,1) = f;
+	//result(2,2) = (far + near) / (near - far);
+	//result(3,2) = - 1.f;
+	//result(2,3) = (2.f * far * near) / (near - far);
+	//return result;
+    float range = static_cast<float>(std::tan((fovy / 2.f) * M_PI / 180.f) * near);	
+    float left = -range * aspect;
+    float right = range * aspect;
+    float bottom = -range;
+    float top = range;
 
-	Matrix4f result = Matrix4f::Zero();
-	result(0,0) = (2.f * zNear) / (right - left);
-	result(1,1) = (2.f * zNear) / (top - bottom);
-	result(2,2) = - (zFar + zNear) / (zFar - zNear);
-	result(3,2) = - 1.f;
-	result(2,3) = - (2.f * zFar * zNear) / (zFar - zNear);
-	return result;
+    Matrix4f result = Matrix4f::Zero();
+    result(0,0) = (2.f * near) / (right - left);
+    result(1,1) = (2.f * near) / (top - bottom);
+    result(2,2) = - (far + near) / (far - near);
+    result(3,2) = - 1.f;
+    result(2,3) = - (2.f * far * near) / (far - near);
+    return result;
 }
 
 Matrix4f frustum( float left, float right, float bottom, float top, float nearVal, float farVal ) {

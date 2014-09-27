@@ -6,6 +6,7 @@
 
 namespace harmont {
 
+
 class camera {
     public:
         typedef std::shared_ptr<camera>       ptr;

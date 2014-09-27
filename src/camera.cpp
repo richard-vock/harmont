@@ -20,9 +20,7 @@ camera_model::const_ptr camera::model() const {
 }
 
 void camera::set_model(camera_model::ptr model) {
-    model->set_up(model_->up());
-    model->set_position(model_->position());
-    model->set_look_at(model_->look_at());
+    model->move_to(model_);
     model_ = model;
 }
 
@@ -78,26 +76,6 @@ const camera::mat4_t& camera::projection_matrix() const {
     return projection_;
 }
 
-void camera::set_position(const vec3_t& position) {
-    model_->set_position(position);
-}
-
-void camera::set_look_at(const vec3_t& look_at) {
-    model_->set_look_at(look_at);
-}
-
-void camera::set_forward(const vec3_t& forward) {
-    model_->set_forward(forward);
-}
-
-void camera::set_up(const vec3_t& up) {
-    model_->set_up(up);
-}
-
-void camera::set_right(const vec3_t& right) {
-    model_->set_right(right);
-}
-
 void camera::set_near(float near) {
     near_ = near;
     reshape(width_, height_);
@@ -139,8 +117,9 @@ camera::ray_t camera::pick_ray(int x, int y) const {
 void camera::reshape(int width, int height) {
     float aspect = static_cast<float>(std::max(width, height)) / std::min(width, height);
 	projection_ = perspective(fov_, aspect, near_, far_);
-    mat4_t view_mat = model_->view_matrix();
+
 	if (ortho_) {
+        mat4_t view_mat = model_->view_matrix();
 		Eigen::Vector4f look_at;
 		look_at << model_->look_at(), 1.f;
 		look_at = view_mat * look_at;
