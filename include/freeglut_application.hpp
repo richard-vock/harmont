@@ -25,7 +25,6 @@ class freeglut_application : public application {
         void update();
 
     protected:
-
         void init_(int argc, char* argv[], std::string title);
         void display_();
         void mouse_(int button, int state, int x, int y);

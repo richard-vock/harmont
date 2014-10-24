@@ -13,6 +13,7 @@
 #include "vertex_buffer.hpp"
 #include "view.hpp"
 #include "application.hpp"
+#include "mesh_traits.hpp"
 #include "freeglut_application.hpp"
 
 #endif /* HARMONT_HPP_ */

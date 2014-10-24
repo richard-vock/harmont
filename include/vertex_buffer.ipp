@@ -32,19 +32,46 @@ inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>
 }
 
 template <typename Scalar, GLenum Target>
-template <int Rows, int Cols, int Options>
+template <int Dim, int Options>
+inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, GLenum usage) {
+    return vertex_buffer<Scalar, Target>::from_data(vector.data(), vector.rows() * vector.cols(), usage);
+}
+
+template <typename Scalar, GLenum Target>
+template <int Dim, int Options>
+inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Eigen::Matrix<Scalar, 1, Dim, Options>& vector, GLenum usage) {
+    return vertex_buffer<Scalar, Target>::from_data(vector.data(), vector.rows() * vector.cols(), usage);
+}
+
+template <typename Scalar, GLenum Target>
+template <int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
 inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix, GLenum usage) {
     if (Options & Eigen::RowMajor) {
         return vertex_buffer<Scalar, Target>::from_data(matrix.data(), matrix.rows() * matrix.cols(), usage);
     }
-    Eigen::Matrix<Scalar, Rows, Cols, (Options ^ Eigen::ColMajor) | Eigen::RowMajor> data_transposed = matrix;
+    Eigen::Matrix<Scalar, Rows, Cols, Eigen::RowMajor> data_transposed = matrix.array();
     return vertex_buffer<Scalar, Target>::from_data(data_transposed.data(), matrix.rows() * matrix.cols(), usage);
 }
 
 template <typename Scalar, GLenum Target>
-template <typename S, int Rows, int Cols, int Options>
+template <typename S, int Dim, int Options>
+inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Eigen::Matrix<S, Dim, 1, Options>& vector, GLenum usage) {
+    Eigen::Matrix<Scalar, Dim, 1, Options> casted = vector.template cast<Scalar>();
+    return vertex_buffer<Scalar, Target>::from_data(casted, usage);
+}
+
+template <typename Scalar, GLenum Target>
+template <typename S, int Dim, int Options>
+inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Eigen::Matrix<S, 1, Dim, Options>& vector, GLenum usage) {
+    Eigen::Matrix<Scalar, 1, Dim, Options> casted = vector.template cast<Scalar>();
+    return vertex_buffer<Scalar, Target>::from_data(casted, usage);
+}
+
+template <typename Scalar, GLenum Target>
+template <typename S, int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
 inline typename vertex_buffer<Scalar, Target>::ptr vertex_buffer<Scalar, Target>::from_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix, GLenum usage) {
-    return vertex_buffer<Scalar, Target>::from_data(matrix.template cast<Scalar>(), usage);
+    Eigen::Matrix<Scalar, Rows, Cols, Options> casted = matrix.template cast<Scalar>();
+    return vertex_buffer<Scalar, Target>::from_data(casted, usage);
 }
 
 template <typename Scalar, GLenum Target>

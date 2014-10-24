@@ -26,7 +26,7 @@
 #include <Eigen/Dense>
 
 // common macros
-#define SPOT (std::string(" (@__FILE__:__LINE__)."))
+#define SPOT (std::string(" (@") + __FILE__ + ":" + std::to_string(__LINE__) + ").")
 
 #ifdef NDEBUG
 #define ASSERTS(expr, msg)

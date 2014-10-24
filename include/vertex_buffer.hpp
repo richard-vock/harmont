@@ -29,6 +29,8 @@ class vertex_buffer {
         typedef std::vector<layout_element_t>         layout_t;
         template <typename S, int Dim>
         using eigen_vector = Eigen::Matrix<S, Dim, 1>;
+        template <typename S, int Dim>
+        using eigen_row_vector = Eigen::Matrix<S, 1, Dim>;
         static constexpr std::size_t scalar_size = sizeof(Scalar);
 
 	public:
@@ -46,9 +48,17 @@ class vertex_buffer {
         static ptr from_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence, GLenum usage = GL_STATIC_DRAW);
         template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
         static ptr from_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence, GLenum usage = GL_STATIC_DRAW);
-        template <int Rows, int Cols, int Options>
+        template <int Dim, int Options>
+        static ptr from_data(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, GLenum usage = GL_STATIC_DRAW);
+        template <int Dim, int Options>
+        static ptr from_data(const Eigen::Matrix<Scalar, 1, Dim, Options>& vector, GLenum usage = GL_STATIC_DRAW);
+        template <int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
         static ptr from_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix, GLenum usage = GL_STATIC_DRAW);
-        template <typename S, int Rows, int Cols, int Options>
+        template <typename S, int Dim, int Options>
+        static ptr from_data(const Eigen::Matrix<S, Dim, 1, Options>& vector, GLenum usage = GL_STATIC_DRAW);
+        template <typename S, int Dim, int Options>
+        static ptr from_data(const Eigen::Matrix<S, 1, Dim, Options>& vector, GLenum usage = GL_STATIC_DRAW);
+        template <typename S, int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
         static ptr from_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix, GLenum usage = GL_STATIC_DRAW);
 
         GLuint handle() const;
