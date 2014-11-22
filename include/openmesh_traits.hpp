@@ -9,15 +9,19 @@
 
 namespace harmont {
 
+template <typename ColorType>
 struct internal_openmesh_traits : public OpenMesh::DefaultTraits {
-	typedef OpenMesh::Vec4uc Color;
+	typedef ColorType Color;
 
 	VertexAttributes( OpenMesh::Attributes::Normal | OpenMesh::Attributes::Color );
 	FaceAttributes( OpenMesh::Attributes::Normal );
 };
 
-typedef ::OpenMesh::TriMesh_ArrayKernelT<internal_openmesh_traits>   tri_mesh;
-typedef ::OpenMesh::PolyMesh_ArrayKernelT<internal_openmesh_traits>  poly_mesh;
+template <typename ColorType>
+using tri_mesh = ::OpenMesh::TriMesh_ArrayKernelT<internal_openmesh_traits<ColorType>>;
+
+template <typename ColorType>
+using poly_mesh = ::OpenMesh::PolyMesh_ArrayKernelT<internal_openmesh_traits<ColorType>>;
 
 } // harmont
 

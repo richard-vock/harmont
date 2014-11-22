@@ -44,6 +44,27 @@ framebuffer::ptr render_pass::fbo() {
     return fbo_;
 }
 
+void render_pass::render(const draw_callback_t& draw_call, const named_textures& inputs, bool clear_depth_buffer) {
+    program_->bind();
+    fbo_->bind();
+
+    framebuffer::named_textures textures(inputs.size());
+    std::transform( inputs.begin(),
+                    inputs.end(),
+                    textures.begin(),
+                    [&] (const named_texture& tex) {
+                        return std::make_pair(tex.first, (*this)[tex.second].location());
+                    }
+    );
+    fbo_->bind(textures);
+    if (clear_depth_buffer) {
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    draw_call(program_);
+    fbo_->release();
+    program_->release();
+}
+
 framebuffer::const_ptr render_pass::fbo() const {
     return fbo_;
 }

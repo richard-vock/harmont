@@ -19,6 +19,7 @@ class render_pass {
         typedef std::weak_ptr<render_pass>           wptr;
         typedef std::shared_ptr<const render_pass>   const_ptr;
         typedef std::weak_ptr<const render_pass>     const_wptr;
+
         typedef std::vector<std::string>             shader_sources;
         typedef framebuffer::textures                textures;
         typedef std::pair<texture::ptr, std::string> named_texture;
@@ -26,6 +27,7 @@ class render_pass {
         typedef shader_program::variable_t           shader_variable;
         template <typename T>
         using named_uniform = std::pair<std::string, T>;
+        typedef std::function<void (shader_program::ptr)> draw_callback_t;
 
 
     public:
@@ -45,8 +47,7 @@ class render_pass {
         framebuffer::ptr fbo();
         framebuffer::const_ptr fbo() const;
 
-        template <typename Func>
-        void render(Func&& draw_call, const named_textures& inputs = named_textures(), bool clear_depth_buffer = true);
+        virtual void render(const draw_callback_t& draw_call, const named_textures& inputs = named_textures(), bool clear_depth_buffer = true);
 
         void bind_program();
         void release_program();

@@ -5,12 +5,15 @@
 #include <harmont/openmesh_traits.hpp>
 using namespace harmont;
 
+typedef OpenMesh::Vec4f   color_t;
+typedef tri_mesh<color_t> mesh_t;
 
-tri_mesh mesh_g;
+mesh_t mesh_g;
 vertex_array::ptr vao_g;
 vertex_buffer<float>::ptr vbo_g;
 index_buffer<uint32_t>::ptr ibo_g;
 render_pass::ptr geom_pass_g;
+uint32_t num_indices;
 
 
 void init() {
@@ -23,7 +26,8 @@ void init() {
 
     Eigen::MatrixXf vbo_data;
     Eigen::Matrix<uint32_t, Eigen::Dynamic, 1> ibo_data;
-    mesh_traits<tri_mesh>::buffer_data(mesh_g, {POSITION, COLOR, NORMAL}, vbo_data, ibo_data, true);
+    mesh_traits<mesh_t>::buffer_data(mesh_g, {POSITION, COLOR, NORMAL}, vbo_data, ibo_data, true);
+    num_indices = ibo_data.rows();
 
     vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}};
     vbo_g = vertex_buffer<float>::from_data(vbo_data);
@@ -38,7 +42,7 @@ void render(shader_program::ptr program) {
     vao_g->bind();
     ibo_g->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDrawElements(GL_TRIANGLES, mesh_g.n_faces(), GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, nullptr);
     ibo_g->release();
     vao_g->release();
 }
@@ -57,6 +61,10 @@ int main (int argc, char* argv[]) {
     if (!OpenMesh::IO::read_mesh(mesh_g, argv[1])) {
         std::cerr << "Unable to read mesh file. Aborting.\n";
         exit(1);
+    }
+    // let us not expect materials to be set
+    for (auto it = mesh_g.vertices_begin(); it != mesh_g.vertices_end(); ++it) {
+        mesh_g.set_color(*it, color_t(1.f, 1.f, 1.f, 1.f));
     }
 
     auto app = freeglut_application::create<orbit_camera_model>(800, 600, &display, &reshape);

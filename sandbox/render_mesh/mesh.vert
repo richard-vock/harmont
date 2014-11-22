@@ -16,9 +16,9 @@ void main() {
 	gl_Position = projection_matrix * modelview_matrix * vec4(out_position, 1.0);
     out_normal = normal;
     uint casted = floatBitsToUint(color);
-    uint r = casted & 16;
-    uint g = casted &  8;
-    uint b = casted;
-    uint a = casted & 24;
+    uint r = (casted >> 16) & 255;
+    uint g = (casted >>  8) & 255;
+    uint b = casted & 255;
+    uint a = (casted >> 24) & 255;
     out_color = vec4(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0);
 }

@@ -212,7 +212,7 @@ struct logical_and<T, Test, Tests...> {
 };
 
 template <typename T, template <typename> class... Tests>
-using require = typename std::enable_if<logical_and<T, Tests...>::value>::type;
+using require = typename std::enable_if<logical_and<typename std::decay<T>::type, Tests...>::value>::type;
 
 
 } // harmont
