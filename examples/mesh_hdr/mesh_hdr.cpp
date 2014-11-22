@@ -51,7 +51,7 @@ void init() {
 
     // light
     light_dir_g = {0.f, 0.f, 1.f};
-    //geom_pass_g->set_uniform("light_dir", light_dir_g);
+    geom_pass_g->set_uniform("light_dir", light_dir_g);
 
     // data
     vao_g = std::make_shared<vertex_array>();
@@ -74,6 +74,7 @@ void init() {
 }
 
 void render(shader_program::ptr program) {
+    geom_pass_g->set_uniform("light_dir", light_dir_g);
     geom_pass_g->set_uniform("l_white", l_white_g);
     vao_g->bind();
     ibo_g->bind();
@@ -124,6 +125,7 @@ int main (int argc, char* argv[]) {
     auto app = freeglut_application::create<orbit_camera_model>(800, 600, &display, &reshape);
     app->init(argc, argv, "Render Mesh", &init);
     app->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { l_white_g += static_cast<float>(delta[1]) * 0.001f; if (l_white_g < 0.0001) l_white_g = 0.0001; app->update(); });
+    app->on_click_left([&] (Eigen::Vector2i pos) { Eigen::Vector3f dir = app->current_camera()->forward().normalized(); light_dir_g = std::vector<float>(dir.data(), dir.data()+3); app->update(); });
 
     app->run();
 }

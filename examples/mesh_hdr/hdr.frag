@@ -47,12 +47,12 @@ void main() {
     float a = max(local_i.x, local_o.x);
     float b = min(local_i.x, local_o.x);
     //vec3 oren_nayar = (albedo / pi) * cos(local_i.x) * (A + (B * max(0.0, cos(local_i.y - local_o.y)) * sin(a) * tan(b))) * light_emission;
-    float cos_theta_i = dot(light_dir, in_normal);
+    float cos_theta_i = max(0.0, dot(light_dir, in_normal));
     //vec3 oren_nayar = (albedo / pi) * max(0.0, cos(local_i.x)) * light_emission;
     vec3 oren_nayar = (albedo / pi) * cos_theta_i * light_emission;
     vec4 diffuse = vec4(oren_nayar, 1.0) * in_color;
 
-    out_color = tone_map(ambient);
+    out_color = tone_map(ambient + diffuse);
     out_color.a = in_color.a;
 }
 
