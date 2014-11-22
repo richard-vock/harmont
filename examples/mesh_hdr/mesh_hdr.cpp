@@ -52,6 +52,7 @@ void init() {
     // light
     light_dir_g = {0.f, 0.f, 1.f};
     geom_pass_g->set_uniform("light_dir", light_dir_g);
+    geom_pass_g->set_uniform("two_sided", 0);
 
     // data
     vao_g = std::make_shared<vertex_array>();
@@ -87,9 +88,9 @@ void render(shader_program::ptr program) {
 void display(camera::ptr cam) {
     geom_pass_g->set_uniform("modelview_matrix", cam->view_matrix());
     //geom_pass_g->set_uniform("normal_matrix", cam->view_normal_matrix());
-    auto eye = -cam->forward();
+    auto eye = cam->forward().normalized();
     std::vector<float> eye_dir = { eye[0], eye[1], eye[2] };
-    //geom_pass_g->set_uniform("eye_dir", eye_dir);
+    geom_pass_g->set_uniform("eye_dir", eye_dir);
     geom_pass_g->render(&render, {{diff_g, "map_diffuse"}});
     //geom_pass_g->render(&render);
 }
