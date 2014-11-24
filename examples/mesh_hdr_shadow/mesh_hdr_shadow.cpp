@@ -1,4 +1,7 @@
 #include <iostream>
+#include <list>
+#include <chrono>
+#include <random>
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <harmont/harmont.hpp>
@@ -24,13 +27,79 @@ uint32_t num_indices;
 texture::ptr diff_g;
 std::vector<float> light_dir_g;
 Eigen::AlignedBox<float, 3> bb_g;
+float l_white_g;
 
 Eigen::Matrix4f shadow_mat_g;
 texture::ptr    shadow_tex_g;
 texture::ptr    dummy_depth_tex_g;
 Eigen::Matrix4f debug_shadow_mat_g;
 
-float l_white_g;
+template <class RNG>
+Eigen::Vector2f gen_point(RNG& rng, float radius, float offset, const Eigen::Vector2f& base = Eigen::Vector2f::Zero()) {
+    float r = rng() * radius + offset;
+    float a = rng() * 2.f * static_cast<float>(M_PI);
+    return base + r * Eigen::Vector2f(cos(a), sin(a));
+}
+
+std::vector<float> poisson_disk(uint32_t n, float radius, uint32_t k = 30) {
+    if (n == 0) return std::vector<float>();
+
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<float> float_dist;
+    auto float_rng = std::bind(float_dist, generator);
+
+    float r2 = radius * radius;
+    Eigen::Vector2f p = gen_point(float_rng, radius, 0.f);
+
+    std::vector<Eigen::Vector2f> points(1, p);
+    std::list<Eigen::Vector2f>   active(1, p);
+
+    Eigen::Vector2f avg_point = p;
+    uint32_t point_count = 0;
+    while (points.size() < n && active.size()) {
+        std::uniform_int_distribution<int> int_dist(0, active.size() - 1);
+        std::list<Eigen::Vector2f>::iterator iter = active.begin();
+        int random_int = int_dist(generator);
+        std::advance(iter, random_int);
+        const Eigen::Vector2f& s = *iter;
+
+        bool valid = true;
+        for (uint32_t j = 0; j < k; ++j) {
+            Eigen::Vector2f np = gen_point(float_rng, radius, radius, s);
+            valid = true;
+            for (uint32_t pt = 0; pt < points.size(); ++pt) {
+                const Eigen::Vector2f& point = points[pt];
+                float square_dist = (point - np).squaredNorm();
+                if (square_dist < r2) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                if (point_count > 1) avg_point *= static_cast<float>(point_count);
+                avg_point += np;
+                avg_point /= static_cast<float>(++point_count);
+                points.push_back(np);
+                active.push_back(np);
+                break;
+            }
+        }
+
+        if (!valid) {
+            active.erase(iter);
+        }
+    }
+
+    std::vector<float> result(points.size() * 2);
+    for (uint32_t i = 0; i < points.size(); ++i) {
+        Eigen::Vector2f local = points[i] - avg_point;
+        result[2*i + 0] = local[0];
+        result[2*i + 1] = local[1];
+    }
+
+    return result;
+}
 
 void load_hdr_map(const char* file_name) {
 	FILE *f;
@@ -90,8 +159,8 @@ void setup_shadow_view() {
 }
 
 void init_shadow() {
-    shadow_tex_g = texture::texture_2d<float>(1024, 1024, 4);
-    dummy_depth_tex_g = texture::depth_texture<float>(1024, 1024);
+    shadow_tex_g = texture::texture_2d<float>(2048, 2048, 4);
+    dummy_depth_tex_g = texture::depth_texture<float>(2048, 2048);
     //shadow_pass_g = std::make_shared<render_pass>(vertex_shader::from_file("shadow.vert"), fragment_shader::from_file("shadow.frag"), render_pass::textures(), shadow_tex_g);
     shadow_pass_g = std::make_shared<render_pass>(vertex_shader::from_file("shadow.vert"), fragment_shader::from_file("shadow.frag"), render_pass::textures({shadow_tex_g}), dummy_depth_tex_g);
     setup_shadow_view();
@@ -101,7 +170,7 @@ void render_shadow(shader_program::ptr program) {
     //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     int width = app_g->width();
     int height = app_g->height();
-    glViewport(0, 0, 1024, 1024);
+    glViewport(0, 0, 2048, 2048);
     vao_g->bind();
     ibo_g->bind();
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -141,9 +210,12 @@ void init() {
     // pass
     geom_pass_g = std::make_shared<render_pass>(vertex_shader::from_file("mesh.vert"), fragment_shader::from_file("hdr.frag"));
 
+    std::vector<float> disk = poisson_disk(16, 1.f);
+    geom_pass_g->set_uniform("poisson_disk[0]", disk);
+
     // light
     geom_pass_g->set_uniform("light_dir", light_dir_g);
-    geom_pass_g->set_uniform("two_sided", 0);
+    geom_pass_g->set_uniform("two_sided", 1);
 
     // data
     vao_g = std::make_shared<vertex_array>();
@@ -151,7 +223,7 @@ void init() {
 
     Eigen::MatrixXf vbo_data;
     Eigen::Matrix<uint32_t, Eigen::Dynamic, 1> ibo_data;
-    mesh_traits<mesh_t>::buffer_data(mesh_g, {POSITION, COLOR, NORMAL}, vbo_data, ibo_data, true);
+    mesh_traits<mesh_t>::buffer_data(mesh_g, {POSITION, COLOR, NORMAL}, vbo_data, ibo_data, false);
     num_indices = ibo_data.rows();
 
     vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}};
@@ -198,6 +270,27 @@ void render(shader_program::ptr program) {
 }
 
 void display(camera::ptr cam) {
+    // update near/far
+    Eigen::Vector3f bb_min = bb_g.min(), bb_max = bb_g.max();
+    Eigen::Vector3f pos = app_g->current_camera()->position();
+    Eigen::Vector3f dir = app_g->current_camera()->forward().normalized();
+    float near = std::numeric_limits<float>::max(), far = 0.f;
+    for (uint32_t c=0; c<8; ++c) {
+        // compute corner
+        Eigen::Vector3f corner;
+        for (uint32_t i = 0; i < 3; ++i) {
+            corner[i] = (c & 1 << i) ? bb_max[i] : bb_min[i];
+        }
+        // compute lambda (depth)
+        float lambda = (corner-pos).dot(dir);
+        if (lambda < near) near = lambda;
+        if (lambda > far)  far = lambda;
+    }
+    near = std::max(near, 0.01f);
+    app_g->current_camera()->set_near(near);
+    app_g->current_camera()->set_far(near);
+
+
     shadow_pass_g->set_uniform("shadow_matrix", shadow_mat_g);
     shadow_pass_g->render(&render_shadow);
 

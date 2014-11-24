@@ -49,6 +49,7 @@ class camera {
         void set_right(const vec3_t& right);
         void set_near(float near);
         void set_far(float far);
+        void set_near_far(float near, float far);
         void set_fov(float fov);
 
         bool ortho() const;

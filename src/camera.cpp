@@ -86,6 +86,12 @@ void camera::set_far(float far) {
     reshape(width_, height_);
 }
 
+void camera::set_near_far(float near, float far) {
+    near_ = near;
+    far_ = far;
+    reshape(width_, height_);
+}
+
 void camera::set_fov(float fov) {
     fov_ = fov;
     reshape(width_, height_);
