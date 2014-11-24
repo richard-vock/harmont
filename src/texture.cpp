@@ -67,7 +67,8 @@ texture::ptr texture::texture_3d(int width, int height, int depth, int channels,
 template <typename Scalar>
 texture::ptr texture::depth_texture(int width, int height) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
-    return ptr(new texture(scalar_type, GL_DEPTH_COMPONENT32, width, height, 0, (const Scalar*)nullptr, parameters_t_(), true));
+	parameters_t_ params = {GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE};
+    return ptr(new texture(scalar_type, GL_DEPTH_COMPONENT32, width, height, 0, (const Scalar*)nullptr, params, true));
 }
 
 texture::~texture() {
