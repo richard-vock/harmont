@@ -35,6 +35,10 @@ framebuffer::framebuffer(const textures& output_textures, texture::ptr depth_tex
         bind_texture_(outputs_[index], GL_COLOR_ATTACHMENT0 + index);
     }
     if (depth_ != nullptr) {
+        if (!outputs_.size()) {
+            glDrawBuffer(GL_NONE);
+        }
+
         bind_texture_(depth_, GL_DEPTH_ATTACHMENT);
     }
     check_();

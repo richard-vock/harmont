@@ -11,6 +11,8 @@ shadow_pass::shadow_pass(uint32_t resolution, uint32_t sample_count, const std::
     tex_ = texture::texture_2d<float>(res_, res_, 1);
     dummy_tex_ = texture::depth_texture<float>(res_, res_, GL_DEPTH_COMPONENT32F);
     pass_ = std::make_shared<render_pass>(vertex_shader::from_file(vertex_shader), fragment_shader::from_file(fragment_shader), render_pass::textures({tex_}), dummy_tex_);
+    //tex_ = texture::depth_texture<float>(res_, res_);
+    //pass_ = std::make_shared<render_pass>(vertex_shader::from_file(vertex_shader), fragment_shader::from_file(fragment_shader), render_pass::textures(), tex_);
     disk_ = poisson_disk_(sample_count_, 1.f);
 }
 
@@ -47,8 +49,10 @@ void shadow_pass::render(vertex_array::ptr vao, index_buffer<uint32_t>::ptr ibo,
     vao->bind();
     ibo->bind();
 
+    //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     pass_->set_uniform("shadow_matrix", mat_);
     pass_->render(std::function<void (shader_program::ptr)>([&] (shader_program::ptr program) { render_(program, num_indices); }));
+    //glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     vao->bind();
     ibo->bind();
