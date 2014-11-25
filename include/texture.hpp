@@ -44,7 +44,7 @@ class texture {
 		static ptr texture_3d(int width, int height, int depth, int channels, const Scalar* data = nullptr, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
 
 		template <typename Scalar>
-		static ptr depth_texture(int width, int height);
+		static ptr depth_texture(int width, int height, GLenum format = GL_DEPTH_COMPONENT24);
 
 		~texture();
 

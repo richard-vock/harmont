@@ -5,4 +5,4 @@ env = Environment(
     LIBS = ['OpenMeshCore', 'harmont', 'GL', 'GLU', 'GLEW']
 )
 
-env.Program('mesh_hdr_shadow', ['mesh_hdr_shadow.cpp', 'rgbe.c'])
+env.Program('mesh_hdr_shadow', ['mesh_hdr_shadow.cpp', 'shadow_pass.cpp', 'rgbe.c'])

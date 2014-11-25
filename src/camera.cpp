@@ -121,6 +121,9 @@ camera::ray_t camera::pick_ray(int x, int y) const {
 }
 
 void camera::reshape(int width, int height) {
+    width_ = width;
+    height_ = height;
+
     float aspect = static_cast<float>(std::max(width, height)) / std::min(width, height);
 	projection_ = perspective(fov_, aspect, near_, far_);
 

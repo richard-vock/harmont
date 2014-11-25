@@ -107,7 +107,17 @@ void framebuffer::release() {
 void framebuffer::bind_texture_(texture::const_ptr tex, GLenum attachment) {
     GLenum target = tex->target();
     int dim = tex->dim();
+
+    GLenum error_code = glGetError();
     attach_func(dim)(GL_DRAW_FRAMEBUFFER, attachment, target, tex->handle());
+
+    error_code = glGetError();
+    switch (error_code) {
+        case GL_INVALID_ENUM: throw std::runtime_error("framebuffer::bind_texture: Invalid enum" + SPOT); break;
+        case GL_INVALID_OPERATION: throw std::runtime_error("framebuffer::bind_texture: Invalid operation" + SPOT); break;
+        case GL_INVALID_VALUE: throw std::runtime_error("framebuffer::bind_texture: Invalid value" + SPOT); break;
+        default: break;
+    }
 }
 
 void framebuffer::check_() {

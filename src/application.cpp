@@ -16,6 +16,7 @@ application::~application() {
 void application::init(int argc, char* argv[], std::string title, callback_t<> init_callback) {
     init_(argc, argv, title);
     if (init_callback) init_callback();
+    reshape_(width_, height_);
 }
 
 int application::width() const {
