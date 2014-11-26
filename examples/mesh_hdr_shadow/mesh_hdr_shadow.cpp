@@ -23,7 +23,7 @@ uint32_t num_indices;
 texture::ptr diff_g;
 std::vector<float> light_dir_g;
 Eigen::AlignedBox<float, 3> bb_g;
-float l_white_g;
+float exposure;
 
 shadow_pass::ptr_t shadow_pass_g;
 
@@ -86,7 +86,8 @@ void init() {
 
 void render(shader_program::ptr program) {
     geom_pass_g->set_uniform("light_dir", light_dir_g);
-    geom_pass_g->set_uniform("l_white", l_white_g);
+    float l_white = 1.f / exposure - 1.f;
+    geom_pass_g->set_uniform("l_white", l_white);
     vao_g->bind();
     ibo_g->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -148,7 +149,7 @@ int main (int argc, char* argv[]) {
         std::cerr << "Unable to read mesh file. Aborting.\n";
         exit(1);
     }
-    l_white_g = 0.2f;
+    exposure = 0.8f;
     mesh_g.triangulate();
     if (!opt.face_has_normal()) {
         mesh_g.update_face_normals();
@@ -162,7 +163,7 @@ int main (int argc, char* argv[]) {
 
     app_g = freeglut_application::create<orbit_camera_model>(800, 600, &display, &reshape);
     app_g->init(argc, argv, "Render Mesh", &init);
-    app_g->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { l_white_g += static_cast<float>(delta[1]) * 0.001f; if (l_white_g < 0.0001) l_white_g = 0.0001; app_g->update(); });
+    app_g->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { exposure -= static_cast<float>(delta[1]) * 0.001f; std::cout << exposure << "\n"; if (exposure < 0.0001) exposure = 0.0001; if (exposure > 1.f) exposure = 1.f; app_g->update(); });
     app_g->on_click_left([&] (Eigen::Vector2i pos) { Eigen::Vector3f dir = app_g->current_camera()->forward().normalized(); light_dir_g = std::vector<float>(dir.data(), dir.data()+3); shadow_pass_g->update(bb_g, dir); app_g->update(); });
 
     app_g->run();

@@ -7,6 +7,7 @@
 #include "framebuffer.hpp"
 #include "orbit_camera_model.hpp"
 #include "render_pass.hpp"
+#include "render_pass_2d.hpp"
 #include "shader_program.hpp"
 #include "texture.hpp"
 #include "vertex_array.hpp"

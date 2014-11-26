@@ -87,7 +87,7 @@ class texture {
 			GLenum wrap_t;
 		};
 		template <typename Scalar>
-		texture(GLenum scalar_type, GLenum internal_format, int width, int height = 0, int depth = 0, const Scalar* data = nullptr, parameters_t_ params = {GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE}, bool is_depth_attachment = false);
+		texture(GLenum scalar_type, GLenum internal_layout, GLenum internal_format, int width, int height = 0, int depth = 0, const Scalar* data = nullptr, parameters_t_ params = {GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE}, bool is_depth_attachment = false);
 
 		void allocate_();
 
@@ -97,6 +97,7 @@ class texture {
 		int           height_;
 		int           depth_;
 		GLenum        scalar_type_;
+		GLenum        internal_layout_;
 		GLenum        internal_format_;
 		GLenum        target_;
 		int           dims_;
