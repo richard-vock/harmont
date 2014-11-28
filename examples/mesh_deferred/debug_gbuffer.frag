@@ -1,6 +1,12 @@
 #version 430
 
 layout(location = 0) uniform sampler2D map_gbuffer;
+layout(location = 1) uniform int       width;
+layout(location = 2) uniform int       height;
+layout(location = 3) uniform float     near;
+layout(location = 4) uniform float     far;
+layout(location = 5) uniform float     frustum_width;
+layout(location = 6) uniform float     frustum_height;
 
 const float pi = 3.14159265358979;
 const float piInv = 0.318309886183791;
@@ -35,36 +41,55 @@ vec3 hsv2rgb(float h, float s, float v) {
 	return vec3(r, g, b);
 }
 
+vec3 unpack_normal(vec3 gbuffer);
+
 void main(void) {
     vec3 gbuffer = texture2D(map_gbuffer, tc).rgb;
     if (gbuffer.r == 0.0 && gbuffer.g == 0.0 && gbuffer.b == 0.0) {
-        frag_color = vec4(0.0, 0.0, 0.0, 0.0);
+        frag_color = vec4(1.0, 0.0, 0.0, 0.0);
         return;
     }
 
+    vec4 b_part = unpackSnorm4x8(uint(gbuffer.b));
+    vec3 real_pos = b_part.rgb;
+    /*real_pos.xyz /= real_pos.w;*/
+
+
+    vec3 pos = gbuffer;
+    /*float z = pos.z;*/
+    /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0, (-gl_FragCoord.y/height + 0.5) * 2.0 / (width / height), z);*/
+    /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0 / (10.0 * frustum_width), (-gl_FragCoord.y/height + 0.5) * 2.0 / (width / height), z);*/
+    float norm_x = (pos.x - near) / (far-near);
+    /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0, (-gl_FragCoord.y/height + 0.5) * 2.0, z);*/
+    /*float l = 0.5 * (clip.y + 1.0);*/
+    /*clip.x *= clip.z;*/
+    /*clip.y *= -clip.z;*/
+    /*vec3 pos = inv_view_mat * vec4(clip, 1.0);*/
+    /*pos.xyz /= pos.w;*/
+
+    /*z = real_pos.z;*/
+    /*float ndc_z = (-z - near) / (far - near);//length(clip - real_pos);*/
+    /*float real_z = (-z - near) / (far - near);//length(clip - real_pos);*/
+    /*float real_z = 0.5 * (real_pos.z + 1.0);*/
+    /*z = real_pos.z;*/
+    /*float real_z = (-z - near) / (far - near);*/
+    /*float ndc_y = pos.y / (frustum_height * float(height));*/
+    float v = norm_x;//abs(clip.x - pos.x);
+    frag_color = vec4(v, v, v, 1.0);
+
+    /*vec3 normal = unpack_normal(gbuffer);*/
+
+    /*float phi = (atan(normal.z, normal.x) + pi) / (2.0 * pi);*/
+    /*float theta = 1.0 - acos(normal.y) / pi;*/
+    /*frag_color = vec4(hsv2rgb(phi, 1.0, theta), 1.0);*/
+}
+
+vec3 unpack_normal(vec3 gbuffer) {
     vec4 g_part = unpackSnorm4x8(uint(gbuffer.g));
     vec2 n_xy = g_part.xy;
     float z_sign = sign(g_part.z);
     float denom = 1.0 + n_xy.x*n_xy.x + n_xy.y*n_xy.y;
     vec3 normal = vec3(2.0*n_xy.x / denom, 2.0*n_xy.y / denom, (-1.0 + n_xy.x*n_xy.x + n_xy.y*n_xy.y) / denom);
-    normal.z *= z_sign;
-    /*vec4 g_part = decode_rgba(gbuffer.g);*/
-    /*vec3 normal = g_part.xyz * 2.0 - 1.0;*/
-    /*float z_sign = sign(float((g_part >> 2*8) & 255) / 128.0 - 1.0);*/
-    /*vec3 normal = g_part.rgb;*/
-
-    /*float denom = 1.0 + nx*nx + ny*ny;*/
-    /*vec3 normal = vec3(2.0*nx / denom, 2.0*ny / denom, (-1.0 + nx*nx + ny*ny) / denom);*/
-    /*normal.z *= z_sign;*/
-
-    float phi = (atan(normal.z, normal.x) + pi) / (2.0 * pi);
-    float theta = 1.0 - acos(normal.y) / pi;
-    //float angle = atan(normal.z / normal.x) / (2.0 * pi);
-	//normal_color = (hsv2rgb(angle, 1.0, 1.0), 1.0)
-	//vec3 normal_color = vec3(red_part, 0.0, 1.0 - red_part);
-    frag_color = vec4(hsv2rgb(phi, 1.0, theta), 1.0);
-    /*frag_color = vec4(vec3(g_part.z, 0.0, 0.0), 1.0);*/
-    /*uint packed_rgb = uint(gbuffer.r);*/
-    /*vec3 rgb = unpackSnorm4x8(packed_rgb).rgb;*/
-    /*frag_color = vec4(rgb, 1.0);*/
+    normal.z *= z_sign * sign(normal.z);
+    return normal;
 }

@@ -62,7 +62,7 @@ inline require<T, std::is_floating_point> uniform_dispatch::set_(GLenum data_typ
 
 template <typename T>
 inline require<T, std::is_integral, std::is_signed> uniform_dispatch::set_(GLenum data_type, GLint size, GLint location, T&& value) {
-    if (data_type != GL_INT) {
+    if (data_type != GL_INT && data_type != GL_BOOL) {
         throw std::runtime_error("shader_program::set(): Invalid data type. Uniform variable is of type " + gl_type_name(data_type) + SPOT);
     }
     int v = static_cast<int>(std::forward<T>(value));

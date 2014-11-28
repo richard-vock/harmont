@@ -37,6 +37,8 @@ class camera {
         float  near() const;
         float  far() const;
         float  fov() const;
+        float  frustum_width() const;
+        float  frustum_height() const;
 
         mat4_t view_matrix() const;
         mat3_t view_normal_matrix() const;
@@ -68,6 +70,8 @@ class camera {
         float             fov_;
         float             near_;
         float             far_;
+        float             frustum_width_;
+        float             frustum_height_;
         bool              ortho_;
         mat4_t            projection_;
 };

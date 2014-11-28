@@ -60,10 +60,15 @@ texture::ptr texture::texture_1d(int width, int channels, const Scalar* data, GL
 }
 
 template <typename Scalar>
-texture::ptr texture::texture_2d(int width, int height, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
+texture::ptr texture::texture_2d(int width, int height, int channels, const Scalar* data, boost::optional<GLenum> format, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
-	GLenum internal_layout = infer_internal_layout(channels);
-	GLenum internal_format = infer_internal_format(channels);
+    GLenum internal_format;
+    if (format) {
+        internal_format = *format;
+    } else {
+        internal_format = infer_internal_format(channels);
+    }
+    GLenum internal_layout = infer_internal_layout(channels);
 	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
     return ptr(new texture(scalar_type, internal_layout, internal_format, width, height, 0, data, params));
 }
@@ -198,6 +203,16 @@ void texture::set_data(const Scalar* data) {
 	}
 }
 
+template <typename Scalar>
+void texture::get_data(Scalar* data) {
+	switch (dims_) {
+		case 1: glGetTexImage(target_, 0, internal_layout_, scalar_type_, (void*)data); break;
+		case 2: glGetTexImage(target_, 0, internal_layout_, scalar_type_, (void*)data); break;
+		case 3: glGetTexImage(target_, 0, internal_layout_, scalar_type_, (void*)data); break;
+		default: break;
+	}
+}
+
 void texture::bind() {
 	glBindTexture(target_, handle_);
 }
@@ -270,11 +285,12 @@ void texture::allocate_() {
 
 #define TEXTURE_SCALAR_INSTANTIATE(type) \
 	template texture::ptr texture::texture_1d(int width, int channels, const type* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
-	template texture::ptr texture::texture_2d(int width, int height, int channels, const type* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
+	template texture::ptr texture::texture_2d(int width, int height, int channels, const type* data, boost::optional<GLenum> format, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
 	template texture::ptr texture::texture_3d(int width, int height, int depth, int channels, const type* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t); \
 	template texture::ptr texture::depth_texture<type>(int width, int height, GLenum format); \
 	template texture::texture(GLenum scalar_type, GLenum internal_layout, GLenum internal_format, int width, int height, int depth, const type* data, parameters_t_ params, bool is_depth_attachment); \
-	template void texture::set_data(const type* data);
+	template void texture::set_data(const type* data); \
+	template void texture::get_data(type* data);
 #include <texture_scalars.def>
 
 

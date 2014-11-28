@@ -11,6 +11,7 @@ namespace harmont {
 
 deferred_renderer::deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, const bounding_box_t& bbox, int width, int height) {
     exposure_ = render_parameters.exposure;
+    two_sided_ = render_parameters.two_sided;
     light_dir_ = render_parameters.light_dir;
 
     //shadow_pass_ = std::make_shared<shadow_pass>(
@@ -39,10 +40,12 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     vertex_shader::ptr   gbuffer_vert = vertex_shader::from_file("gbuffer.vert");
     fragment_shader::ptr clear_frag   = fragment_shader::from_file("clear.frag");
     fragment_shader::ptr gbuffer_frag = fragment_shader::from_file("gbuffer.frag");
+    fragment_shader::ptr compose_frag = fragment_shader::from_file("compose.frag");
     fragment_shader::ptr debug_gbuffer_frag = fragment_shader::from_file("debug_gbuffer.frag");
 
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, render_pass::textures({gbuffer_tex_}));
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
+    compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
     debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
 }
 
@@ -68,6 +71,18 @@ void deferred_renderer::delta_exposure(float delta) {
     set_exposure(exposure_ + delta);
 }
 
+bool deferred_renderer::two_sided() const {
+    return two_sided_;
+}
+
+void deferred_renderer::set_two_sided(bool two_sided) {
+    two_sided_ = two_sided;
+}
+
+void deferred_renderer::toggle_two_sided() {
+    two_sided_ = !!two_sided_;
+}
+
 render_pass::ptr deferred_renderer::geometry_pass() {
     return geom_pass_;
 }
@@ -87,22 +102,57 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     // render shadow texture
     //shadow_pass_->render(render_callback, cam->width(), cam->height());
 
-    // setup geometry pass variables
-    //auto eye = cam->forward().normalized();
-    //std::vector<float> eye_dir = { eye[0], eye[1], eye[2] };
+    // update geometry pass
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
     geom_pass_->set_uniform("modelview_matrix", cam->view_matrix());
-    //geom_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
+    //geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
+    geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
+
+    // update compose pass
+    auto eye = cam->forward().normalized();
+    std::vector<float> eye_dir = { eye[0], eye[1], eye[2] };
     std::vector<float> light_dir_vec(light_dir_.data(), light_dir_.data()+3);
-    //geom_pass_->set_uniform("light_dir", light_dir_vec);
-    //geom_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
-    //geom_pass_->set_uniform("eye_dir", eye_dir);
+    compose_pass_->set_uniform("light_dir", light_dir_vec);
+    compose_pass_->set_uniform("eye_dir", eye_dir);
+    compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
+
+    // update debug pass
+    //debug_pass_->set_uniform("width", cam->width());
+    //debug_pass_->set_uniform("height", cam->height());
+    debug_pass_->set_uniform("near", cam->near());
+    debug_pass_->set_uniform("far", cam->far());
+    std::cout << "f_width: " << cam->frustum_width() << "\n";
+    //debug_pass_->set_uniform("frustum_width", cam->frustum_width());
+    //debug_pass_->set_uniform("frustum_height", cam->frustum_height());
+    //Eigen::Matrix4f inv_view = cam->view_matrix().inverse();
+    //debug_pass_->set_uniform("inv_view_matrix", inv_view);
+
+    //Eigen::Vector3f eye_pos = cam->position();
+    //geom_pass_->set_uniform("eye_pos", std::vector<float>(eye_pos.data(), eye_pos.data()+3));
+    //geom_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
 
     // render geometry pass
     //geom_pass_->render(render_callback, {{diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
     clear_pass_->render([&] (shader_program::ptr) { });
     geom_pass_->render(render_callback);
+    //Eigen::MatrixXf gbuf_mat(cam->height(), cam->width());
+    float* data = new float[3 * cam->height() * cam->width()];
+
+    gbuffer_tex_->bind();
+    gbuffer_tex_->get_data(data);
+    gbuffer_tex_->release();
+    //std::cout << gbuf_mat << "\n";
+    float min = 0.f;
+    float max = 0.f;
+    for (int i=0; i<cam->height()*cam->width(); ++i) {
+        float v = data[i*3];
+        if (v<min) min = v;
+        if (v>max) max = v;
+    }
+    std::cout << min << " " << max << "\n";
+    delete [] data;
     debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
+    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}});
     //debug_pass_->render([&] (shader_program::ptr) { });
 }
 
@@ -127,7 +177,7 @@ void deferred_renderer::load_hdr_map_(std::string filename) {
     float* data = new float[width*height*3];
 	RGBE_ReadPixels_RLE(f, data, width, height);
 	fclose(f);
-    diff_tex_ = texture::texture_2d(width, height, 3, data, GL_LINEAR, GL_LINEAR);
+    diff_tex_ = texture::texture_2d(width, height, 3, data, GL_RGB, GL_LINEAR, GL_LINEAR);
     delete [] data;
 }
 

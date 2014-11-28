@@ -52,6 +52,7 @@ inline Scalar tiny() {
 
 inline std::string gl_type_name(GLenum type) {
     switch (type) {
+        case GL_BOOL: return "GL_BOOL"; break;
         case GL_FLOAT: return "GL_FLOAT"; break;
         case GL_FLOAT_VEC2: return "GL_FLOAT_VEC2"; break;
         case GL_FLOAT_VEC3: return "GL_FLOAT_VEC3"; break;
@@ -81,6 +82,11 @@ inline std::string gl_type_name(GLenum type) {
 
 template<typename T>
 struct gl_type_enum;
+
+template <>
+struct gl_type_enum<bool> {
+	static constexpr GLenum value = GL_BOOL;
+};
 
 template <>
 struct gl_type_enum<int8_t> {
@@ -209,6 +215,19 @@ struct logical_and<T, Test> {
 template <typename T, template <typename> class Test, template <typename> class... Tests>
 struct logical_and<T, Test, Tests...> {
     static constexpr bool value = Test<T>::value && logical_and<T, Tests...>::value;
+};
+
+template <typename T, template <typename> class... Tests>
+struct logical_or;
+
+template <typename T, template <typename> class Test>
+struct logical_or<T, Test> {
+    static constexpr bool value = Test<T>::value;
+};
+
+template <typename T, template <typename> class Test, template <typename> class... Tests>
+struct logical_or<T, Test, Tests...> {
+    static constexpr bool value = Test<T>::value || logical_or<T, Tests...>::value;
 };
 
 template <typename T, template <typename> class... Tests>

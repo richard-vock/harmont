@@ -5,6 +5,9 @@
 namespace harmont {
 
 camera::camera(camera_model::ptr model, int width, int height, float fov, float near, float far, bool ortho) : model_(model), width_(width), height_(height), fov_(fov), near_(near), far_(far), ortho_(ortho) {
+    float aspect = static_cast<float>(std::max(width, height)) / std::min(width, height);
+    frustum_width_ = 2.f * near * aspect / fov;
+    frustum_height_ = 2.f * near / fov;
     reshape(width_, height_);
 }
 
@@ -62,6 +65,14 @@ float camera::far() const {
 
 float camera::fov() const {
     return fov_;
+}
+
+float camera::frustum_width() const {
+    return frustum_width_;
+}
+
+float camera::frustum_height() const {
+    return frustum_height_;
 }
 
 camera::mat4_t camera::view_matrix() const {
@@ -126,6 +137,10 @@ void camera::reshape(int width, int height) {
 
     float aspect = static_cast<float>(std::max(width, height)) / std::min(width, height);
 	projection_ = perspective(fov_, aspect, near_, far_);
+
+    float f = 1.0 / tan(fov_ * M_PI / 360.f);
+    frustum_width_ = 2.f*near_*aspect / f;
+    frustum_height_ = 2.f*near_ / f;
 
 	if (ortho_) {
         mat4_t view_mat = model_->view_matrix();

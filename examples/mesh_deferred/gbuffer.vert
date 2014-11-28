@@ -12,8 +12,8 @@ layout(location = 1) out vec4 out_color;
 layout(location = 2) out vec3 out_normal;
 
 void main() {
-    out_position = position;
-	gl_Position = projection_matrix * modelview_matrix * vec4(out_position, 1.0);
+    out_position = (modelview_matrix * vec4(position, 1.0)).xyz;
+	gl_Position = projection_matrix * modelview_matrix * vec4(position, 1.0);
     out_normal = normalize(normal);
     uint casted = floatBitsToUint(color);
     uint r = (casted >> 16) & 255;

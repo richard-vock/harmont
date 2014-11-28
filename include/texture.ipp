@@ -31,3 +31,12 @@ inline void texture::set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& 
 	Eigen::Matrix<Scalar, Rows, Cols, Eigen::RowMajor> copy = matrix;
 	set_data(copy.data());
 }
+
+template <typename Scalar, int Rows, int Cols, int Options>
+inline void texture::get_data(Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix) {
+	ASSERTS(internal_layout_ = GL_RED, "texture::set_data: Matrix setter not supported textures with more than 1 channel"+SPOT)
+	ASSERTS(matrix.cols() == width_, "texture::set_data: Requested matrix col count is bigger than textures' width"+SPOT)
+	ASSERTS(matrix.rows() == height_, "texture::set_data: Requested matrix row count is bigger than textures' height"+SPOT)
+    get_data(matrix.data());
+    if (Options & Eigen::ColMajor) matrix.transposeInPlace();
+}

@@ -31,6 +31,7 @@ void init() {
     deferred_renderer::render_parameters_t r_params {
         light_dir,
         0.8f,
+        true,
         "mesh.vert",
         "hdr.frag",
         "pisa_diffuse.hdr"

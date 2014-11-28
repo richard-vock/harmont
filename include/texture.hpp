@@ -16,6 +16,9 @@
 
 #include "common.hpp"
 
+#include <boost/optional.hpp>
+#include <boost/none.hpp>
+
 
 namespace harmont {
 
@@ -35,7 +38,7 @@ class texture {
 		static ptr texture_1d(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
 
 		template <typename Scalar>
-		static ptr texture_2d(int width, int height, int channels, const Scalar* data = nullptr, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
+		static ptr texture_2d(int width, int height, int channels, const Scalar* data = nullptr, boost::optional<GLenum> format = boost::none, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
 
 		template <typename Scalar, int Rows, int Cols, int Options>
 		static ptr texture_2d(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
@@ -72,6 +75,12 @@ class texture {
 
 		template <typename Scalar, int Rows, int Cols, int Options>
 		void set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
+
+        template <typename Scalar>
+        void get_data(Scalar* data);
+
+		template <typename Scalar, int Rows, int Cols, int Options>
+		void get_data(Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
 
 		void bind();
 		void release();

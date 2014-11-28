@@ -19,6 +19,7 @@ class deferred_renderer {
 		struct render_parameters_t {
 			Eigen::Vector3f light_dir;
 			float exposure;
+            bool two_sided;
 			std::string vertex_shader;
 			std::string fragment_shader;
 			std::string hdr_map;
@@ -40,6 +41,10 @@ class deferred_renderer {
 		void set_exposure(float exposure);
 		void delta_exposure(float delta);
 
+        bool two_sided() const;
+        void set_two_sided(bool two_sided);
+        void toggle_two_sided();
+
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
@@ -53,6 +58,7 @@ class deferred_renderer {
 	protected:
 		render_pass_2d::ptr  clear_pass_;
 		render_pass::ptr     geom_pass_;
+		render_pass_2d::ptr  compose_pass_;
 		render_pass_2d::ptr  debug_pass_;
 		texture::ptr         depth_tex_;
 		texture::ptr         gbuffer_tex_;
@@ -60,6 +66,7 @@ class deferred_renderer {
 		shadow_pass::ptr_t   shadow_pass_;
 		Eigen::Vector3f      light_dir_;
 		float                exposure_;
+        bool                 two_sided_;
 };
 
 
