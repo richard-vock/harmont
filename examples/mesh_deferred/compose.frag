@@ -43,6 +43,7 @@ vec2 dirToUV(in vec3 dir);
 vec3 tone_map(in vec3 col);
 vec3 diffuse(vec3 n, vec3 l, vec3 kd);
 vec3 specular(float roughness, vec3 ks, vec3 n, vec3 v, vec3 l);
+float in_shadow(vec3 normal);
 
 void main(void) {
     vec3 gbuffer = texture2D(map_gbuffer, tc).rgb;
@@ -175,4 +176,31 @@ vec3 specular(float roughness, vec3 ks, vec3 n, vec3 v, vec3 l) {
     float sg = spec_g(roughness, n, v, l);
 
     return sd * sf * sg / (4.0 * nl * nv);
+}
+
+float take_shadow_sample(vec2 xy, vec2 o, float z, inout float n) {
+    float l = length(o * SHADOW_RES);
+    float f = 1.0 / (1.0 + pow(l, distance_weight));
+    n += f;
+    return f * float(texture2D(map_shadow, xy + o).r < z);
+}
+
+float sample_shadow(vec2 xy, float z) {
+    float h = SHADOW_RES_INV * sampling_spread;
+    float ret = 0.0;
+    float n = 0.0;
+
+    for (int i=0; i < PCF_SAMPLES; ++i) {
+        vec2 o = poisson_disk[i] * h;
+        ret += take_shadow_sample(xy, o, z, n);
+    }
+    return ret / n;
+}
+
+float in_shadow(vec3 normal) {
+    if (dot(normal, light_dir) < 0.0) {
+        return 1.0;
+    }
+    vec3 real_shadow = in_shadow_pos.xyz / in_shadow_pos.w;
+    return sample_shadow(0.5 * (real_shadow.xy + vec2(1.0, 1.0)), 0.5 * (real_shadow.z + 1.0) - shadow_bias);
 }
