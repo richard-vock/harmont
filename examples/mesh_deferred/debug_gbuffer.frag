@@ -7,6 +7,7 @@ layout(location = 3) uniform float     near;
 layout(location = 4) uniform float     far;
 layout(location = 5) uniform float     frustum_width;
 layout(location = 6) uniform float     frustum_height;
+layout(location = 7) uniform mat4      inv_view_proj_matrix;
 
 const float pi = 3.14159265358979;
 const float piInv = 0.318309886183791;
@@ -56,10 +57,14 @@ void main(void) {
 
 
     vec3 pos = gbuffer;
+    vec4 window_pos = vec4(tc * 2.0 - 1.0, pos.z, 1.0);
+    vec4 world_pos = inv_view_proj_matrix * window_pos;
+    world_pos.xyz /= world_pos.w;
+    float error = length(pos.x - world_pos.z);
     /*float z = pos.z;*/
     /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0, (-gl_FragCoord.y/height + 0.5) * 2.0 / (width / height), z);*/
     /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0 / (10.0 * frustum_width), (-gl_FragCoord.y/height + 0.5) * 2.0 / (width / height), z);*/
-    float norm_x = (pos.x - near) / (far-near);
+    /*float norm_x = (pos.x - near) / (far-near);*/
     /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0, (-gl_FragCoord.y/height + 0.5) * 2.0, z);*/
     /*float l = 0.5 * (clip.y + 1.0);*/
     /*clip.x *= clip.z;*/
@@ -74,7 +79,7 @@ void main(void) {
     /*z = real_pos.z;*/
     /*float real_z = (-z - near) / (far - near);*/
     /*float ndc_y = pos.y / (frustum_height * float(height));*/
-    float v = norm_x;//abs(clip.x - pos.x);
+    float v = error;//abs(clip.x - pos.x);
     frag_color = vec4(v, v, v, 1.0);
 
     /*vec3 normal = unpack_normal(gbuffer);*/

@@ -43,6 +43,7 @@ class camera {
         mat4_t view_matrix() const;
         mat3_t view_normal_matrix() const;
         const mat4_t& projection_matrix() const;
+        mat4_t inverse_view_projection_matrix() const;
 
         void set_position(const vec3_t& position);
         void set_look_at(const vec3_t& look_at);

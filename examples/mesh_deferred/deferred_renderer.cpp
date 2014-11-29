@@ -119,9 +119,11 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     // update debug pass
     //debug_pass_->set_uniform("width", cam->width());
     //debug_pass_->set_uniform("height", cam->height());
-    debug_pass_->set_uniform("near", cam->near());
-    debug_pass_->set_uniform("far", cam->far());
-    std::cout << "f_width: " << cam->frustum_width() << "\n";
+    //Eigen::Matrix4f inv_proj_mat = cam->projection_matrix().inverse();
+    //debug_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
+    //debug_pass_->set_uniform("near", cam->near());
+    //debug_pass_->set_uniform("far", cam->far());
+    //std::cout << "f_width: " << cam->frustum_width() << "\n";
     //debug_pass_->set_uniform("frustum_width", cam->frustum_width());
     //debug_pass_->set_uniform("frustum_height", cam->frustum_height());
     //Eigen::Matrix4f inv_view = cam->view_matrix().inverse();
@@ -136,23 +138,22 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     clear_pass_->render([&] (shader_program::ptr) { });
     geom_pass_->render(render_callback);
     //Eigen::MatrixXf gbuf_mat(cam->height(), cam->width());
-    float* data = new float[3 * cam->height() * cam->width()];
+    //float* data = new float[3 * cam->height() * cam->width()];
 
-    gbuffer_tex_->bind();
-    gbuffer_tex_->get_data(data);
-    gbuffer_tex_->release();
-    //std::cout << gbuf_mat << "\n";
-    float min = 0.f;
-    float max = 0.f;
-    for (int i=0; i<cam->height()*cam->width(); ++i) {
-        float v = data[i*3];
-        if (v<min) min = v;
-        if (v>max) max = v;
-    }
-    std::cout << min << " " << max << "\n";
-    delete [] data;
-    debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
-    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}});
+    //gbuffer_tex_->bind();
+    //gbuffer_tex_->get_data(data);
+    //gbuffer_tex_->release();
+    ////std::cout << gbuf_mat << "\n";
+    //float min = 0.f;
+    //float max = 0.f;
+    //for (int i=0; i<cam->height()*cam->width(); ++i) {
+        //float v = data[i*3];
+        //if (v<min) min = v;
+        //if (v>max) max = v;
+    //}
+    //delete [] data;
+    //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
+    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}});
     //debug_pass_->render([&] (shader_program::ptr) { });
 }
 

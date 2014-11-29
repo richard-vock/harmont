@@ -87,6 +87,10 @@ const camera::mat4_t& camera::projection_matrix() const {
     return projection_;
 }
 
+camera::mat4_t camera::inverse_view_projection_matrix() const {
+    return (projection_ * model_->view_matrix()).inverse();
+}
+
 void camera::set_near(float near) {
     near_ = near;
     reshape(width_, height_);
