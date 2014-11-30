@@ -34,6 +34,7 @@ class freeglut_application : public application {
         static void glut_reshape_(freeglut_application* self, int width, int height);
         static void glut_mouse_(freeglut_application* self, int button, int state, int x, int y);
         static void glut_mouse_move_(freeglut_application* self, int x, int y);
+        static void glut_keyboard_(freeglut_application* self, unsigned char key);
 
     protected:
         screen_pos_t  last_pos_ = screen_pos_t(0, 0);

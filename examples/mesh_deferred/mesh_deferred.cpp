@@ -31,6 +31,7 @@ void init() {
     deferred_renderer::render_parameters_t r_params {
         light_dir,
         0.8f,
+        0.05f,
         true,
         "mesh.vert",
         "hdr.frag",
@@ -106,6 +107,11 @@ int main (int argc, char* argv[]) {
     app_g->init(argc, argv, "Render Mesh", &init);
     app_g->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { renderer_g->delta_exposure(-delta[1] * 0.001f); app_g->update(); });
     app_g->on_click_left([&] (Eigen::Vector2i pos) { Eigen::Vector3f dir = app_g->current_camera()->forward().normalized(); renderer_g->set_light_dir(dir, bb_g); app_g->update(); });
+    app_g->on_char([&] (unsigned char key) {
+        if (key == 'b') renderer_g->delta_shadow_bias(-0.001);
+        if (key == 'B') renderer_g->delta_shadow_bias(0.001);
+        app_g->update();
+    });
 
     app_g->run();
 }

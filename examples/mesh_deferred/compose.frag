@@ -1,14 +1,21 @@
 #version 430
 
+#define PCF_SAMPLES        {{sample_count}}
+#define SHADOW_RES         {{shadow_res}}
+#define SHADOW_RES_INV     (1.0 / SHADOW_RES)
+
 in vec2 tc;
 
 layout(location = 0) uniform sampler2D map_gbuffer;
 layout(location = 1) uniform sampler2D map_diffuse;
-/*layout(location = 2) uniform sampler2D map_shadow;*/
+layout(location = 2) uniform sampler2D map_shadow;
 layout(location = 3) uniform vec3 light_dir;
 layout(location = 4) uniform vec3 eye_dir;
 layout(location = 5) uniform float l_white;
-/*layout(location = 6) uniform vec2 poisson_disk[PCF_SAMPLES];*/
+layout(location = 6) uniform mat4 shadow_matrix;
+layout(location = 7) uniform mat4 inv_view_proj_matrix;
+layout(location = 8) uniform float shadow_bias;
+layout(location = 9) uniform vec2 poisson_disk[PCF_SAMPLES];
 
 out vec4 out_color;
 
@@ -32,7 +39,6 @@ const float toe_d = 0.3;
 const vec3 light_emission = vec3(1.0, 1.0, 1.0);
 
 // shadow parameters
-const float shadow_bias = 0.05;
 const float sampling_spread = 1.0;
 const float distance_weight = 0.0;
 
@@ -43,12 +49,12 @@ vec2 dirToUV(in vec3 dir);
 vec3 tone_map(in vec3 col);
 vec3 diffuse(vec3 n, vec3 l, vec3 kd);
 vec3 specular(float roughness, vec3 ks, vec3 n, vec3 v, vec3 l);
-float in_shadow(vec3 normal);
+float in_shadow(vec3 normal, vec4 in_shadow_pos);
 
 void main(void) {
     vec3 gbuffer = texture2D(map_gbuffer, tc).rgb;
     if (gbuffer.r == 0.0 && gbuffer.g == 0.0 && gbuffer.b == 0.0) {
-        out_color = vec4(1.0, 1.0, 1.0, 0.0);
+        out_color = vec4(0.2, 0.2, 0.2, 0.0);
         return;
     }
 
@@ -59,8 +65,14 @@ void main(void) {
     unpack_colors(gbuffer, mat_diffuse, mat_specular);
     vec3 mat_ambient = 0.1 * mat_diffuse;
 
+    vec4 window_pos = vec4(tc * 2.0 - 1.0, gbuffer.r, 1.0);
+    vec4 world_pos = inv_view_proj_matrix * window_pos;
+    world_pos /= world_pos.w;
+    vec4 in_shadow_pos = shadow_matrix * world_pos;
+
     vec3 env_col = texture2D(map_diffuse, dirToUV(normal)).rgb * vec3(1.0, 1.0, 1.0);
-    float visibility = 1.0; // 1.0 - in_shadow(normal);
+    float visibility = 1.0 - in_shadow(normal, in_shadow_pos);
+
 
     vec3 ambient = mat_ambient * env_col;
     vec3 diffuse = diffuse(normal, light_dir, mat_diffuse) * env_col;
@@ -197,7 +209,7 @@ float sample_shadow(vec2 xy, float z) {
     return ret / n;
 }
 
-float in_shadow(vec3 normal) {
+float in_shadow(vec3 normal, vec4 in_shadow_pos) {
     if (dot(normal, light_dir) < 0.0) {
         return 1.0;
     }

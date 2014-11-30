@@ -13,18 +13,19 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     exposure_ = render_parameters.exposure;
     two_sided_ = render_parameters.two_sided;
     light_dir_ = render_parameters.light_dir;
+    shadow_bias_ = render_parameters.shadow_bias;
 
-    //shadow_pass_ = std::make_shared<shadow_pass>(
-        //shadow_parameters.resolution,
-        //shadow_parameters.sample_count,
-        //shadow_parameters.vertex_shader,
-        //shadow_parameters.fragment_shader
-    //);
-    //shadow_pass_->update(bbox, light_dir_);
+    shadow_pass_ = std::make_shared<shadow_pass>(
+        shadow_parameters.resolution,
+        shadow_parameters.sample_count,
+        shadow_parameters.vertex_shader,
+        shadow_parameters.fragment_shader
+    );
+    shadow_pass_->update(bbox, light_dir_);
 
     load_hdr_map_(render_parameters.hdr_map);
 
-    //vertex_shader::parameters_t params = {{"sample_count", std::to_string(shadow_parameters.sample_count)}, {"shadow_res", std::to_string(shadow_parameters.resolution)}};
+    vertex_shader::parameters_t params = {{"sample_count", std::to_string(shadow_parameters.sample_count)}, {"shadow_res", std::to_string(shadow_parameters.resolution)}};
     //vertex_shader::ptr vs = vertex_shader::from_file(render_parameters.vertex_shader, params);
     //fragment_shader::ptr fs = fragment_shader::from_file(render_parameters.fragment_shader, params);
     //geom_pass_ = std::make_shared<render_pass>(vs, fs);
@@ -40,7 +41,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     vertex_shader::ptr   gbuffer_vert = vertex_shader::from_file("gbuffer.vert");
     fragment_shader::ptr clear_frag   = fragment_shader::from_file("clear.frag");
     fragment_shader::ptr gbuffer_frag = fragment_shader::from_file("gbuffer.frag");
-    fragment_shader::ptr compose_frag = fragment_shader::from_file("compose.frag");
+    fragment_shader::ptr compose_frag = fragment_shader::from_file("compose.frag", params);
     fragment_shader::ptr debug_gbuffer_frag = fragment_shader::from_file("debug_gbuffer.frag");
 
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, render_pass::textures({gbuffer_tex_}));
@@ -54,7 +55,7 @@ deferred_renderer::~deferred_renderer() {
 
 void deferred_renderer::set_light_dir(const Eigen::Vector3f& light_dir, const bounding_box_t& bbox) {
     light_dir_ = light_dir;
-    //shadow_pass_->update(bbox, light_dir_);
+    shadow_pass_->update(bbox, light_dir_);
 }
 
 float deferred_renderer::exposure() const {
@@ -69,6 +70,19 @@ void deferred_renderer::set_exposure(float exposure) {
 
 void deferred_renderer::delta_exposure(float delta) {
     set_exposure(exposure_ + delta);
+}
+
+float deferred_renderer::shadow_bias() const {
+    return shadow_bias_;
+}
+
+void deferred_renderer::set_shadow_bias(float bias) {
+    shadow_bias_ = bias;
+}
+
+void deferred_renderer::delta_shadow_bias(float delta) {
+    shadow_bias_ += delta;
+    if (shadow_bias_ < 0.f) shadow_bias_ = 0.f;
 }
 
 bool deferred_renderer::two_sided() const {
@@ -100,12 +114,12 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     cam->set_near_far(near, far);
 
     // render shadow texture
-    //shadow_pass_->render(render_callback, cam->width(), cam->height());
+    shadow_pass_->render(render_callback, cam->width(), cam->height());
 
     // update geometry pass
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
     geom_pass_->set_uniform("modelview_matrix", cam->view_matrix());
-    //geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
+    geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
 
     // update compose pass
@@ -115,6 +129,10 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     compose_pass_->set_uniform("light_dir", light_dir_vec);
     compose_pass_->set_uniform("eye_dir", eye_dir);
     compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
+    compose_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
+    compose_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
+	compose_pass_->set_uniform("shadow_bias", shadow_bias_);
+	compose_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
 
     // update debug pass
     //debug_pass_->set_uniform("width", cam->width());
@@ -131,7 +149,6 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
 
     //Eigen::Vector3f eye_pos = cam->position();
     //geom_pass_->set_uniform("eye_pos", std::vector<float>(eye_pos.data(), eye_pos.data()+3));
-    //geom_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
 
     // render geometry pass
     //geom_pass_->render(render_callback, {{diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
@@ -153,7 +170,7 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     //}
     //delete [] data;
     //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
-    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}});
+    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
     //debug_pass_->render([&] (shader_program::ptr) { });
 }
 

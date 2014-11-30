@@ -20,6 +20,7 @@ void freeglut_application::run() {
     glutMouseFunc([] (int button, int state, int x, int y) { freeglut_application::glut_mouse_(application_instance, button, state, x, y); });
     glutMotionFunc([] (int x, int y) { freeglut_application::glut_mouse_move_(application_instance, x, y); });
     glutPassiveMotionFunc([] (int x, int y) { freeglut_application::glut_mouse_move_(application_instance, x, y); });
+    glutKeyboardFunc([] (unsigned char key, int, int) { freeglut_application::glut_keyboard_(application_instance, key); });
     glutMainLoop();
 }
 
@@ -116,6 +117,10 @@ void freeglut_application::glut_mouse_(freeglut_application* self, int button, i
 
 void freeglut_application::glut_mouse_move_(freeglut_application* self, int x, int y) {
     self->motion_(x, y);
+}
+
+void freeglut_application::glut_keyboard_(freeglut_application* self, unsigned char key) {
+    self->char_(key);
 }
 
 

@@ -44,6 +44,7 @@ class application {
         void on_drag_right(callback_t<screen_pos_t, screen_pos_t> callback);
         void on_drag_middle(callback_t<screen_pos_t, screen_pos_t> callback);
         void on_scroll(callback_t<int> callback);
+        void on_char(callback_t<unsigned char> callback);
 
     protected:
         virtual void init_(int argc, char* argv[], std::string title) = 0;
@@ -65,6 +66,7 @@ class application {
         void drag_right_(screen_pos_t pos, screen_pos_t delta);
         void drag_middle_(screen_pos_t pos, screen_pos_t delta);
         void scroll_(int delta);
+        void char_(unsigned char key);
 
         template <class CameraModel>
         static camera::ptr default_camera_(int width, int height);
@@ -90,6 +92,7 @@ class application {
         callback_t<screen_pos_t, screen_pos_t> cb_drag_right_;
         callback_t<screen_pos_t, screen_pos_t> cb_drag_middle_;
         callback_t<int>                        cb_scroll_;
+        callback_t<unsigned char>              cb_char_;
 };
 
 #include "application.ipp"

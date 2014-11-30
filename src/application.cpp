@@ -87,6 +87,10 @@ void application::on_scroll(callback_t<int> callback) {
     cb_scroll_ = std::move(callback);
 }
 
+void application::on_char(callback_t<unsigned char> callback) {
+    cb_char_ = std::move(callback);
+}
+
 camera::const_ptr application::current_camera() const {
     return camera_;
 }
@@ -163,6 +167,10 @@ void application::scroll_(int delta) {
     camera_->update(-1.f * camera::vec3_t(0.0, 0.0, delta), camera::vec3_t::Zero());
     if (cb_scroll_) cb_scroll_(delta);
     update();
+}
+
+void application::char_(unsigned char key) {
+    if (cb_char_) cb_char_(key);
 }
 
 

@@ -19,6 +19,7 @@ class deferred_renderer {
 		struct render_parameters_t {
 			Eigen::Vector3f light_dir;
 			float exposure;
+			float shadow_bias;
             bool two_sided;
 			std::string vertex_shader;
 			std::string fragment_shader;
@@ -40,6 +41,10 @@ class deferred_renderer {
 		float exposure() const;
 		void set_exposure(float exposure);
 		void delta_exposure(float delta);
+
+		float shadow_bias() const;
+		void set_shadow_bias(float bias);
+		void delta_shadow_bias(float delta);
 
         bool two_sided() const;
         void set_two_sided(bool two_sided);
@@ -66,6 +71,7 @@ class deferred_renderer {
 		shadow_pass::ptr_t   shadow_pass_;
 		Eigen::Vector3f      light_dir_;
 		float                exposure_;
+        float                shadow_bias_;
         bool                 two_sided_;
 };
 

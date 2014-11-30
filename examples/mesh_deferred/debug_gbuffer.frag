@@ -47,20 +47,21 @@ vec3 unpack_normal(vec3 gbuffer);
 void main(void) {
     vec3 gbuffer = texture2D(map_gbuffer, tc).rgb;
     if (gbuffer.r == 0.0 && gbuffer.g == 0.0 && gbuffer.b == 0.0) {
-        frag_color = vec4(1.0, 0.0, 0.0, 0.0);
+        frag_color = vec4(1.0, 1.0, 1.0, 0.0);
         return;
     }
 
-    vec4 b_part = unpackSnorm4x8(uint(gbuffer.b));
-    vec3 real_pos = b_part.rgb;
+    /*vec4 b_part = unpackSnorm4x8(uint(gbuffer.b));*/
+    /*vec3 real_pos = b_part.rgb;*/
     /*real_pos.xyz /= real_pos.w;*/
 
 
-    vec3 pos = gbuffer;
-    vec4 window_pos = vec4(tc * 2.0 - 1.0, pos.z, 1.0);
-    vec4 world_pos = inv_view_proj_matrix * window_pos;
-    world_pos.xyz /= world_pos.w;
-    float error = length(pos.x - world_pos.z);
+    /*vec3 pos = gbuffer;*/
+    /*vec4 window_pos = vec4(tc * 2.0 - 1.0, pos.z, 1.0);*/
+    /*vec4 world_pos = inv_view_proj_matrix * window_pos;*/
+    /*world_pos.xyz /= world_pos.w;*/
+    /*float error = length(pos.x - world_pos.z);*/
+
     /*float z = pos.z;*/
     /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0, (-gl_FragCoord.y/height + 0.5) * 2.0 / (width / height), z);*/
     /*vec3 clip = vec3((gl_FragCoord.x/width - 0.5) * 2.0 / (10.0 * frustum_width), (-gl_FragCoord.y/height + 0.5) * 2.0 / (width / height), z);*/
@@ -79,14 +80,14 @@ void main(void) {
     /*z = real_pos.z;*/
     /*float real_z = (-z - near) / (far - near);*/
     /*float ndc_y = pos.y / (frustum_height * float(height));*/
-    float v = error;//abs(clip.x - pos.x);
-    frag_color = vec4(v, v, v, 1.0);
+    /*float v = error;//abs(clip.x - pos.x);*/
+    /*frag_color = vec4(v, v, v, 1.0);*/
 
-    /*vec3 normal = unpack_normal(gbuffer);*/
+    vec3 normal = unpack_normal(gbuffer);
 
-    /*float phi = (atan(normal.z, normal.x) + pi) / (2.0 * pi);*/
-    /*float theta = 1.0 - acos(normal.y) / pi;*/
-    /*frag_color = vec4(hsv2rgb(phi, 1.0, theta), 1.0);*/
+    float phi = (atan(normal.y, normal.x) + pi) / (2.0 * pi);
+    float theta = 1.0 - acos(normal.z) / pi;
+    frag_color = vec4(hsv2rgb(phi, 1.0, theta), 1.0);
 }
 
 vec3 unpack_normal(vec3 gbuffer) {
