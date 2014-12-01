@@ -27,7 +27,7 @@ class shadow_pass {
 		std::vector<float>& poisson_disk();
 		const std::vector<float>& poisson_disk() const;
 
-		void render(const render_callback_t& render_callback, int width, int height);
+		void render(const render_callback_t& render_callback, int width, int height, bool clipping, float clipping_z);
 
 		void update(const bounding_box_t& bbox, const Eigen::Vector3f& light_dir);
 

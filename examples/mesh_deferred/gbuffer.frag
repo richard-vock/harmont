@@ -6,8 +6,8 @@ layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec4 in_color;
 layout(location = 2) in vec3 in_normal;
 
-layout(location = 2) uniform mat3 normal_matrix;
-layout(location = 3) uniform bool two_sided;
+layout(location = 4) uniform mat3 normal_matrix;
+layout(location = 5) uniform bool two_sided;
 
 // material parameters
 vec3  mat_diffuse = vec3(0.8, 0.8, 0.8);

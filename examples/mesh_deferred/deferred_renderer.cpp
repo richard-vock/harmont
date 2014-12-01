@@ -9,11 +9,14 @@ extern "C" {
 namespace harmont {
 
 
-deferred_renderer::deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, const bounding_box_t& bbox, int width, int height) {
+deferred_renderer::deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, const bounding_box_t& bbox, int width, int height) : clipping_(false), clipping_height_(0.5f) {
     exposure_ = render_parameters.exposure;
     two_sided_ = render_parameters.two_sided;
     light_dir_ = render_parameters.light_dir;
     shadow_bias_ = render_parameters.shadow_bias;
+
+    clipping_min_z_ = bbox.min()[2];
+    clipping_max_z_ = bbox.max()[2];
 
     shadow_pass_ = std::make_shared<shadow_pass>(
         shadow_parameters.resolution,
@@ -22,6 +25,9 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
         shadow_parameters.fragment_shader
     );
     shadow_pass_->update(bbox, light_dir_);
+
+    ssao_pass_ = std::make_shared<ssao>(4, 20, 1.f);
+    ssao_pass_->init(width, height);
 
     load_hdr_map_(render_parameters.hdr_map);
 
@@ -43,11 +49,12 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     fragment_shader::ptr gbuffer_frag = fragment_shader::from_file("gbuffer.frag");
     fragment_shader::ptr compose_frag = fragment_shader::from_file("compose.frag", params);
     fragment_shader::ptr debug_gbuffer_frag = fragment_shader::from_file("debug_gbuffer.frag");
+    fragment_shader::ptr debug_ssao_frag = fragment_shader::from_file("debug_ssao.frag");
 
-    clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, render_pass::textures({gbuffer_tex_}));
+    clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, render_pass::textures({gbuffer_tex_, ssao_pass_->ssao_texture()}));
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
-    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
+    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssao_frag);
 }
 
 deferred_renderer::~deferred_renderer() {
@@ -97,6 +104,30 @@ void deferred_renderer::toggle_two_sided() {
     two_sided_ = !!two_sided_;
 }
 
+bool deferred_renderer::clipping() const {
+    return clipping_;
+}
+
+void deferred_renderer::set_clipping(bool clipping) {
+    clipping_ = clipping;
+}
+
+void deferred_renderer::toggle_clipping() {
+    clipping_ = !clipping_;
+}
+
+float deferred_renderer::clipping_height() const {
+    return clipping_height_;
+}
+
+void deferred_renderer::set_clipping_height(float height) {
+    clipping_height_ = height;
+}
+
+void deferred_renderer::delta_clipping_height(float delta) {
+    clipping_height_ += delta;
+}
+
 render_pass::ptr deferred_renderer::geometry_pass() {
     return geom_pass_;
 }
@@ -113,8 +144,10 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     std::tie(near, far) = get_near_far(cam, bbox);
     cam->set_near_far(near, far);
 
+    float clip_z = clipping_min_z_ + clipping_height_ * (clipping_max_z_ - clipping_min_z_);
+
     // render shadow texture
-    shadow_pass_->render(render_callback, cam->width(), cam->height());
+    shadow_pass_->render(render_callback, cam->width(), cam->height(), clipping_, clip_z);
 
     // update geometry pass
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
@@ -134,50 +167,30 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
 	compose_pass_->set_uniform("shadow_bias", shadow_bias_);
 	compose_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
 
-    // update debug pass
-    //debug_pass_->set_uniform("width", cam->width());
-    //debug_pass_->set_uniform("height", cam->height());
-    //Eigen::Matrix4f inv_proj_mat = cam->projection_matrix().inverse();
-    //debug_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
-    //debug_pass_->set_uniform("near", cam->near());
-    //debug_pass_->set_uniform("far", cam->far());
-    //std::cout << "f_width: " << cam->frustum_width() << "\n";
-    //debug_pass_->set_uniform("frustum_width", cam->frustum_width());
-    //debug_pass_->set_uniform("frustum_height", cam->frustum_height());
-    //Eigen::Matrix4f inv_view = cam->view_matrix().inverse();
-    //debug_pass_->set_uniform("inv_view_matrix", inv_view);
-
-    //Eigen::Vector3f eye_pos = cam->position();
-    //geom_pass_->set_uniform("eye_pos", std::vector<float>(eye_pos.data(), eye_pos.data()+3));
-
-    // render geometry pass
-    //geom_pass_->render(render_callback, {{diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
     clear_pass_->render([&] (shader_program::ptr) { });
+    if (clipping_) {
+        geom_pass_->set_uniform("clip_normal", std::vector<float>({0.f, 0.f, 1.f}) );
+        geom_pass_->set_uniform("clip_distance", clip_z );
+        glEnable(GL_CLIP_DISTANCE0);
+    }
     geom_pass_->render(render_callback);
-    //Eigen::MatrixXf gbuf_mat(cam->height(), cam->width());
-    //float* data = new float[3 * cam->height() * cam->width()];
+    if (clipping_) {
+        glDisable(GL_CLIP_DISTANCE0);
+    }
 
-    //gbuffer_tex_->bind();
-    //gbuffer_tex_->get_data(data);
-    //gbuffer_tex_->release();
-    ////std::cout << gbuf_mat << "\n";
-    //float min = 0.f;
-    //float max = 0.f;
-    //for (int i=0; i<cam->height()*cam->width(); ++i) {
-        //float v = data[i*3];
-        //if (v<min) min = v;
-        //if (v>max) max = v;
-    //}
-    //delete [] data;
-    //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
-    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
-    //debug_pass_->render([&] (shader_program::ptr) { });
+    ssao_pass_->compute(gbuffer_tex_, cam);
+
+    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
+    debug_pass_->render([&] (shader_program::ptr) { }, {{ssao_pass_->ssao_texture(), "map_ssao"}});
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {
+    int width = cam->width();
+    int height = cam->height();
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
-    depth_tex_->resize(cam->width(), cam->height());
-    gbuffer_tex_->resize(cam->width(), cam->height());
+    depth_tex_->resize(width, height);
+    gbuffer_tex_->resize(width, height);
+    ssao_pass_->reshape(width, height);
 }
 
 void deferred_renderer::load_hdr_map_(std::string filename) {

@@ -3,6 +3,7 @@
 
 #include <harmont/harmont.hpp>
 #include "shadow_pass.hpp"
+#include "ssao.hpp"
 
 namespace harmont {
 
@@ -50,6 +51,14 @@ class deferred_renderer {
         void set_two_sided(bool two_sided);
         void toggle_two_sided();
 
+        bool clipping() const;
+        void set_clipping(bool clipping);
+        void toggle_clipping();
+
+        float clipping_height() const;
+        void  set_clipping_height(float height);
+        void  delta_clipping_height(float delta);
+
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
@@ -69,10 +78,15 @@ class deferred_renderer {
 		texture::ptr         gbuffer_tex_;
 		texture::ptr         diff_tex_;
 		shadow_pass::ptr_t   shadow_pass_;
+		ssao::ptr_t          ssao_pass_;
 		Eigen::Vector3f      light_dir_;
 		float                exposure_;
         float                shadow_bias_;
         bool                 two_sided_;
+        bool                 clipping_;
+        float                clipping_height_;
+        float                clipping_min_z_;
+        float                clipping_max_z_;
 };
 
 
