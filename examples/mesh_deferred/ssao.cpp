@@ -15,6 +15,7 @@ ssao::~ssao() {
 void ssao::init(int width, int height) {
     tex_noise_ = texture::texture_2d<unsigned int>(4, 4, 1, nullptr, GL_RED, GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT);
     init_samples_();
+    init_noise_();
     tex_ssao_ = texture::texture_2d<float>(width, height, 1);
     auto vs_sample = vertex_shader::from_file("full_quad.vert");
     auto fs_sample = fragment_shader::from_file("ssao.frag");
@@ -29,10 +30,13 @@ void ssao::compute(texture::ptr gbuffer, camera::ptr cam) {
     pass_sample_->set_uniform("modelview_matrix", cam->view_matrix());
     pass_sample_->set_uniform("projection_matrix", cam->projection_matrix());
     pass_sample_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
-    pass_sample_->set_uniform("exponent", 3.0);
+    //pass_sample_->set_uniform("exponent", 0.5);
     pass_sample_->set_uniform("radius", radius_);
+    //pass_sample_->set_uniform("near", cam->near());
+    //pass_sample_->set_uniform("far", cam->far());
     //pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {tex_noise_, "map_noise"}, {gbuffer, "map_gbuffer"}});
-    pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {gbuffer, "map_gbuffer"}});
+    //pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {gbuffer, "map_gbuffer"}});
+    pass_sample_->render([&] (shader_program::ptr) {}, {{gbuffer, "map_gbuffer"}});
     //pass_sample_->render([&] (shader_program::ptr) {}, {{gbuffer, "map_gbuffer"}});
 }
 
@@ -48,6 +52,7 @@ void ssao::set_variation(uint32_t variation) {
     variation_ = variation;
     if (variation_ < 1) variation_ = 1;
     init_samples_();
+    init_noise_();
 }
 
 uint32_t ssao::num_samples() const {
@@ -67,34 +72,38 @@ float ssao::radius() const {
 void ssao::set_radius(float radius) {
     radius_ = radius;
     if (radius_ < 0.f) radius_ = 0.f;
-    compute_samples_();
 }
 
 void ssao::delta_radius(float delta) {
     radius_ += delta;
     if (radius_ < 0.f) radius_ = 0.f;
-    compute_samples_();
 }
 
 void ssao::init_samples_() {
-    tex_samples_ = texture::texture_2d<float>(variation_, num_samples_, 3);
-    compute_samples_();
+    typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> mat_t;
+    mat_t data = 0.5f * (mat_t::Random(num_samples_, 4) + mat_t::Ones(num_samples_, 4));
+    float factor = 1.f / (sqrt(2.f * M_PI));
+    for (uint32_t i = 0; i < num_samples_; ++i) {
+        data(i, 3) = fabs(factor * exp(-0.5 * data(i, 3) * data(i,3)));
+    }
+    tex_samples_ = texture::texture_1d<float>(num_samples_, 4, data.data(), GL_RGBA32F);
+
+    //float* samples = new float[variation_ * num_samples_ * 3];
+    //for (uint32_t i = 0; i < variation_; ++i) {
+        //for (uint32_t j = 0; j < num_samples_; ++j) {
+            //Eigen::Vector3f sample = Eigen::Vector3f::Random();
+            //sample[2] = 0.5f * (sample[2] + 1.f);
+            //sample = sample.normalized();
+            //samples[i*num_samples_*3 + j*3 + 0] = sample[0];
+            //samples[i*num_samples_*3 + j*3 + 1] = sample[1];
+            //samples[i*num_samples_*3 + j*3 + 2] = sample[2];
+        //}
+    //}
+    //tex_samples_->set_data(samples);
+    //delete [] samples;
 }
 
-void ssao::compute_samples_() {
-    float* samples = new float[variation_ * num_samples_ * 3];
-    for (uint32_t i = 0; i < variation_; ++i) {
-        for (uint32_t j = 0; j < num_samples_; ++j) {
-            Eigen::Vector3f sample = Eigen::Vector3f::Random();
-            sample[2] = 0.5f * (sample[2] + 1.f);
-            sample = radius_ * sample.normalized();
-            samples[i*num_samples_*3 + j*3 + 0] = sample[0];
-            samples[i*num_samples_*3 + j*3 + 1] = sample[1];
-            samples[i*num_samples_*3 + j*3 + 2] = sample[2];
-        }
-    }
-    tex_samples_->set_data(samples);
-
+void ssao::init_noise_() {
     unsigned long seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::uniform_int_distribution<int> distribution(0, variation_ - 1);
@@ -104,8 +113,7 @@ void ssao::compute_samples_() {
             noise(i, j) = distribution(generator);
         }
     }
-    tex_noise_->set_data(noise);
-    delete [] samples;
+    //tex_noise_->set_data(noise);
 }
 
 

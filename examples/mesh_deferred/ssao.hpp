@@ -35,6 +35,7 @@ class ssao {
 
 	protected:
         void init_samples_();
+        void init_noise_();
 		void compute_samples_();
 
 	protected:

@@ -32,7 +32,7 @@ class texture {
 
 	public:
 		template <typename Scalar>
-		static ptr texture_1d(int width, int channels, const Scalar* data = nullptr, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
+		static ptr texture_1d(int width, int channels, const Scalar* data = nullptr, boost::optional<GLenum> format = boost::none, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);
 
 		template <typename Scalar, int Dim, int Options>
 		static ptr texture_1d(const Eigen::Matrix<Scalar, Dim, 1, Options>& vector, GLenum min_filter = GL_NEAREST, GLenum mag_filter = GL_NEAREST, GLenum wrap_s = GL_CLAMP_TO_EDGE, GLenum wrap_t = GL_CLAMP_TO_EDGE);

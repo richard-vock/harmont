@@ -26,19 +26,18 @@ void main() {
         normal *= -1.0;
     }
 
-    float n_denom = 1.0 - normal.z;
-    vec2 n_xy;
-    if (n_denom < 0.00001) {
-        n_xy = vec2(normal.x, normal.y);
-    } else {
-        n_xy = vec2(normal.x / (1.0 - normal.z), normal.y / (1.0 - normal.z));
-    }
+    /*vec2 n_xy = vec2(normal.x, normal.y);*/
+    /*float n_denom = 1.0 - normal.z;*/
+    /*if (n_denom > 0.00001) {*/
+        /*n_xy /= n_denom;*/
+    /*}*/
     vec3 albedo_ycbcr = rgb_to_ycbcr(mat_diffuse);
     vec3 spec_ycbcr = rgb_to_ycbcr(mat_specular);
 
-    float final_r = 2.0 * gl_FragCoord.z - 1.0;;
-    float final_g = float(packSnorm4x8(vec4(n_xy, mat_roughness * sign(normal.z), 0.0)));
+    float final_r = 2.0 * gl_FragCoord.z - 1.0;
+    float final_g = float(packSnorm4x8(vec4(normal, mat_roughness)));
     float final_b = float(packSnorm4x8(vec4(albedo_ycbcr, spec_ycbcr.x)));
+    
     /*[>uint final_g = uint(255 * n_xy.x) << 3*8<]*/
                  /*[>+ uint(255 * n_xy.y) << 2*8<]*/
                  /*[>+ uint(255 * rough)  << 1*8;<]*/

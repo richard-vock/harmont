@@ -26,7 +26,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     );
     shadow_pass_->update(bbox, light_dir_);
 
-    ssao_pass_ = std::make_shared<ssao>(4, 20, 1.f);
+    ssao_pass_ = std::make_shared<ssao>(4, 20, 0.1f);
     ssao_pass_->init(width, height);
 
     load_hdr_map_(render_parameters.hdr_map);
@@ -55,6 +55,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
     debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssao_frag);
+    //debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
 }
 
 deferred_renderer::~deferred_renderer() {
@@ -128,6 +129,18 @@ void deferred_renderer::delta_clipping_height(float delta) {
     clipping_height_ += delta;
 }
 
+float deferred_renderer::ssao_radius() const {
+    return ssao_pass_->radius();
+}
+
+void deferred_renderer::set_ssao_radius(float radius) {
+    ssao_pass_->set_radius(radius);
+}
+
+void deferred_renderer::delta_ssao_radius(float delta) {
+    ssao_pass_->delta_radius(delta);
+}
+
 render_pass::ptr deferred_renderer::geometry_pass() {
     return geom_pass_;
 }
@@ -181,7 +194,9 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     ssao_pass_->compute(gbuffer_tex_, cam);
 
     //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
+    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
     debug_pass_->render([&] (shader_program::ptr) { }, {{ssao_pass_->ssao_texture(), "map_ssao"}});
+    //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {

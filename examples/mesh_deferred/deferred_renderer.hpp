@@ -59,6 +59,10 @@ class deferred_renderer {
         void  set_clipping_height(float height);
         void  delta_clipping_height(float delta);
 
+		float ssao_radius() const;
+		void  set_ssao_radius(float radius);
+		void  delta_ssao_radius(float delta);
+
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 

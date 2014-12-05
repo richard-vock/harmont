@@ -81,6 +81,7 @@ void reshape(camera::ptr cam) {
 
 
 int main (int argc, char* argv[]) {
+    omerr().disable();
 	OpenMesh::IO::Options opt;
 	opt += OpenMesh::IO::Options::FaceNormal;
 	opt += OpenMesh::IO::Options::VertexNormal;
@@ -112,6 +113,8 @@ int main (int argc, char* argv[]) {
         if (key == 'B') renderer_g->delta_shadow_bias(0.001);
         if (key == 'e') renderer_g->delta_exposure(-0.001f);
         if (key == 'E') renderer_g->delta_exposure(0.001f);
+        if (key == 'r') renderer_g->delta_ssao_radius(-0.01f);
+        if (key == 'R') renderer_g->delta_ssao_radius(0.01f);
         if (key == 'c' || key == 'C') renderer_g->toggle_clipping();
         app_g->update();
     });

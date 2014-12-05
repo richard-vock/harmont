@@ -83,11 +83,11 @@ void main(void) {
     /*float v = error;//abs(clip.x - pos.x);*/
     /*frag_color = vec4(v, v, v, 1.0);*/
 
-    vec3 normal = unpack_normal(gbuffer);
+    vec3 normal = unpackSnorm4x8(uint(gbuffer.g)).xyz;//unpack_normal(gbuffer);
 
     float phi = (atan(normal.y, normal.x) + pi) / (2.0 * pi);
     float theta = 1.0 - acos(normal.z) / pi;
-    frag_color = vec4(hsv2rgb(phi, 1.0, theta), 1.0);
+    frag_color = vec4(normal.x, normal.y, normal.z, 1.0); //vec4(hsv2rgb(phi, 1.0, theta), 1.0);
 }
 
 vec3 unpack_normal(vec3 gbuffer) {

@@ -15,7 +15,8 @@ layout(location = 5) uniform float l_white;
 layout(location = 6) uniform mat4 shadow_matrix;
 layout(location = 7) uniform mat4 inv_view_proj_matrix;
 layout(location = 8) uniform float shadow_bias;
-layout(location = 9) uniform vec2 poisson_disk[PCF_SAMPLES];
+layout(location = 9) uniform sampler2D map_ssao;
+layout(location = 10) uniform vec2 poisson_disk[PCF_SAMPLES];
 
 out vec4 out_color;
 
@@ -73,9 +74,10 @@ void main(void) {
     vec3 env_col = texture2D(map_diffuse, dirToUV(normal)).rgb * vec3(1.0, 1.0, 1.0);
     float visibility = 1.0 - in_shadow(normal, in_shadow_pos);
 
+    float ssao = texture(map_ssao, tc).r;
 
-    vec3 ambient = mat_ambient * env_col;
-    vec3 diffuse = diffuse(normal, light_dir, mat_diffuse) * env_col;
+    vec3 ambient = mat_ambient * env_col * ssao;
+    vec3 diffuse = diffuse(normal, light_dir, mat_diffuse) * env_col * ssao;
     vec3 hdr_color = ambient;
     hdr_color += clamp(visibility, 0.05, 1.0) * diffuse;
     if (visibility > 0.0) {
