@@ -35,10 +35,10 @@ camera_model::mat3_t camera_model::view_normal_matrix() const {
 void camera_model::update(vec3_t translational, vec3_t rotational, bool ortho_projection) {
     update_(translational, rotational, ortho_projection);
     normal_ = trans_.topLeftCorner<3,3>();
-    //if (fabs(1.f - scale_) > 0.0001) {
-        //normal_ = normal_.inverse();
-        //normal_.transposeInPlace();
-    //}
+    if (fabs(1.f - scale_) > 0.0001) {
+        normal_ = normal_.inverse();
+        normal_.transposeInPlace();
+    }
 }
 
 camera_model::camera_model() {

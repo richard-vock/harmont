@@ -44,6 +44,10 @@ texture::ptr ssao::ssao_texture() {
     return tex_ssao_;
 }
 
+texture::ptr ssao::sample_texture() {
+    return tex_samples_;
+}
+
 uint32_t ssao::variation() const {
     return variation_;
 }

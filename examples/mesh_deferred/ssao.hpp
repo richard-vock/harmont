@@ -22,6 +22,7 @@ class ssao {
         void compute(texture::ptr gbuffer, camera::ptr cam);
 
         texture::ptr ssao_texture();
+        texture::ptr sample_texture();
 
 		uint32_t variation() const;
 		void     set_variation(uint32_t variation);

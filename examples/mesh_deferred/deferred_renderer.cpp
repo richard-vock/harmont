@@ -54,8 +54,15 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, render_pass::textures({gbuffer_tex_, ssao_pass_->ssao_texture()}));
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
-    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssao_frag);
-    //debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
+    //debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssao_frag);
+    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
+
+    fragment_shader::ptr debug_sample_frag = fragment_shader::from_file("debug_sample.frag");
+    texture::ptr samples_tex = texture::texture_2d<float>(20, 1, 3);
+    debug_sample_pass_ = std::make_shared<render_pass_samples>(full_quad_vert, debug_sample_frag, render_pass::textures({samples_tex}));
+    vertex_shader::ptr   render_samples_vert = vertex_shader::from_file("render_samples.vert");
+    fragment_shader::ptr render_samples_frag = fragment_shader::from_file("render_samples.frag");
+    render_samples_pass_ = std::make_shared<render_pass>(render_samples_vert, render_samples_frag);
 }
 
 deferred_renderer::~deferred_renderer() {
@@ -153,8 +160,22 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     glEnable(GL_DEPTH_TEST);
 
     // update near/far values
+    bounding_box_t tmp_bbox = bbox;
+    //if (samples_.size()) {
+        //std::cout << "pos: " << samples_[0].transpose() << "\n";
+        //std::cout << "min: " << bbox.min() << "\n";
+        //std::cout << "max: " << bbox.max() << "\n";
+        //std::cout << "mv:  " << (cam->view_matrix() * samples_[0].homogeneous()).transpose() << "\n";
+    //}
+    for (const auto& s : samples_) {
+        tmp_bbox.extend(s);
+    }
     float near, far;
-    std::tie(near, far) = get_near_far(cam, bbox);
+    std::tie(near, far) = get_near_far(cam, tmp_bbox);
+    //if (samples_.size()) {
+        //std::cout << "near: " << near << "\n";
+        //std::cout << "far: " << far << "\n";
+    //}
     cam->set_near_far(near, far);
 
     float clip_z = clipping_min_z_ + clipping_height_ * (clipping_max_z_ - clipping_min_z_);
@@ -174,6 +195,7 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     std::vector<float> light_dir_vec(light_dir_.data(), light_dir_.data()+3);
     compose_pass_->set_uniform("light_dir", light_dir_vec);
     compose_pass_->set_uniform("eye_dir", eye_dir);
+    std::cout << "eye: " << eye.transpose() << "\n";
     compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
     compose_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
     compose_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
@@ -193,10 +215,68 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
 
     ssao_pass_->compute(gbuffer_tex_, cam);
 
+    if (debug_position_.minCoeff() >= 0) {
+        samples_.clear();
+        debug_sample_pass_->set_uniform("width", cam->width());
+        debug_sample_pass_->set_uniform("height", cam->height());
+        debug_sample_pass_->set_uniform("pixel", std::vector<int>(debug_position_.data(), debug_position_.data()+2));
+        debug_sample_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
+        debug_sample_pass_->set_uniform("radius", ssao_pass_->radius());
+        debug_sample_pass_->render(cam->width(), cam->height(), 20, {{gbuffer_tex_, "map_gbuffer"}, {ssao_pass_->sample_texture(), "map_samples"}});
+        //debug_sample_pass_->render(cam->width(), cam->height(), 20);
+        float* samples_data = new float[20*3];
+        debug_sample_pass_->outputs()[0]->get_data(samples_data);
+        for (uint32_t i = 0; i < 20; ++i) {
+            Eigen::Vector3f s = Eigen::Map<Eigen::Vector3f>(samples_data + i*3);
+            if (s[0] != 0.f || s[1] != 0.f || s[2] != 0.f) samples_.push_back(s);
+        }
+        delete [] samples_data;
+        std::cout << samples_.size() << "\n";
+        debug_position_ = -Eigen::Vector2i::Ones();
+    }
+
     //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
     //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
-    debug_pass_->render([&] (shader_program::ptr) { }, {{ssao_pass_->ssao_texture(), "map_ssao"}});
-    //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
+    //debug_pass_->render([&] (shader_program::ptr) { }, {{ssao_pass_->ssao_texture(), "map_ssao"}});
+    debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
+
+    if (samples_.size()) {
+        auto vao = std::make_shared<vertex_array>();
+        vao->bind();
+        uint32_t n = samples_.size();
+        std::cout << "normal: " << samples_[0].transpose() << "\n";
+        Eigen::MatrixXf vbo_data(n-1, 3);
+        Eigen::Matrix<uint32_t, Eigen::Dynamic, 1> ibo_data(n-1);
+        vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}};
+        for (uint32_t i = 0; i < n-1; ++i) {
+            vbo_data.row(i) = samples_[i+1].transpose();
+            ibo_data[i] = i;
+        }
+        auto vbo = vertex_buffer<float>::from_data(vbo_data);
+        vbo->bind_to_array(vbo_layout, render_samples_pass_);
+        auto ibo = index_buffer<uint32_t>::from_data(ibo_data);
+        vao->release();
+
+        GLboolean depth_enabled;
+        glGetBooleanv(GL_DEPTH_TEST, &depth_enabled);
+        glDisable(GL_DEPTH_TEST);
+        render_samples_pass_->set_uniform("modelview_matrix", cam->view_matrix());
+        render_samples_pass_->render(
+            [&] (shader_program::ptr prog) {
+                vao->bind();
+                ibo->bind();
+                glPointSize(5.0);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                glDrawElements(GL_POINTS, n-1, GL_UNSIGNED_INT, nullptr);
+                glPointSize(1.0);
+                ibo->release();
+                vao->release();
+            }
+        );
+        if (depth_enabled) {
+            glEnable(GL_DEPTH_TEST);
+        }
+    }
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {
@@ -206,6 +286,11 @@ void deferred_renderer::reshape(camera::ptr cam) {
     depth_tex_->resize(width, height);
     gbuffer_tex_->resize(width, height);
     ssao_pass_->reshape(width, height);
+    render_samples_pass_->set_uniform("projection_matrix", cam->projection_matrix());
+}
+
+void deferred_renderer::set_debug_position(Eigen::Vector2i pos) {
+    debug_position_ = pos;
 }
 
 void deferred_renderer::load_hdr_map_(std::string filename) {
