@@ -13,10 +13,13 @@ layout(location = 6) uniform int height;
 out vec3 sample_pos;
 
 
-vec3 sample_point(mat3 local, vec3 pos) {
+vec3 sample_point(mat3 local, vec3 pos, vec3 eye) {
     int sample_idx = int(floor(gl_FragCoord.x));
     if (sample_idx == 0) {
         return local[2];
+    }
+    if (sample_idx == 1) {
+        return eye;
     }
     vec4 local_sample = texelFetch(map_samples, sample_idx, 0);
     local_sample.xy = 2.0 * local_sample.xy - 1.0;
@@ -49,6 +52,7 @@ void main(void) {
     // get normal
     float roughness;
     vec3 normal = unpack_normal(gbuffer, roughness);
+    vec3 eye = unpackSnorm4x8(uint(gbuffer.b)).xyz;
 
     // get world position
     vec3 world_pos = inverse_view_project(vec3(fpx * 2.0 - 1.0, gbuffer.r));
@@ -58,5 +62,5 @@ void main(void) {
     tangent = normalize(tangent - dot(tangent, normal) * normal);
     mat3 local = mat3(tangent, cross(normal, tangent), normal);
 
-	sample_pos = sample_point(local, world_pos);
+	sample_pos = sample_point(local, world_pos, eye);
 }

@@ -4,14 +4,14 @@ in vec3  position;
 in float color;
 in vec3  normal;
 
+layout(location = 0) out vec3 out_position;
+layout(location = 1) out vec4 out_color;
+layout(location = 2) out vec3 out_normal;
+
 layout(location = 0) uniform mat4  modelview_matrix;
 layout(location = 1) uniform mat4  projection_matrix;
 layout(location = 2) uniform vec3  clip_normal;
 layout(location = 3) uniform float clip_distance;
-
-layout(location = 0) out vec3 out_position;
-layout(location = 1) out vec4 out_color;
-layout(location = 2) out vec3 out_normal;
 
 void main() {
     out_position = (modelview_matrix * vec4(position, 1.0)).xyz;

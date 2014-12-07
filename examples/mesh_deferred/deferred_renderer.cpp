@@ -195,7 +195,6 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     std::vector<float> light_dir_vec(light_dir_.data(), light_dir_.data()+3);
     compose_pass_->set_uniform("light_dir", light_dir_vec);
     compose_pass_->set_uniform("eye_dir", eye_dir);
-    std::cout << "eye: " << eye.transpose() << "\n";
     compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
     compose_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
     compose_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
@@ -245,6 +244,9 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
         vao->bind();
         uint32_t n = samples_.size();
         std::cout << "normal: " << samples_[0].transpose() << "\n";
+        std::cout << "eye: " << samples_[1].transpose() << "\n";
+        std::cout << std::boolalpha << (samples_[0].dot(samples_[1]) > 0.f) << "\n";
+        std::cout << (cam->view_matrix().inverse().block<3,3>(0,0) * samples_[0]).transpose() << "\n";
         Eigen::MatrixXf vbo_data(n-1, 3);
         Eigen::Matrix<uint32_t, Eigen::Dynamic, 1> ibo_data(n-1);
         vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}};

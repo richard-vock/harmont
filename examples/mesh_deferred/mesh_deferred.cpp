@@ -32,7 +32,7 @@ void init() {
         light_dir,
         0.8f,
         0.05f,
-        true,
+        false,
         "mesh.vert",
         "hdr.frag",
         "pisa_diffuse.hdr"
