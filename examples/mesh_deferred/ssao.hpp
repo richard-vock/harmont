@@ -19,10 +19,11 @@ class ssao {
         void init(int width, int height);
         void reshape(int width, int height);
 
-        void compute(texture::ptr gbuffer, camera::ptr cam);
+        void compute(texture::ptr gbuffer, camera::ptr cam, uint32_t num_blur_passes = 1);
 
         texture::ptr ssao_texture();
         texture::ptr sample_texture();
+        texture::ptr noise_texture();
 
 		uint32_t variation() const;
 		void     set_variation(uint32_t variation);
@@ -34,6 +35,10 @@ class ssao {
 		void  set_radius(float radius);
 		void  delta_radius(float delta);
 
+		float exponent() const;
+		void  set_exponent(float exponent);
+		void  delta_exponent(float delta);
+
 	protected:
         void init_samples_();
         void init_noise_();
@@ -43,13 +48,14 @@ class ssao {
         uint32_t             variation_;
         uint32_t             num_samples_;
 		float                radius_;
+        float                exponent_;
 		texture::ptr         tex_samples_;
 		texture::ptr         tex_noise_;
 		texture::ptr         tex_ssao_;
-		//texture::ptr         tex_work_;
+		texture::ptr         tex_work_;
         render_pass_2d::ptr  pass_sample_;
-        //render_pass_2d::ptr  pass_blur_h_;
-        //render_pass_2d::ptr  pass_blur_v_;
+        render_pass_2d::ptr  pass_blur_h_;
+        render_pass_2d::ptr  pass_blur_v_;
 };
 
 

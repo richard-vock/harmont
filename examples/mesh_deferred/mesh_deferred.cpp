@@ -32,7 +32,7 @@ void init() {
         light_dir,
         0.8f,
         0.05f,
-        false,
+        true,
         "mesh.vert",
         "hdr.frag",
         "pisa_diffuse.hdr"
@@ -108,7 +108,6 @@ int main (int argc, char* argv[]) {
     app_g->init(argc, argv, "Render Mesh", &init);
     app_g->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { renderer_g->delta_clipping_height(-delta[1] * 0.01f); app_g->update(); });
     app_g->on_click_left([&] (Eigen::Vector2i pos) { Eigen::Vector3f dir = app_g->current_camera()->forward().normalized(); renderer_g->set_light_dir(dir, bb_g); app_g->update(); });
-    app_g->on_click_right([&] (Eigen::Vector2i pos) { renderer_g->set_debug_position(pos); app_g->update(); });
     app_g->on_char([&] (unsigned char key) {
         if (key == 'b') renderer_g->delta_shadow_bias(-0.001);
         if (key == 'B') renderer_g->delta_shadow_bias(0.001);
@@ -116,6 +115,8 @@ int main (int argc, char* argv[]) {
         if (key == 'E') renderer_g->delta_exposure(0.001f);
         if (key == 'r') renderer_g->delta_ssao_radius(-0.01f);
         if (key == 'R') renderer_g->delta_ssao_radius(0.01f);
+        if (key == 's') renderer_g->delta_ssao_exponent(-0.1f);
+        if (key == 'S') renderer_g->delta_ssao_exponent(0.1f);
         if (key == 'c' || key == 'C') renderer_g->toggle_clipping();
         app_g->update();
     });

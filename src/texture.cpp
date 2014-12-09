@@ -29,62 +29,100 @@ static GLenum infer_targets(int dim) {
 	}
 }
 
-static GLenum infer_internal_layout(int channels) {
-	switch(channels) {
-		case 1: return GL_RED; break;
-		case 2: return GL_RG; break;
-		case 3: return GL_RGB; break;
-		case 4: return GL_RGBA; break;
-		default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
-	}
-}
+template <typename Scalar>
+struct internal_layout;
 
-static GLenum infer_internal_format(int channels) {
-	switch(channels) {
-		case 1: return GL_R32F; break;
-		case 2: return GL_RG32F; break;
-		case 3: return GL_RGB32F; break;
-		case 4: return GL_RGBA32F; break;
-		default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
-	}
-}
+template <>
+struct internal_layout<float> {
+    static GLenum infer(int channels) {
+        switch(channels) {
+            case 1: return GL_RED; break;
+            case 2: return GL_RG; break;
+            case 3: return GL_RGB; break;
+            case 4: return GL_RGBA; break;
+            default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
+        }
+    }
+};
+
+template <>
+struct internal_layout<unsigned int> {
+    static GLenum infer(int channels) {
+        switch(channels) {
+            case 1: return GL_RED_INTEGER; break;
+            case 2: return GL_RG_INTEGER; break;
+            case 3: return GL_RGB_INTEGER; break;
+            case 4: return GL_RGBA_INTEGER; break;
+            default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
+        }
+    }
+};
+
+template <typename Scalar>
+struct internal_format;
+
+template <>
+struct internal_format<float> {
+    static GLenum infer(int channels) {
+        switch(channels) {
+            case 1: return GL_R32F; break;
+            case 2: return GL_RG32F; break;
+            case 3: return GL_RGB32F; break;
+            case 4: return GL_RGBA32F; break;
+            default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
+        }
+    }
+};
+
+template <>
+struct internal_format<unsigned int> {
+    static GLenum infer(int channels) {
+        switch(channels) {
+            case 1: return GL_R32UI; break;
+            case 2: return GL_RG32UI; break;
+            case 3: return GL_RGB32UI; break;
+            case 4: return GL_RGBA32UI; break;
+            default: throw std::runtime_error("texture: Invalid number of texture channels. Must be in [1,4].");
+        }
+    }
+};
 
 
 template <typename Scalar>
 texture::ptr texture::texture_1d(int width, int channels, const Scalar* data, boost::optional<GLenum> format, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
-	GLenum internal_layout = infer_internal_layout(channels);
-    GLenum internal_format;
+	GLenum int_layout = internal_layout<Scalar>::infer(channels);
+    GLenum int_format;
     if (format) {
-        internal_format = *format;
+        int_format = *format;
     } else {
-        internal_format = infer_internal_format(channels);
+        int_format = internal_format<Scalar>::infer(channels);
     }
 	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
-    return ptr(new texture(scalar_type, internal_layout, internal_format, width, 0, 0, data, params));
+    return ptr(new texture(scalar_type, int_layout, int_format, width, 0, 0, data, params));
 }
 
 template <typename Scalar>
 texture::ptr texture::texture_2d(int width, int height, int channels, const Scalar* data, boost::optional<GLenum> format, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
-    GLenum internal_format;
+    GLenum int_layout = internal_layout<Scalar>::infer(channels);
+    GLenum int_format;
     if (format) {
-        internal_format = *format;
+        int_format = *format;
     } else {
-        internal_format = infer_internal_format(channels);
+        int_format = internal_format<Scalar>::infer(channels);
     }
-    GLenum internal_layout = infer_internal_layout(channels);
 	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
-    return ptr(new texture(scalar_type, internal_layout, internal_format, width, height, 0, data, params));
+    return ptr(new texture(scalar_type, int_layout, int_format, width, height, 0, data, params));
 }
 
 template <typename Scalar>
 texture::ptr texture::texture_3d(int width, int height, int depth, int channels, const Scalar* data, GLenum min_filter, GLenum mag_filter, GLenum wrap_s, GLenum wrap_t) {
 	GLenum scalar_type = gl_type_enum<Scalar>::value;
-	GLenum internal_layout = infer_internal_layout(channels);
-	GLenum internal_format = infer_internal_format(channels);
+	GLenum int_layout = internal_layout<Scalar>::infer(channels);
+	GLenum int_format = internal_format<Scalar>::infer(channels);
 	parameters_t_ params = {min_filter, mag_filter, wrap_s, wrap_t};
-    return ptr(new texture(scalar_type, internal_layout, internal_format, width, height, depth, data, params));
+    return ptr(new texture(scalar_type, int_layout, int_format, width, height, depth, data, params));
 }
 
 template <typename Scalar>

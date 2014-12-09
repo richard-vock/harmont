@@ -4,7 +4,6 @@
 #include <harmont/harmont.hpp>
 #include "shadow_pass.hpp"
 #include "ssao.hpp"
-#include "render_pass_samples.hpp"
 
 namespace harmont {
 
@@ -64,13 +63,15 @@ class deferred_renderer {
 		void  set_ssao_radius(float radius);
 		void  delta_ssao_radius(float delta);
 
+		float ssao_exponent() const;
+		void  set_ssao_exponent(float exponent);
+		void  delta_ssao_exponent(float delta);
+
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
 		void render(const render_callback_t& render_callback, camera::ptr cam, const bounding_box_t& bbox);
 		void reshape(camera::ptr cam);
-
-        void set_debug_position(Eigen::Vector2i pos);
 
 	protected:
 		void   load_hdr_map_(std::string filename);
@@ -94,11 +95,6 @@ class deferred_renderer {
         float                clipping_height_;
         float                clipping_min_z_;
         float                clipping_max_z_;
-
-		render_pass_samples::ptr  debug_sample_pass_;
-        Eigen::Vector2i      debug_position_ = Eigen::Vector2i(-1,-1);
-        std::vector<Eigen::Vector3f> samples_;
-        render_pass::ptr  render_samples_pass_;
 };
 
 

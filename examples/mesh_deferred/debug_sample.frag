@@ -23,8 +23,9 @@ vec3 sample_point(mat3 local, vec3 pos, vec3 eye) {
     }
     vec4 local_sample = texelFetch(map_samples, sample_idx, 0);
     local_sample.xy = 2.0 * local_sample.xy - 1.0;
-    local_sample.xyz = radius * local_sample.a * normalize(local_sample.xyz) + 0.02 * vec3(0.0, 0.0, 1.0);
-    return local_sample.xyz * local + pos;
+    /*local_sample.xyz = radius * local_sample.a * normalize(local_sample.xyz) + 0.02 * vec3(0.0, 0.0, 1.0);*/
+    local_sample.xyz = radius * 1.0 * normalize(local_sample.xyz) + 0.02 * vec3(0.0, 0.0, 1.0);
+    return local * local_sample.xyz + pos;
 }
 
 vec3 inverse_view_project(vec3 pos) {

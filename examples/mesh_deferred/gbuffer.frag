@@ -14,7 +14,7 @@ vec3  mat_diffuse = vec3(0.8, 0.8, 0.8);
 vec3  mat_specular = vec3(0.1, 0.1, 0.1);
 float mat_roughness  = 0.7;
 
-out vec3 out_color;
+out uvec3 out_color;
 
 vec3 rgb_to_ycbcr(vec3 rgb);
 
@@ -29,11 +29,10 @@ void main() {
     vec3 albedo_ycbcr = rgb_to_ycbcr(mat_diffuse);
     vec3 spec_ycbcr = rgb_to_ycbcr(mat_specular);
 
-    float final_r = 2.0 * gl_FragCoord.z - 1.0;
-    float final_g = float(packSnorm4x8(vec4(normalize(normal_matrix * normal), mat_roughness)));
-    /*float final_b = float(packSnorm4x8(vec4(albedo_ycbcr, spec_ycbcr.x)));*/
-    float final_b = float(packSnorm4x8(vec4(eye_dir, 0.0)));
-    out_color = vec3(final_r, final_g, final_b);
+    uint final_r = floatBitsToUint(gl_FragCoord.z);//uint(clamp(gl_FragCoord.z * 255.0, 0.0, 255.0));
+    uint final_g = packSnorm4x8(vec4(normal, mat_roughness));
+    uint final_b = packSnorm4x8(vec4(albedo_ycbcr, spec_ycbcr.x));
+    out_color = uvec3(final_r, final_g, final_b);
 }
 
 vec3 rgb_to_ycbcr(vec3 rgb) {

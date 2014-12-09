@@ -1,6 +1,6 @@
 #version 430
 
-layout(location = 0) uniform sampler2D map_gbuffer;
+layout(location = 0) uniform usampler2D map_gbuffer;
 layout(location = 1) uniform int       width;
 layout(location = 2) uniform int       height;
 layout(location = 3) uniform float     near;
@@ -45,8 +45,8 @@ vec3 hsv2rgb(float h, float s, float v) {
 vec3 unpack_normal(vec3 gbuffer);
 
 void main(void) {
-    vec3 gbuffer = texture2D(map_gbuffer, tc).rgb;
-    if (gbuffer.r == 0.0 && gbuffer.g == 0.0 && gbuffer.b == 0.0) {
+    uvec3 gbuffer = texture(map_gbuffer, tc).rgb;
+    if (gbuffer.r == 0 && gbuffer.g == 0 && gbuffer.b == 0) {
         frag_color = vec4(1.0, 1.0, 1.0, 0.0);
         return;
     }
@@ -83,19 +83,9 @@ void main(void) {
     /*float v = error;//abs(clip.x - pos.x);*/
     /*frag_color = vec4(v, v, v, 1.0);*/
 
-    vec3 normal = unpackSnorm4x8(uint(gbuffer.g)).xyz;//unpack_normal(gbuffer);
+    vec3 normal = unpackSnorm4x8(gbuffer.g).xyz;//unpack_normal(gbuffer);
 
     float phi = (atan(normal.y, normal.x) + pi) / (2.0 * pi);
     float theta = 1.0 - acos(normal.z) / pi;
     frag_color = vec4(normal.x, normal.y, normal.z, 1.0); //vec4(hsv2rgb(phi, 1.0, theta), 1.0);
-}
-
-vec3 unpack_normal(vec3 gbuffer) {
-    vec4 g_part = unpackSnorm4x8(uint(gbuffer.g));
-    vec2 n_xy = g_part.xy;
-    float z_sign = sign(g_part.z);
-    float denom = 1.0 + n_xy.x*n_xy.x + n_xy.y*n_xy.y;
-    vec3 normal = vec3(2.0*n_xy.x / denom, 2.0*n_xy.y / denom, (-1.0 + n_xy.x*n_xy.x + n_xy.y*n_xy.y) / denom);
-    normal.z *= z_sign * sign(normal.z);
-    return normal;
 }
