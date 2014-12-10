@@ -1,8 +1,0 @@
-env = Environment(
-    CXXFLAGS = "-g -Wall -O2 -std=c++1y",
-    CPPPATH = ['/usr/include/eigen3'],
-    LIBPATH = ['/usr/lib/OpenMesh'],
-    LIBS = ['OpenMeshCore', 'harmont', 'GL', 'GLU', 'GLEW']
-)
-
-env.Program('mesh_hdr_shadow', ['mesh_hdr_shadow.cpp', 'shadow_pass.cpp', 'rgbe.c'])
