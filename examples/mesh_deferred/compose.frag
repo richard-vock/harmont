@@ -25,6 +25,7 @@ out vec4 out_color;
 const float pi = 3.14159265358979;
 const float piInv = 0.318309886183791;
 const float fudge = 0.001;
+const float min_diffuse = 0.2;
 
 // tonemapping parameters
 const float shoulder_s = 0.22;
@@ -65,7 +66,7 @@ void main(void) {
 
     vec3 mat_diffuse, mat_specular;
     unpack_colors(gbuffer, mat_diffuse, mat_specular);
-    vec3 mat_ambient = 0.1 * mat_diffuse;
+    vec3 mat_ambient = 0.03 * mat_diffuse;
 
     float window_z = unpack_depth(gbuffer);
     vec4 window_pos = vec4(tc * 2.0 - 1.0, 2.0 * window_z - 1.0, 1.0);
@@ -76,12 +77,12 @@ void main(void) {
     vec3 env_col = texture2D(map_diffuse, dirToUV(normal)).rgb * vec3(1.0, 1.0, 1.0);
     float visibility = 1.0 - in_shadow(normal, in_shadow_pos);
 
-    float ssao = texture(map_ssao, tc).r;
+    vec3 ssao = texture(map_ssao, tc).rgb;
 
-    vec3 ambient = mat_ambient * env_col * ssao;
-    vec3 diffuse = diffuse(normal, light_dir, mat_diffuse) * env_col;// * ssao;
-    vec3 hdr_color = ambient;
-    hdr_color += clamp(visibility, 0.05, 1.0) * diffuse;
+    vec3 ambient = mat_ambient * env_col;// * ssao;
+    vec3 diffuse = ssao; // env_col;// * ssao;
+    vec3 hdr_color = vec3(0.0, 0.0, 0.0); //ambient;
+    hdr_color += clamp(visibility, min_diffuse, 1.0) * diffuse;
     if (visibility > 0.0) {
         vec3 specular = specular(roughness, mat_specular, normal, eye_dir, light_dir) * light_emission;
         hdr_color += visibility * specular;
@@ -99,7 +100,7 @@ vec3 unpack_normal(uvec3 gbuffer, out float roughness) {
 
 void unpack_colors(uvec3 gbuffer, out vec3 mat_diffuse, out vec3 mat_specular) {
     vec4 b_part = unpackSnorm4x8(gbuffer.b);
-    mat_diffuse = ycbcr_to_rgb(b_part.xyz);
+    mat_diffuse = b_part.xyz; //ycbcr_to_rgb(b_part.xyz);
     mat_specular = ycbcr_to_rgb(vec3(b_part.w, 0.5, 0.5));
 }
 
@@ -153,11 +154,12 @@ vec3 tone_map(in vec3 col) {
 	return mapped;
 }
 
-vec3 diffuse(vec3 n, vec3 l, vec3 kd) {
-    float nl = dot(n, l);
-    if (nl < 0.0) return vec3(0.0, 0.0, 0.0);
-    return kd * max(0, dot(n,l)) / pi;
-}
+/*vec3 diffuse(vec3 n, vec3 l, vec3 kd) {*/
+    /*float nl = dot(n, l);*/
+    /*vec3 min_kd = min_diffuse * kd;*/
+    /*if (nl < 0.0) return min_kd; //vec3(min_diffuse, min_diffuse, min_diffuse);*/
+    /*return clamp(kd * max(0, nl), min_kd, vec3(1.0, 1.0, 1.0)); //clamp(kd * max(0, nl) / pi, min_diffuse, 1.0);*/
+/*}*/
 
 float spec_d(float roughness, vec3 n, vec3 h) {
     // computes ndf as suggested by disney (GGX/Trowbridge-Reitz)

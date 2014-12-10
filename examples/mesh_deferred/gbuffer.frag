@@ -26,12 +26,12 @@ void main() {
         normal *= -1.0;
     }
 
-    vec3 albedo_ycbcr = rgb_to_ycbcr(mat_diffuse);
+    vec3 albedo_ycbcr = rgb_to_ycbcr(in_color.rgb);
     vec3 spec_ycbcr = rgb_to_ycbcr(mat_specular);
 
     uint final_r = floatBitsToUint(gl_FragCoord.z);//uint(clamp(gl_FragCoord.z * 255.0, 0.0, 255.0));
     uint final_g = packSnorm4x8(vec4(normal, mat_roughness));
-    uint final_b = packSnorm4x8(vec4(albedo_ycbcr, spec_ycbcr.x));
+    uint final_b = packSnorm4x8(vec4(in_color.rgb, spec_ycbcr.x));
     out_color = uvec3(final_r, final_g, final_b);
 }
 

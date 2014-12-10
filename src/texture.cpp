@@ -260,6 +260,14 @@ void texture::get_data(Scalar* data) {
     release();
 }
 
+void texture::copy_to(texture::ptr other) {
+    glCopyImageSubData(
+        handle_,        target_,        0, 0, 0, 0, // src
+        other->handle_, other->target_, 0, 0, 0, 0, // tgt
+        width_, height_, depth_
+    );
+}
+
 void texture::bind() {
 	glBindTexture(target_, handle_);
 }

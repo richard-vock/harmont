@@ -31,7 +31,7 @@ void init() {
     deferred_renderer::render_parameters_t r_params {
         light_dir,
         0.8f,
-        0.05f,
+        0.003f,
         true,
         "mesh.vert",
         "hdr.frag",
@@ -39,7 +39,7 @@ void init() {
     };
     deferred_renderer::shadow_parameters_t s_params {
         2048,
-        16,
+        32,
         "shadow.vert",
         "shadow.frag",
     };
@@ -87,6 +87,7 @@ int main (int argc, char* argv[]) {
 	opt += OpenMesh::IO::Options::VertexNormal;
 	opt += OpenMesh::IO::Options::VertexColor;
 
+	mesh_g.request_vertex_colors();
 	mesh_g.request_vertex_normals();
 	mesh_g.request_face_normals();
     if (!OpenMesh::IO::read_mesh(mesh_g, argv[1], opt)) {
@@ -117,6 +118,8 @@ int main (int argc, char* argv[]) {
         if (key == 'R') renderer_g->delta_ssao_radius(0.01f);
         if (key == 's') renderer_g->delta_ssao_exponent(-0.1f);
         if (key == 'S') renderer_g->delta_ssao_exponent(0.1f);
+        if (key == 'a') renderer_g->delta_ssao_reflective_albedo(-0.1f);
+        if (key == 'A') renderer_g->delta_ssao_reflective_albedo(0.1f);
         if (key == 'c' || key == 'C') renderer_g->toggle_clipping();
         app_g->update();
     });

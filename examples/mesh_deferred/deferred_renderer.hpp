@@ -67,6 +67,10 @@ class deferred_renderer {
 		void  set_ssao_exponent(float exponent);
 		void  delta_ssao_exponent(float delta);
 
+		float ssao_reflective_albedo() const;
+		void  set_ssao_reflective_albedo(float reflective_albedo);
+		void  delta_ssao_reflective_albedo(float delta);
+
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 

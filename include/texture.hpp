@@ -82,6 +82,8 @@ class texture {
 		template <typename Scalar, int Rows, int Cols, int Options>
 		void get_data(Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
 
+        void copy_to(texture::ptr other);
+
 		void bind();
 		void release();
 

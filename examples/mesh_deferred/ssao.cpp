@@ -6,7 +6,7 @@
 namespace harmont {
 
 
-ssao::ssao(uint32_t variation, uint32_t num_samples, float radius) : variation_(variation), num_samples_(num_samples), radius_(radius), exponent_(1.f) {
+ssao::ssao(uint32_t variation, uint32_t num_samples, float radius) : variation_(variation), num_samples_(num_samples), radius_(radius), exponent_(0.8f), first_pass_(true), refl_albedo_(0.1) {
 }
 
 ssao::~ssao() {
@@ -16,24 +16,32 @@ void ssao::init(int width, int height) {
     tex_noise_ = texture::texture_2d<float>(variation_, variation_, 2, nullptr, GL_RG32F, GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT);
     init_samples_();
     init_noise_();
-    tex_ssao_ = texture::texture_2d<float>(width, height, 1);
-    tex_work_ = texture::texture_2d<float>(width, height, 1);
+    tex_ssao_ = texture::texture_2d<float>(width, height, 3);
+
+    float* data = new float[width * height * 3];
+    std::fill(data, data+(width*height*3), 0.f);
+    tex_last_ = texture::texture_2d<float>(width, height, 3, data);
+    delete [] data;
+
+    tex_work_ = texture::texture_2d<float>(width, height, 3);
     auto vs_quad = vertex_shader::from_file("full_quad.vert");
     auto fs_sample = fragment_shader::from_file("ssao.frag");
-    auto fs_blur = fragment_shader::from_file("blur.frag");
+    auto fs_blur_h = fragment_shader::from_file("blur_h.frag");
+    auto fs_blur_v = fragment_shader::from_file("blur_v.frag");
     pass_sample_ = std::make_shared<render_pass_2d>(vs_quad, fs_sample, render_pass::textures({tex_ssao_}));
-    pass_blur_h_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur, render_pass::textures({tex_work_}));
-    pass_blur_v_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur, render_pass::textures({tex_ssao_}));
+    pass_blur_h_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_h, render_pass::textures({tex_work_}));
+    pass_blur_v_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_v, render_pass::textures({tex_ssao_, tex_last_}));
     pass_blur_h_->set_uniform("dimension", 0);
     pass_blur_v_->set_uniform("dimension", 1);
 }
 
 void ssao::reshape(int width, int height) {
     tex_ssao_->resize(width, height);
+    tex_last_->resize(width, height);
     tex_work_->resize(width, height);
 }
 
-void ssao::compute(texture::ptr gbuffer, camera::ptr cam, uint32_t num_blur_passes) {
+void ssao::compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, uint32_t num_blur_passes) {
     pass_sample_->set_uniform("modelview_matrix", cam->view_matrix());
     pass_sample_->set_uniform("projection_matrix", cam->projection_matrix());
     pass_sample_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
@@ -41,7 +49,9 @@ void ssao::compute(texture::ptr gbuffer, camera::ptr cam, uint32_t num_blur_pass
     pass_sample_->set_uniform("radius", radius_);
     pass_sample_->set_uniform("near", cam->near());
     pass_sample_->set_uniform("far", cam->far());
-    pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {tex_noise_, "map_noise"}, {gbuffer, "map_gbuffer"}});
+    pass_sample_->set_uniform("reflective_albedo", refl_albedo_);
+    pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {tex_noise_, "map_noise"}, {gbuffer, "map_gbuffer"}, {env_map, "map_env"}, {tex_last_, "map_last"}});
+    //pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {tex_noise_, "map_noise"}, {gbuffer, "map_gbuffer"}, {env_map, "map_env"}});
     //pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {gbuffer, "map_gbuffer"}});
 
     // blur
@@ -57,6 +67,8 @@ void ssao::compute(texture::ptr gbuffer, camera::ptr cam, uint32_t num_blur_pass
         pass_blur_h_->render([&] (shader_program::ptr) {}, {{tex_ssao_, "map_input"}, {gbuffer, "map_gbuffer"}});
         pass_blur_v_->render([&] (shader_program::ptr) {}, {{tex_work_, "map_input"}, {gbuffer, "map_gbuffer"}});
     }
+
+    first_pass_ = false;
 }
 
 texture::ptr ssao::ssao_texture() {
@@ -69,6 +81,10 @@ texture::ptr ssao::sample_texture() {
 
 texture::ptr ssao::noise_texture() {
     return tex_noise_;
+}
+
+render_pass::textures ssao::clear_textures() {
+    return render_pass::textures({tex_ssao_});
 }
 
 uint32_t ssao::variation() const {
@@ -116,6 +132,20 @@ void ssao::set_exponent(float exponent) {
 
 void ssao::delta_exponent(float delta) {
     set_exponent(exponent_ + delta);
+}
+
+float ssao::reflective_albedo() const {
+    return refl_albedo_;
+}
+
+void ssao::set_reflective_albedo(float reflective_albedo) {
+    refl_albedo_ = reflective_albedo;
+    if (refl_albedo_ < 0.f) refl_albedo_ = 0.f;
+    if (refl_albedo_ > 1.f) refl_albedo_ = 1.f;
+}
+
+void ssao::delta_reflective_albedo(float delta) {
+    set_reflective_albedo(refl_albedo_ + delta);
 }
 
 void ssao::init_samples_() {

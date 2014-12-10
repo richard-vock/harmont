@@ -26,7 +26,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     );
     shadow_pass_->update(bbox, light_dir_);
 
-    ssao_pass_ = std::make_shared<ssao>(64, 20, 0.1f);
+    ssao_pass_ = std::make_shared<ssao>(4, 40, 2.1f);
     ssao_pass_->init(width, height);
 
     load_hdr_map_(render_parameters.hdr_map);
@@ -51,7 +51,10 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     fragment_shader::ptr debug_gbuffer_frag = fragment_shader::from_file("debug_gbuffer.frag");
     fragment_shader::ptr debug_ssao_frag = fragment_shader::from_file("debug_ssao.frag");
 
-    clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, render_pass::textures({gbuffer_tex_, ssao_pass_->ssao_texture()}));
+    auto ssao_clear_textures = ssao_pass_->clear_textures();
+    render_pass::textures clear_textures(1, gbuffer_tex_);
+    clear_textures.insert(clear_textures.end(), ssao_clear_textures.begin(), ssao_clear_textures.end());
+    clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, clear_textures);
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
     debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssao_frag);
@@ -153,6 +156,18 @@ void deferred_renderer::delta_ssao_exponent(float delta) {
     ssao_pass_->delta_exponent(delta);
 }
 
+float deferred_renderer::ssao_reflective_albedo() const {
+    return ssao_pass_->reflective_albedo();
+}
+
+void deferred_renderer::set_ssao_reflective_albedo(float reflective_albedo) {
+    ssao_pass_->set_reflective_albedo(reflective_albedo);
+}
+
+void deferred_renderer::delta_ssao_reflective_albedo(float delta) {
+    ssao_pass_->delta_reflective_albedo(delta);
+}
+
 render_pass::ptr deferred_renderer::geometry_pass() {
     return geom_pass_;
 }
@@ -203,10 +218,13 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
         glDisable(GL_CLIP_DISTANCE0);
     }
 
-    ssao_pass_->compute(gbuffer_tex_, cam, 2);
+    ssao_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
 
     //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
-    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
+    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
+    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
+    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
+    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
     //debug_pass_->render([&] (shader_program::ptr) { }, {{ssao_pass_->ssao_texture(), "map_ssao"}});
     //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
 }

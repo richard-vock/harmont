@@ -10,7 +10,7 @@ layout(location = 3) uniform int width;
 layout(location = 4) uniform int height;
 
 in  vec2 tc;
-out float blurred;
+out vec3 blurred;
 
 bool is_background(vec2 tex_coord) {
     uvec3 gbuffer = texture(map_gbuffer, tex_coord).rgb;
@@ -19,7 +19,7 @@ bool is_background(vec2 tex_coord) {
 
 void main (void) {
     if (is_background(tc)) {
-		blurred = texture(map_input, tc).r;
+		blurred = texture(map_input, tc).rgb;
 		return;
     }
 	vec2 unit = vec2(0.0, 0.0);
@@ -31,17 +31,17 @@ void main (void) {
 	}
 
 	float sum_weights = 0.0;
-	blurred = texture(map_input, tc).r * weight[0];
+	blurred = texture(map_input, tc).rgb * weight[0];
 	sum_weights += weight[0];
 	for (int i=1; i<3; ++i) {
 		vec2 tc_off = tc + unit * offset[i] * scale;
 		if (!is_background(tc_off)) {
-			blurred += texture(map_input, tc_off) * weight[i];
+			blurred += texture(map_input, tc_off).rgb * weight[i];
 			sum_weights += weight[i];
 		}
 		tc_off = tc - unit * offset[i] * scale;
 		if (!is_background(tc_off)) {
-			blurred += texture(map_input, tc_off) * weight[i];
+			blurred += texture(map_input, tc_off).rgb * weight[i];
 			sum_weights += weight[i];
 		}
 	}
