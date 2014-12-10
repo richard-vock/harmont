@@ -3,7 +3,7 @@
 
 #include <harmont/harmont.hpp>
 #include "shadow_pass.hpp"
-#include "ssao.hpp"
+#include "ssdo.hpp"
 
 namespace harmont {
 
@@ -59,17 +59,17 @@ class deferred_renderer {
         void  set_clipping_height(float height);
         void  delta_clipping_height(float delta);
 
-		float ssao_radius() const;
-		void  set_ssao_radius(float radius);
-		void  delta_ssao_radius(float delta);
+		float ssdo_radius() const;
+		void  set_ssdo_radius(float radius);
+		void  delta_ssdo_radius(float delta);
 
-		float ssao_exponent() const;
-		void  set_ssao_exponent(float exponent);
-		void  delta_ssao_exponent(float delta);
+		float ssdo_exponent() const;
+		void  set_ssdo_exponent(float exponent);
+		void  delta_ssdo_exponent(float delta);
 
-		float ssao_reflective_albedo() const;
-		void  set_ssao_reflective_albedo(float reflective_albedo);
-		void  delta_ssao_reflective_albedo(float delta);
+		float ssdo_reflective_albedo() const;
+		void  set_ssdo_reflective_albedo(float reflective_albedo);
+		void  delta_ssdo_reflective_albedo(float delta);
 
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
@@ -90,7 +90,7 @@ class deferred_renderer {
 		texture::ptr         gbuffer_tex_;
 		texture::ptr         diff_tex_;
 		shadow_pass::ptr_t   shadow_pass_;
-		ssao::ptr_t          ssao_pass_;
+		ssdo::ptr_t          ssdo_pass_;
 		Eigen::Vector3f      light_dir_;
 		float                exposure_;
         float                shadow_bias_;

@@ -1,4 +1,4 @@
-#include "ssao.hpp"
+#include "ssdo.hpp"
 
 #include <random>
 #include <chrono>
@@ -6,17 +6,17 @@
 namespace harmont {
 
 
-ssao::ssao(uint32_t variation, uint32_t num_samples, float radius) : variation_(variation), num_samples_(num_samples), radius_(radius), exponent_(0.8f), first_pass_(true), refl_albedo_(0.1) {
+ssdo::ssdo(uint32_t variation, uint32_t num_samples, float radius) : variation_(variation), num_samples_(num_samples), radius_(radius), exponent_(0.8f), first_pass_(true), refl_albedo_(0.1) {
 }
 
-ssao::~ssao() {
+ssdo::~ssdo() {
 }
 
-void ssao::init(int width, int height) {
+void ssdo::init(int width, int height) {
     tex_noise_ = texture::texture_2d<float>(variation_, variation_, 2, nullptr, GL_RG32F, GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT);
     init_samples_();
     init_noise_();
-    tex_ssao_ = texture::texture_2d<float>(width, height, 3);
+    tex_ssdo_ = texture::texture_2d<float>(width, height, 3);
 
     float* data = new float[width * height * 3];
     std::fill(data, data+(width*height*3), 0.f);
@@ -25,23 +25,23 @@ void ssao::init(int width, int height) {
 
     tex_work_ = texture::texture_2d<float>(width, height, 3);
     auto vs_quad = vertex_shader::from_file("full_quad.vert");
-    auto fs_sample = fragment_shader::from_file("ssao.frag");
+    auto fs_sample = fragment_shader::from_file("ssdo.frag");
     auto fs_blur_h = fragment_shader::from_file("blur_h.frag");
     auto fs_blur_v = fragment_shader::from_file("blur_v.frag");
-    pass_sample_ = std::make_shared<render_pass_2d>(vs_quad, fs_sample, render_pass::textures({tex_ssao_}));
+    pass_sample_ = std::make_shared<render_pass_2d>(vs_quad, fs_sample, render_pass::textures({tex_ssdo_}));
     pass_blur_h_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_h, render_pass::textures({tex_work_}));
-    pass_blur_v_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_v, render_pass::textures({tex_ssao_, tex_last_}));
+    pass_blur_v_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_v, render_pass::textures({tex_ssdo_, tex_last_}));
     pass_blur_h_->set_uniform("dimension", 0);
     pass_blur_v_->set_uniform("dimension", 1);
 }
 
-void ssao::reshape(int width, int height) {
-    tex_ssao_->resize(width, height);
+void ssdo::reshape(int width, int height) {
+    tex_ssdo_->resize(width, height);
     tex_last_->resize(width, height);
     tex_work_->resize(width, height);
 }
 
-void ssao::compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, uint32_t num_blur_passes) {
+void ssdo::compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, uint32_t num_blur_passes) {
     pass_sample_->set_uniform("modelview_matrix", cam->view_matrix());
     pass_sample_->set_uniform("projection_matrix", cam->projection_matrix());
     pass_sample_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
@@ -64,91 +64,91 @@ void ssao::compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, 
             pass_blur_v_->set_uniform("width", width);
             pass_blur_v_->set_uniform("height", height);
         }
-        pass_blur_h_->render([&] (shader_program::ptr) {}, {{tex_ssao_, "map_input"}, {gbuffer, "map_gbuffer"}});
+        pass_blur_h_->render([&] (shader_program::ptr) {}, {{tex_ssdo_, "map_input"}, {gbuffer, "map_gbuffer"}});
         pass_blur_v_->render([&] (shader_program::ptr) {}, {{tex_work_, "map_input"}, {gbuffer, "map_gbuffer"}});
     }
 
     first_pass_ = false;
 }
 
-texture::ptr ssao::ssao_texture() {
-    return tex_ssao_;
+texture::ptr ssdo::ssdo_texture() {
+    return tex_ssdo_;
 }
 
-texture::ptr ssao::sample_texture() {
+texture::ptr ssdo::sample_texture() {
     return tex_samples_;
 }
 
-texture::ptr ssao::noise_texture() {
+texture::ptr ssdo::noise_texture() {
     return tex_noise_;
 }
 
-render_pass::textures ssao::clear_textures() {
-    return render_pass::textures({tex_ssao_});
+render_pass::textures ssdo::clear_textures() {
+    return render_pass::textures({tex_ssdo_});
 }
 
-uint32_t ssao::variation() const {
+uint32_t ssdo::variation() const {
     return variation_;
 }
 
-void ssao::set_variation(uint32_t variation) {
+void ssdo::set_variation(uint32_t variation) {
     variation_ = variation;
     if (variation_ < 1) variation_ = 1;
     init_samples_();
     init_noise_();
 }
 
-uint32_t ssao::num_samples() const {
+uint32_t ssdo::num_samples() const {
     return num_samples_;
 }
 
-void ssao::set_num_samples(uint32_t num_samples) {
+void ssdo::set_num_samples(uint32_t num_samples) {
     num_samples_ = num_samples;
     if (num_samples_ < 1) num_samples_ = 1;
     init_samples_();
 }
 
-float ssao::radius() const {
+float ssdo::radius() const {
     return radius_;
 }
 
-void ssao::set_radius(float radius) {
+void ssdo::set_radius(float radius) {
     radius_ = radius;
     if (radius_ < 0.f) radius_ = 0.f;
 }
 
-void ssao::delta_radius(float delta) {
+void ssdo::delta_radius(float delta) {
     set_radius(radius_ + delta);
 }
 
-float ssao::exponent() const {
+float ssdo::exponent() const {
     return exponent_;
 }
 
-void ssao::set_exponent(float exponent) {
+void ssdo::set_exponent(float exponent) {
     exponent_ = exponent;
     if (exponent_ < 0.01f) exponent_ = 0.01f;
 }
 
-void ssao::delta_exponent(float delta) {
+void ssdo::delta_exponent(float delta) {
     set_exponent(exponent_ + delta);
 }
 
-float ssao::reflective_albedo() const {
+float ssdo::reflective_albedo() const {
     return refl_albedo_;
 }
 
-void ssao::set_reflective_albedo(float reflective_albedo) {
+void ssdo::set_reflective_albedo(float reflective_albedo) {
     refl_albedo_ = reflective_albedo;
     if (refl_albedo_ < 0.f) refl_albedo_ = 0.f;
     if (refl_albedo_ > 1.f) refl_albedo_ = 1.f;
 }
 
-void ssao::delta_reflective_albedo(float delta) {
+void ssdo::delta_reflective_albedo(float delta) {
     set_reflective_albedo(refl_albedo_ + delta);
 }
 
-void ssao::init_samples_() {
+void ssdo::init_samples_() {
     typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> mat_t;
     mat_t data = 0.5f * (mat_t::Random(num_samples_, 4) + mat_t::Ones(num_samples_, 4));
     float factor = 1.f / (sqrt(2.f * M_PI));
@@ -172,7 +172,7 @@ void ssao::init_samples_() {
     //delete [] samples;
 }
 
-void ssao::init_noise_() {
+void ssdo::init_noise_() {
     unsigned long seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::uniform_real_distribution<float> distribution(0, 1);

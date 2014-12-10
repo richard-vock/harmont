@@ -1,27 +1,27 @@
-#ifndef _HARMONT_SSAO_HPP_
-#define _HARMONT_SSAO_HPP_
+#ifndef _HARMONT_SSDO_HPP_
+#define _HARMONT_SSDO_HPP_
 
 #include <harmont/harmont.hpp>
 
 namespace harmont {
 
-class ssao {
+class ssdo {
 	public:
-		typedef std::shared_ptr<ssao>        ptr_t;
-		typedef std::weak_ptr<ssao>          wptr_t;
-		typedef std::shared_ptr<const ssao>  const_ptr_t;
-		typedef std::weak_ptr<const ssao>    const_wptr_t;
+		typedef std::shared_ptr<ssdo>        ptr_t;
+		typedef std::weak_ptr<ssdo>          wptr_t;
+		typedef std::shared_ptr<const ssdo>  const_ptr_t;
+		typedef std::weak_ptr<const ssdo>    const_wptr_t;
 
 	public:
-		ssao(uint32_t variation, uint32_t num_samples, float radius);
-		virtual ~ssao();
+		ssdo(uint32_t variation, uint32_t num_samples, float radius);
+		virtual ~ssdo();
 
         void init(int width, int height);
         void reshape(int width, int height);
 
         void compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, uint32_t num_blur_passes = 1);
 
-        texture::ptr ssao_texture();
+        texture::ptr ssdo_texture();
         texture::ptr sample_texture();
         texture::ptr noise_texture();
         render_pass::textures clear_textures();
@@ -56,7 +56,7 @@ class ssao {
         float                exponent_;
 		texture::ptr         tex_samples_;
 		texture::ptr         tex_noise_;
-		texture::ptr         tex_ssao_;
+		texture::ptr         tex_ssdo_;
 		texture::ptr         tex_last_;
 		texture::ptr         tex_work_;
         render_pass_2d::ptr  pass_sample_;
@@ -69,4 +69,4 @@ class ssao {
 
 } // harmont
 
-#endif /* _HARMONT_SSAO_HPP_ */
+#endif /* _HARMONT_SSDO_HPP_ */

@@ -26,38 +26,30 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     );
     shadow_pass_->update(bbox, light_dir_);
 
-    ssao_pass_ = std::make_shared<ssao>(4, 40, 2.1f);
-    ssao_pass_->init(width, height);
+    ssdo_pass_ = std::make_shared<ssdo>(4, 40, 2.1f);
+    ssdo_pass_->init(width, height);
 
     load_hdr_map_(render_parameters.hdr_map);
-
-    vertex_shader::parameters_t params = {{"sample_count", std::to_string(shadow_parameters.sample_count)}, {"shadow_res", std::to_string(shadow_parameters.resolution)}};
-    //vertex_shader::ptr vs = vertex_shader::from_file(render_parameters.vertex_shader, params);
-    //fragment_shader::ptr fs = fragment_shader::from_file(render_parameters.fragment_shader, params);
-    //geom_pass_ = std::make_shared<render_pass>(vs, fs);
-    //geom_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
-    //std::vector<float> light_dir_vec(light_dir_.data(), light_dir_.data()+3);
-    //geom_pass_->set_uniform("light_dir", light_dir_vec);
-    //geom_pass_->set_uniform("two_sided", 1);
 
     depth_tex_ = texture::depth_texture<float>(width, height);
     gbuffer_tex_ = texture::texture_2d<unsigned int>(width, height, 3);
 
+    vertex_shader::parameters_t params = {{"sample_count", std::to_string(shadow_parameters.sample_count)}, {"shadow_res", std::to_string(shadow_parameters.resolution)}};
     vertex_shader::ptr full_quad_vert = vertex_shader::from_file("full_quad.vert");
     vertex_shader::ptr   gbuffer_vert = vertex_shader::from_file("gbuffer.vert");
     fragment_shader::ptr clear_frag   = fragment_shader::from_file("clear.frag");
     fragment_shader::ptr gbuffer_frag = fragment_shader::from_file("gbuffer.frag");
     fragment_shader::ptr compose_frag = fragment_shader::from_file("compose.frag", params);
     fragment_shader::ptr debug_gbuffer_frag = fragment_shader::from_file("debug_gbuffer.frag");
-    fragment_shader::ptr debug_ssao_frag = fragment_shader::from_file("debug_ssao.frag");
+    fragment_shader::ptr debug_ssdo_frag = fragment_shader::from_file("debug_ssdo.frag");
 
-    auto ssao_clear_textures = ssao_pass_->clear_textures();
+    auto ssdo_clear_textures = ssdo_pass_->clear_textures();
     render_pass::textures clear_textures(1, gbuffer_tex_);
-    clear_textures.insert(clear_textures.end(), ssao_clear_textures.begin(), ssao_clear_textures.end());
+    clear_textures.insert(clear_textures.end(), ssdo_clear_textures.begin(), ssdo_clear_textures.end());
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, clear_textures);
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
-    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssao_frag);
+    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssdo_frag);
     //debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
 }
 
@@ -132,40 +124,40 @@ void deferred_renderer::delta_clipping_height(float delta) {
     clipping_height_ += delta;
 }
 
-float deferred_renderer::ssao_radius() const {
-    return ssao_pass_->radius();
+float deferred_renderer::ssdo_radius() const {
+    return ssdo_pass_->radius();
 }
 
-void deferred_renderer::set_ssao_radius(float radius) {
-    ssao_pass_->set_radius(radius);
+void deferred_renderer::set_ssdo_radius(float radius) {
+    ssdo_pass_->set_radius(radius);
 }
 
-void deferred_renderer::delta_ssao_radius(float delta) {
-    ssao_pass_->delta_radius(delta);
+void deferred_renderer::delta_ssdo_radius(float delta) {
+    ssdo_pass_->delta_radius(delta);
 }
 
-float deferred_renderer::ssao_exponent() const {
-    return ssao_pass_->exponent();
+float deferred_renderer::ssdo_exponent() const {
+    return ssdo_pass_->exponent();
 }
 
-void deferred_renderer::set_ssao_exponent(float exponent) {
-    ssao_pass_->set_exponent(exponent);
+void deferred_renderer::set_ssdo_exponent(float exponent) {
+    ssdo_pass_->set_exponent(exponent);
 }
 
-void deferred_renderer::delta_ssao_exponent(float delta) {
-    ssao_pass_->delta_exponent(delta);
+void deferred_renderer::delta_ssdo_exponent(float delta) {
+    ssdo_pass_->delta_exponent(delta);
 }
 
-float deferred_renderer::ssao_reflective_albedo() const {
-    return ssao_pass_->reflective_albedo();
+float deferred_renderer::ssdo_reflective_albedo() const {
+    return ssdo_pass_->reflective_albedo();
 }
 
-void deferred_renderer::set_ssao_reflective_albedo(float reflective_albedo) {
-    ssao_pass_->set_reflective_albedo(reflective_albedo);
+void deferred_renderer::set_ssdo_reflective_albedo(float reflective_albedo) {
+    ssdo_pass_->set_reflective_albedo(reflective_albedo);
 }
 
-void deferred_renderer::delta_ssao_reflective_albedo(float delta) {
-    ssao_pass_->delta_reflective_albedo(delta);
+void deferred_renderer::delta_ssdo_reflective_albedo(float delta) {
+    ssdo_pass_->delta_reflective_albedo(delta);
 }
 
 render_pass::ptr deferred_renderer::geometry_pass() {
@@ -218,15 +210,8 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
         glDisable(GL_CLIP_DISTANCE0);
     }
 
-    ssao_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
-
-    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
-    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {diff_tex_, "map_diffuse"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
-    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
-    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssao_pass_->ssao_texture(), "map_ssao"}});
-    //compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}});
-    //debug_pass_->render([&] (shader_program::ptr) { }, {{ssao_pass_->ssao_texture(), "map_ssao"}});
-    //debug_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
+    ssdo_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
+    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {
@@ -235,7 +220,7 @@ void deferred_renderer::reshape(camera::ptr cam) {
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
     depth_tex_->resize(width, height);
     gbuffer_tex_->resize(width, height);
-    ssao_pass_->reshape(width, height);
+    ssdo_pass_->reshape(width, height);
 }
 
 void deferred_renderer::load_hdr_map_(std::string filename) {

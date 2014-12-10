@@ -114,12 +114,12 @@ int main (int argc, char* argv[]) {
         if (key == 'B') renderer_g->delta_shadow_bias(0.001);
         if (key == 'e') renderer_g->delta_exposure(-0.001f);
         if (key == 'E') renderer_g->delta_exposure(0.001f);
-        if (key == 'r') renderer_g->delta_ssao_radius(-0.01f);
-        if (key == 'R') renderer_g->delta_ssao_radius(0.01f);
-        if (key == 's') renderer_g->delta_ssao_exponent(-0.1f);
-        if (key == 'S') renderer_g->delta_ssao_exponent(0.1f);
-        if (key == 'a') renderer_g->delta_ssao_reflective_albedo(-0.1f);
-        if (key == 'A') renderer_g->delta_ssao_reflective_albedo(0.1f);
+        if (key == 'r') renderer_g->delta_ssdo_radius(-0.01f);
+        if (key == 'R') renderer_g->delta_ssdo_radius(0.01f);
+        if (key == 's') renderer_g->delta_ssdo_exponent(-0.1f);
+        if (key == 'S') renderer_g->delta_ssdo_exponent(0.1f);
+        if (key == 'a') renderer_g->delta_ssdo_reflective_albedo(-0.1f);
+        if (key == 'A') renderer_g->delta_ssdo_reflective_albedo(0.1f);
         if (key == 'c' || key == 'C') renderer_g->toggle_clipping();
         app_g->update();
     });

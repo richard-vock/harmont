@@ -5,4 +5,4 @@ env = Environment(
     LIBS = ['OpenMeshCore', 'harmont', 'GL', 'GLU', 'GLEW']
 )
 
-env.Program('mesh_deferred', ['mesh_deferred.cpp', 'shadow_pass.cpp', 'deferred_renderer.cpp', 'ssao.cpp', 'rgbe.c'])
+env.Program('mesh_deferred', ['mesh_deferred.cpp', 'shadow_pass.cpp', 'deferred_renderer.cpp', 'ssdo.cpp', 'rgbe.c'])

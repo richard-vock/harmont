@@ -19,7 +19,7 @@ out vec3 light;
 
 const float pi = 3.14159265358979;
 
-vec3 ssao(mat3 local, vec3 pos, vec3 kd);
+vec3 ssdo(mat3 local, vec3 pos, vec3 kd);
 vec3 unpack_normal(uvec3 gbuffer, out float roughness);
 void unpack_colors(uvec3 gbuffer, out vec3 mat_diffuse, out vec3 mat_specular);
 float unpack_depth(uvec3 gbuffer);
@@ -62,10 +62,10 @@ void main (void) {
     tangent = normalize(tangent - dot(tangent, normal) * normal);
     mat3 local = mat3(tangent, cross(normal, tangent), normal);
 
-	light = ssao(local, world_pos, mat_diffuse);
+	light = ssdo(local, world_pos, mat_diffuse);
 }
 
-vec3 ssao(mat3 local, vec3 pos, vec3 kd) {
+vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {
     vec3 light = vec3(0.0, 0.0, 0.0);
     vec3 global_sample;
     vec4 local_sample;
