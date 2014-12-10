@@ -1,4 +1,6 @@
-#include "shadow_pass.hpp"
+#include <shadow_pass.hpp>
+
+#ifdef BUILD_DEFERRED_RENDERER
 
 #include <chrono>
 #include <list>
@@ -10,7 +12,9 @@ namespace harmont {
 shadow_pass::shadow_pass(uint32_t resolution, uint32_t sample_count, const std::string& vertex_shader, const std::string& fragment_shader) : res_(resolution), sample_count_(sample_count) {
     tex_ = texture::texture_2d<float>(res_, res_, 1);
     dummy_tex_ = texture::depth_texture<float>(res_, res_, GL_DEPTH_COMPONENT32F);
-    pass_ = std::make_shared<render_pass>(vertex_shader::from_file(vertex_shader), fragment_shader::from_file(fragment_shader), render_pass::textures({tex_}), dummy_tex_);
+    vertex_shader::ptr   vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"shadow.vert");
+    fragment_shader::ptr frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shadow.frag");
+    pass_ = std::make_shared<render_pass>(vert, frag, render_pass::textures({tex_}), dummy_tex_);
     //tex_ = texture::depth_texture<float>(res_, res_);
     //pass_ = std::make_shared<render_pass>(vertex_shader::from_file(vertex_shader), fragment_shader::from_file(fragment_shader), render_pass::textures(), tex_);
     disk_ = poisson_disk_(sample_count_, 1.f);
@@ -155,5 +159,6 @@ std::vector<float> shadow_pass::poisson_disk_(uint32_t n, float radius, uint32_t
     return result;
 }
 
+#endif // BUILD_DEFERRED_RENDERER
 
 } // harmont

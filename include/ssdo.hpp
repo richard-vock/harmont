@@ -1,7 +1,7 @@
 #ifndef _HARMONT_SSDO_HPP_
 #define _HARMONT_SSDO_HPP_
 
-#include <harmont/harmont.hpp>
+#include "harmont.hpp"
 
 namespace harmont {
 

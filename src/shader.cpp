@@ -40,7 +40,6 @@ typename shader<Stage>::ptr shader<Stage>::from_source(std::string source, bool 
     return ptr(new shader<Stage>(source, compile_now));
 }
 
-#ifdef USE_PLUSTACHE
 template <int Stage>
 typename shader<Stage>::ptr shader<Stage>::from_file(std::string filename, const parameters_t& params, bool compile_now) {
     return from_source(load_file_(filename), params, compile_now);
@@ -50,7 +49,6 @@ template <int Stage>
 typename shader<Stage>::ptr shader<Stage>::from_source(std::string source, const parameters_t& params, bool compile_now) {
     return from_source(render_source_(source, params), compile_now);
 }
-#endif // USE_PLUSTACHE
 
 template <int Stage>
 shader<Stage>::~shader() {
@@ -113,17 +111,19 @@ std::string shader<Stage>::load_file_(const std::string& filename) {
     return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
-#ifdef USE_PLUSTACHE
 template <int Stage>
 std::string shader<Stage>::render_source_(const std::string& source, const parameters_t& params) {
+#ifdef USE_PLUSTACHE
     PlustacheTypes::ObjectType ctx;
     for (const auto& param : params) {
         ctx[param.first] = param.second;
     }
     Plustache::template_t t;
     return t.render(source, ctx);
-}
+#else
+    return source
 #endif // USE_PLUSTACHE
+}
 
 } // harmont
 

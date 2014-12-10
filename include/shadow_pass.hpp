@@ -1,7 +1,7 @@
 #ifndef _HARMONT_EXAMPLE_SHADOW_PASS_HPP_
 #define _HARMONT_EXAMPLE_SHADOW_PASS_HPP_
 
-#include <harmont/harmont.hpp>
+#include "harmont.hpp"
 
 namespace harmont {
 
@@ -50,6 +50,5 @@ class shadow_pass {
 #include "shadow_pass.ipp"
 
 } // harmont
-
 
 #endif /* _HARMONT_EXAMPLE_SHADOW_PASS_HPP_ */

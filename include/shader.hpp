@@ -31,17 +31,13 @@ class shader {
 		typedef std::weak_ptr<shader<Stage>>          wptr;
 		typedef std::shared_ptr<const shader<Stage>>  const_ptr;
 		typedef std::weak_ptr<const shader<Stage>>    const_wptr;
-#ifdef USE_PLUSTACHE
         typedef std::map<std::string, std::string>    parameters_t;
-#endif //USE_PLUSTACHE
 
 	public:
 		static ptr from_file(std::string filename, bool compile_now = true);
 		static ptr from_source(std::string source, bool compile_now = true);
-#ifdef USE_PLUSTACHE
 		static ptr from_file(std::string filename, const parameters_t& params, bool compile_now = true);
 		static ptr from_source(std::string source, const parameters_t& params, bool compile_now = true);
-#endif // USE_PLUSTACHE
 		virtual ~shader();
 
 		constexpr GLenum stage() { return Stage; };
@@ -56,9 +52,7 @@ class shader {
 
         static std::string load_file_(const std::string& filename);
 
-#ifdef USE_PLUSTACHE
         static std::string render_source_(const std::string& source, const parameters_t& params);
-#endif // USE_PLUSTACHE
 
 	protected:
 		GLuint      handle_;

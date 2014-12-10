@@ -1,4 +1,6 @@
-#include "ssdo.hpp"
+#include <ssdo.hpp>
+
+#ifdef BUILD_DEFERRED_RENDERER
 
 #include <random>
 #include <chrono>
@@ -24,10 +26,10 @@ void ssdo::init(int width, int height) {
     delete [] data;
 
     tex_work_ = texture::texture_2d<float>(width, height, 3);
-    auto vs_quad = vertex_shader::from_file("full_quad.vert");
-    auto fs_sample = fragment_shader::from_file("ssdo.frag");
-    auto fs_blur_h = fragment_shader::from_file("blur_h.frag");
-    auto fs_blur_v = fragment_shader::from_file("blur_v.frag");
+    auto vs_quad = vertex_shader::from_file(std::string(GLSL_PREFIX)+"full_quad.vert");
+    auto fs_sample = fragment_shader::from_file(std::string(GLSL_PREFIX)+"ssdo.frag");
+    auto fs_blur_h = fragment_shader::from_file(std::string(GLSL_PREFIX)+"blur_h.frag");
+    auto fs_blur_v = fragment_shader::from_file(std::string(GLSL_PREFIX)+"blur_v.frag");
     pass_sample_ = std::make_shared<render_pass_2d>(vs_quad, fs_sample, render_pass::textures({tex_ssdo_}));
     pass_blur_h_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_h, render_pass::textures({tex_work_}));
     pass_blur_v_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_v, render_pass::textures({tex_ssdo_, tex_last_}));
@@ -190,3 +192,5 @@ void ssdo::init_noise_() {
 
 
 } // harmont
+
+#endif // BUILD_DEFERRED_RENDERER

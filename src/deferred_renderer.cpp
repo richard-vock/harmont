@@ -1,9 +1,11 @@
-#include "deferred_renderer.hpp"
+#include <deferred_renderer.hpp>
+
+#ifdef BUILD_DEFERRED_RENDERER
 
 #include <limits>
 
 extern "C" {
-#include "rgbe.h"
+#include <rgbe/rgbe.h>
 }
 
 namespace harmont {
@@ -35,13 +37,11 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     gbuffer_tex_ = texture::texture_2d<unsigned int>(width, height, 3);
 
     vertex_shader::parameters_t params = {{"sample_count", std::to_string(shadow_parameters.sample_count)}, {"shadow_res", std::to_string(shadow_parameters.resolution)}};
-    vertex_shader::ptr full_quad_vert = vertex_shader::from_file("full_quad.vert");
-    vertex_shader::ptr   gbuffer_vert = vertex_shader::from_file("gbuffer.vert");
-    fragment_shader::ptr clear_frag   = fragment_shader::from_file("clear.frag");
-    fragment_shader::ptr gbuffer_frag = fragment_shader::from_file("gbuffer.frag");
-    fragment_shader::ptr compose_frag = fragment_shader::from_file("compose.frag", params);
-    fragment_shader::ptr debug_gbuffer_frag = fragment_shader::from_file("debug_gbuffer.frag");
-    fragment_shader::ptr debug_ssdo_frag = fragment_shader::from_file("debug_ssdo.frag");
+    vertex_shader::ptr full_quad_vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"full_quad.vert");
+    vertex_shader::ptr   gbuffer_vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"gbuffer.vert");
+    fragment_shader::ptr clear_frag   = fragment_shader::from_file(std::string(GLSL_PREFIX)+"clear.frag");
+    fragment_shader::ptr gbuffer_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"gbuffer.frag");
+    fragment_shader::ptr compose_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"compose.frag", params);
 
     auto ssdo_clear_textures = ssdo_pass_->clear_textures();
     render_pass::textures clear_textures(1, gbuffer_tex_);
@@ -49,8 +49,6 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, clear_textures);
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, compose_frag);
-    debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_ssdo_frag);
-    //debug_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, debug_gbuffer_frag);
 }
 
 deferred_renderer::~deferred_renderer() {
@@ -265,3 +263,5 @@ std::pair<float, float> deferred_renderer::get_near_far(camera::const_ptr cam, c
 
 
 } // harmont
+
+#endif // BUILD_DEFERRED_RENDERER

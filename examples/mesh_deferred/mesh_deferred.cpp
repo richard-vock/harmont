@@ -3,11 +3,8 @@
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <harmont/harmont.hpp>
 #include <harmont/openmesh_traits.hpp>
+#include <harmont/deferred_renderer.hpp>
 #include <boost/lexical_cast.hpp>
-extern "C" {
-#include "rgbe.h"
-}
-#include "deferred_renderer.hpp"
 using namespace harmont;
 
 typedef OpenMesh::Vec4f   color_t;

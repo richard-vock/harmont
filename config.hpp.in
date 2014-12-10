@@ -1,0 +1,14 @@
+#ifndef CMAKE_CONFIG_HPP
+#define CMAKE_CONFIG_HPP
+
+#define VERSION_MAJOR @harmont_VERSION_MAJOR@
+#define VERSION_MINOR @harmont_VERSION_MINOR@
+#define PREFIX "@CMAKE_INSTALL_PREFIX@"
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+#define GLSL_PREFIX "glsl/"
+#else
+#define GLSL_PREFIX "@CMAKE_INSTALL_PREFIX@/include/harmont/glsl/"
+#endif
+
+#endif // CMAKE_CONFIG_HPP

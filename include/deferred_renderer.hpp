@@ -1,7 +1,7 @@
 #ifndef _HARMONT_DEFERRED_RENDERER_HPP_
 #define _HARMONT_DEFERRED_RENDERER_HPP_
 
-#include <harmont/harmont.hpp>
+#include "harmont.hpp"
 #include "shadow_pass.hpp"
 #include "ssdo.hpp"
 
@@ -103,5 +103,6 @@ class deferred_renderer {
 
 
 } // harmont
+
 
 #endif /* _HARMONT_DEFERRED_RENDERER_HPP_ */

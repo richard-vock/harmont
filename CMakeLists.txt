@@ -4,6 +4,11 @@ project(harmont)
 set (harmont_VERSION_MAJOR 0)
 set (harmont_VERSION_MINOR 1)
 
+configure_file (
+  "${PROJECT_SOURCE_DIR}/config.hpp.in"
+  "${PROJECT_SOURCE_DIR}/include/config.hpp"
+)
+
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/include")
@@ -22,10 +27,14 @@ endif()
 find_package(Eigen)
 find_package(OpenGL)
 find_package(GLEW)
+find_package(RGBE)
 
 find_package(Plustache)
 if (PLUSTACHE_FOUND)
     add_definitions(-DUSE_PLUSTACHE)
+    if (RGBE_FOUND)
+        add_definitions(-DBUILD_DEFERRED_RENDERER)
+    endif()
 else()
     message(STATUS "No plustache package found. Plustache support will be disabled.")
 endif()
@@ -64,12 +73,21 @@ if (GLEW_FOUND AND EIGEN_FOUND)
     else()
         set(OPENMESH_LIBRARIES "")
     endif()
+    if(RGBE_FOUND)
+        include_directories(${RGBE_INCLUDE_DIRS})
+    else()
+        set(RGBE_LIBRARIES "")
+    endif()
 	add_library(harmont SHARED ${obj})
-	target_link_libraries(harmont ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} ${PLUSTACHE_LIBRARIES} ${OPENMESH_LIBRARIES} "dl")
+	target_link_libraries(harmont ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} ${PLUSTACHE_LIBRARIES} ${OPENMESH_LIBRARIES} ${RGBE_LIBRARIES} "dl")
 
 	# install binary
 	install (TARGETS harmont DESTINATION lib)
 	# install header
 	install (DIRECTORY include/ DESTINATION include/harmont)
+    # install shader
+    if (BUILD_DEFERRED_RENDERER)
+        install (DIRECTORY glsl/ DESTINATION include/harmont/glsl)
+    endif()
 endif()
 

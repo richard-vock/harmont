@@ -24,6 +24,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <Eigen/Dense>
+#include "config.hpp"
 
 // common macros
 #define SPOT (std::string(" (@") + __FILE__ + ":" + std::to_string(__LINE__) + ").")
