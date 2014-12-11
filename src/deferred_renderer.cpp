@@ -181,7 +181,9 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
 
     // update geometry pass
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
-    geom_pass_->set_uniform("modelview_matrix", cam->view_matrix());
+    Eigen::Matrix4f id = Eigen::Matrix4f::Identity();
+    geom_pass_->set_uniform("model_matrix", id);
+    geom_pass_->set_uniform("view_matrix", cam->view_matrix());
     geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
 

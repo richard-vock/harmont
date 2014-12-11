@@ -4,18 +4,19 @@ in vec3  position;
 in float color;
 in vec3  normal;
 
-layout(location = 0) uniform mat4  modelview_matrix;
-layout(location = 1) uniform mat4  projection_matrix;
-layout(location = 2) uniform vec3  clip_normal;
-layout(location = 3) uniform float clip_distance;
+layout(location = 0) uniform mat4  model_matrix;
+layout(location = 1) uniform mat4  view_matrix;
+layout(location = 2) uniform mat4  projection_matrix;
+layout(location = 3) uniform vec3  clip_normal;
+layout(location = 4) uniform float clip_distance;
 
 layout(location = 0) out vec3 out_position;
 layout(location = 1) out vec4 out_color;
 layout(location = 2) out vec3 out_normal;
 
 void main() {
-    out_position = (modelview_matrix * vec4(position, 1.0)).xyz;
-	gl_Position = projection_matrix * modelview_matrix * vec4(position, 1.0);
+    out_position = (view_matrix * model_matrix * vec4(position, 1.0)).xyz;
+	gl_Position = projection_matrix * vec4(out_position, 1.0);
     out_normal = normalize(normal);
     uint casted = floatBitsToUint(color);
     uint r = (casted >> 16) & 255;

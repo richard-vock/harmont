@@ -44,7 +44,7 @@ void ssdo::reshape(int width, int height) {
 }
 
 void ssdo::compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, uint32_t num_blur_passes) {
-    pass_sample_->set_uniform("modelview_matrix", cam->view_matrix());
+    pass_sample_->set_uniform("view_matrix", cam->view_matrix());
     pass_sample_->set_uniform("projection_matrix", cam->projection_matrix());
     pass_sample_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
     pass_sample_->set_uniform("exponent", exponent_);

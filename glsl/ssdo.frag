@@ -1,6 +1,6 @@
 #version 430
 
-layout(location = 0) uniform mat4 modelview_matrix;
+layout(location = 0) uniform mat4 view_matrix;
 layout(location = 1) uniform mat4 projection_matrix;
 layout(location = 2) uniform float exponent;
 layout(location = 3) uniform float radius;
@@ -166,7 +166,7 @@ float unpack_depth(uvec3 gbuffer) {
 }
 
 vec3 view_project(vec3 pos) {
-    vec4 proj = projection_matrix * modelview_matrix * vec4(pos, 1.0);
+    vec4 proj = projection_matrix * view_matrix * vec4(pos, 1.0);
     return proj.xyz / proj.w;
 }
 
