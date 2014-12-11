@@ -86,7 +86,7 @@ if (GLEW_FOUND AND EIGEN_FOUND)
 	# install header
 	install (DIRECTORY include/ DESTINATION include/harmont)
     # install shader
-    if (BUILD_DEFERRED_RENDERER)
+    if (PLUSTACHE_FOUND AND RGBE_FOUND)
         install (DIRECTORY glsl/ DESTINATION include/harmont/glsl)
     endif()
 endif()
