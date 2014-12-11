@@ -9,6 +9,7 @@ layout(location = 1) uniform mat4  view_matrix;
 layout(location = 2) uniform mat4  projection_matrix;
 layout(location = 3) uniform vec3  clip_normal;
 layout(location = 4) uniform float clip_distance;
+layout(location = 5) uniform float vp_ratio;
 
 layout(location = 0) out vec3 out_position;
 layout(location = 1) out vec4 out_color;
@@ -27,4 +28,5 @@ void main() {
     out_color = vec4(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0);
 
     gl_ClipDistance[0] = -dot(position.xyz, clip_normal) + clip_distance;
+    gl_PointSize = max(1.0, vp_ratio / out_position.z);
 }

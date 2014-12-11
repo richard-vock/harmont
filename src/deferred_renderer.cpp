@@ -11,7 +11,7 @@ extern "C" {
 namespace harmont {
 
 
-deferred_renderer::deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, const bounding_box_t& bbox, int width, int height) : clipping_(false), clipping_height_(0.5f) {
+deferred_renderer::deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, const bounding_box_t& bbox, int width, int height) : clipping_(false), clipping_height_(0.5f), point_size_(1.f) {
     exposure_ = render_parameters.exposure;
     two_sided_ = render_parameters.two_sided;
     light_dir_ = render_parameters.light_dir;
@@ -158,6 +158,19 @@ void deferred_renderer::delta_ssdo_reflective_albedo(float delta) {
     ssdo_pass_->delta_reflective_albedo(delta);
 }
 
+float deferred_renderer::point_size() const {
+    return point_size_;
+}
+
+void deferred_renderer::set_point_size(float point_size) {
+    point_size_ = point_size;
+    if (point_size_ < 0.f) point_size_ = 0.f;
+}
+
+void deferred_renderer::delta_point_size(float delta) {
+    set_point_size(point_size_ + delta);
+}
+
 render_pass::ptr deferred_renderer::geometry_pass() {
     return geom_pass_;
 }
@@ -186,6 +199,8 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     geom_pass_->set_uniform("view_matrix", cam->view_matrix());
     geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
+    float vp_ratio = -2.f * point_size_ * cam->near() * cam->height() / (cam->frustum_height() * 100.f);
+    geom_pass_->set_uniform("vp_ratio", vp_ratio);
 
     // update compose pass
     auto eye = cam->forward().normalized();
@@ -205,7 +220,11 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
         geom_pass_->set_uniform("clip_distance", clip_z );
         glEnable(GL_CLIP_DISTANCE0);
     }
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    glEnable(GL_PROGRAM_POINT_SIZE);
     geom_pass_->render(render_callback);
+    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    glDisable(GL_PROGRAM_POINT_SIZE);
     if (clipping_) {
         glDisable(GL_CLIP_DISTANCE0);
     }

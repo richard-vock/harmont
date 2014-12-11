@@ -41,6 +41,8 @@
 
 namespace harmont {
 
+typedef enum {POSITION, NORMAL, COLOR} data_field_t;
+
 template <typename Scalar>
 inline Scalar eps() {
     return Eigen::NumTraits<Scalar>::epsilon();

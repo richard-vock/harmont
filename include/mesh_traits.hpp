@@ -8,8 +8,6 @@
 
 namespace harmont {
 
-typedef enum {POSITION, NORMAL, COLOR} data_field_t;
-
 template <typename T>
 struct mesh_traits {
     typedef T mesh_type_t;

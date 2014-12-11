@@ -22,8 +22,6 @@ class deferred_renderer {
 			float exposure;
 			float shadow_bias;
             bool two_sided;
-			std::string vertex_shader;
-			std::string fragment_shader;
 			std::string hdr_map;
 		};
 		struct shadow_parameters_t {
@@ -71,6 +69,10 @@ class deferred_renderer {
 		void  set_ssdo_reflective_albedo(float reflective_albedo);
 		void  delta_ssdo_reflective_albedo(float delta);
 
+        float point_size() const;
+        void set_point_size(float point_size);
+        void delta_point_size(float delta);
+
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
@@ -99,6 +101,7 @@ class deferred_renderer {
         float                clipping_height_;
         float                clipping_min_z_;
         float                clipping_max_z_;
+        float                point_size_;
 };
 
 
