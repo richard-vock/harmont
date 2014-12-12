@@ -27,8 +27,6 @@ class deferred_renderer {
 		struct shadow_parameters_t {
 			uint32_t resolution;
 			uint32_t sample_count;
-			std::string vertex_shader;
-			std::string fragment_shader;
 		};
 
 	public:

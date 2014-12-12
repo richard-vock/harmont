@@ -57,7 +57,7 @@ float in_shadow(vec3 normal, vec4 in_shadow_pos);
 void main(void) {
     uvec3 gbuffer = texture(map_gbuffer, tc).rgb;
     if (gbuffer.r == 0 && gbuffer.g == 0 && gbuffer.b == 0) {
-        out_color = vec4(0.2, 0.2, 0.2, 0.0);
+        out_color = vec4(1.0, 1.0, 1.0, 1.0);
         return;
     }
 

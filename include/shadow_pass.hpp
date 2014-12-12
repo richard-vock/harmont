@@ -15,7 +15,7 @@ class shadow_pass {
 		typedef application::callback_t<shader_program::ptr>  render_callback_t;
 
 	public:
-		shadow_pass(uint32_t resolution, uint32_t sample_count, const std::string& vertex_shader, const std::string& fragment_shader);
+		shadow_pass(uint32_t resolution, uint32_t sample_count);
 		virtual ~shadow_pass();
 
 		texture::ptr shadow_texture();

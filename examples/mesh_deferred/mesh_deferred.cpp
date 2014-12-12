@@ -30,15 +30,11 @@ void init() {
         0.8f,
         0.003f,
         true,
-        "mesh.vert",
-        "hdr.frag",
         "pisa_diffuse.hdr"
     };
     deferred_renderer::shadow_parameters_t s_params {
         2048,
-        32,
-        "shadow.vert",
-        "shadow.frag",
+        32
     };
     renderer_g = std::make_shared<deferred_renderer>(r_params, s_params, bb_g, app_g->current_camera()->width(), app_g->current_camera()->height());
 

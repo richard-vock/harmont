@@ -22,9 +22,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
 
     shadow_pass_ = std::make_shared<shadow_pass>(
         shadow_parameters.resolution,
-        shadow_parameters.sample_count,
-        shadow_parameters.vertex_shader,
-        shadow_parameters.fragment_shader
+        shadow_parameters.sample_count
     );
     shadow_pass_->update(bbox, light_dir_);
 

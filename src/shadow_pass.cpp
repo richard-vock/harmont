@@ -9,7 +9,7 @@
 namespace harmont {
 
 
-shadow_pass::shadow_pass(uint32_t resolution, uint32_t sample_count, const std::string& vertex_shader, const std::string& fragment_shader) : res_(resolution), sample_count_(sample_count) {
+shadow_pass::shadow_pass(uint32_t resolution, uint32_t sample_count) : res_(resolution), sample_count_(sample_count) {
     tex_ = texture::texture_2d<float>(res_, res_, 1);
     dummy_tex_ = texture::depth_texture<float>(res_, res_, GL_DEPTH_COMPONENT32F);
     vertex_shader::ptr   vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"shadow.vert");
