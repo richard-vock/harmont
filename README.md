@@ -13,7 +13,7 @@ modern in the sense that this whole fixed-function pipeline crap is not part of 
 
 For the bare wrapper library (without helper classes) the dependencies are
 
-- Eigen 3 (http://eigen.tuxfamily.org)
+- Eigen 3 (http://eigen.tuxfamily.org). Yes, eigen. Eigen is mandatory for *everything*. Please folks, stop writing your own miserable linear algebra code.
 - OpenGL (GL + GLU)
 - GLEW (http://glew.sourceforge.net/)
 
