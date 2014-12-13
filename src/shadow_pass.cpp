@@ -159,6 +159,6 @@ std::vector<float> shadow_pass::poisson_disk_(uint32_t n, float radius, uint32_t
     return result;
 }
 
-#endif // BUILD_DEFERRED_RENDERER
-
 } // harmont
+
+#endif // BUILD_DEFERRED_RENDERER
