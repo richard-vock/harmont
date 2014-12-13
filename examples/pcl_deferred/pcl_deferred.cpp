@@ -16,11 +16,26 @@ deferred_renderer::ptr_t    renderer_g;
 cloud_t::Ptr                cloud_g;
 Eigen::AlignedBox<float, 3> bb_g;
 
-vertex_array::ptr           vao_g;
-vertex_buffer<float>::ptr   vbo_g;
+vertex_array::ptr           vao_shadow_g, vao_display_g;
+vertex_buffer<float>::ptr   vbo_shadow_g, vbo_display_g;
 index_buffer<uint32_t>::ptr ibo_g;
 uint32_t                    num_indices_g;
 
+
+void init_geometry(shader_program::ptr program, pass_type_t type) {
+    vertex_buffer<float>::layout_t vbo_layout;
+    if (type == SHADOW_GEOMETRY) {
+        vao_shadow_g->bind();
+        vbo_layout = {{"position", 3}};
+        vbo_shadow_g->bind_to_array(vbo_layout, program);
+        vao_shadow_g->release();
+    } else {
+        vao_display_g->bind();
+        vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}};
+        vbo_display_g->bind_to_array(vbo_layout, program);
+        vao_display_g->release();
+    }
+}
 
 void init() {
     Eigen::Vector3f light_dir = Eigen::Vector3f(1.f, 1.f, 1.f).normalized();
@@ -34,36 +49,40 @@ void init() {
     };
     deferred_renderer::shadow_parameters_t s_params {
         2048,
-        32,
-        "shadow.vert",
-        "shadow.frag",
+        32
     };
     renderer_g = std::make_shared<deferred_renderer>(r_params, s_params, bb_g, app_g->current_camera()->width(), app_g->current_camera()->height());
 
-    vao_g = std::make_shared<vertex_array>();
-    vao_g->bind();
+    vao_shadow_g = std::make_shared<vertex_array>();
+    vao_display_g = std::make_shared<vertex_array>();
 
-    Eigen::MatrixXf vbo_data;
+    Eigen::MatrixXf vbo_data, pos_data;
     Eigen::Matrix<uint32_t, Eigen::Dynamic, 1> ibo_data;
     pointcloud_traits<cloud_t>::buffer_data(*cloud_g, {POSITION, COLOR, NORMAL}, vbo_data, ibo_data);
+    pos_data = vbo_data.block(0, 0, vbo_data.rows(), 3);
     num_indices_g = ibo_data.rows();
 
-    vertex_buffer<float>::layout_t vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}};
-    vbo_g = vertex_buffer<float>::from_data(vbo_data);
-    vbo_g->bind_to_array(vbo_layout, renderer_g->geometry_pass());
-
+    vbo_shadow_g = vertex_buffer<float>::from_data(pos_data);
+    vbo_display_g = vertex_buffer<float>::from_data(vbo_data);
     ibo_g = index_buffer<uint32_t>::from_data(ibo_data);
-
-    vao_g->release();
+    renderer_g->init(&init_geometry);
 }
 
-void render(shader_program::ptr program) {
-    vao_g->bind();
+void render(shader_program::ptr program, pass_type_t type) {
+    if (type == SHADOW_GEOMETRY) {
+        vao_shadow_g->bind();
+    } else {
+        vao_display_g->bind();
+    }
     ibo_g->bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDrawElements(GL_POINTS, num_indices_g, GL_UNSIGNED_INT, nullptr);
     ibo_g->release();
-    vao_g->release();
+    if (type == SHADOW_GEOMETRY) {
+        vao_shadow_g->release();
+    } else {
+        vao_display_g->release();
+    }
 }
 
 void display(camera::ptr cam) {

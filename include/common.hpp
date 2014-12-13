@@ -43,6 +43,11 @@ namespace harmont {
 
 typedef enum {POSITION, NORMAL, COLOR} data_field_t;
 
+template <typename... Args>
+using callback_t = std::function<void (Args...)>;
+
+typedef enum {SHADOW_GEOMETRY, DISPLAY_GEOMETRY}  pass_type_t;
+
 template <typename Scalar>
 inline Scalar eps() {
     return Eigen::NumTraits<Scalar>::epsilon();

@@ -1,8 +1,0 @@
-env = Environment(
-    CXXFLAGS = "-g -Wall -O2 -std=c++1y",
-    CPPPATH = ['/usr/include/eigen3', '/usr/include/pcl-1.8'],
-    LIBPATH = ['/usr/lib/OpenMesh'],
-    LIBS = ['pcl_common', 'pcl_io', 'harmont', 'GL', 'GLU', 'GLEW', 'boost_system']
-)
-
-env.Program('pcl_deferred', ['pcl_deferred.cpp'])

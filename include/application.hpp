@@ -13,8 +13,6 @@ class application {
         typedef std::shared_ptr<const application> const_ptr;
         typedef std::weak_ptr<const application>   const_wptr;
         typedef Eigen::Vector2i                    screen_pos_t;
-        template <typename... Args>
-        using callback_t = std::function<void (Args...)>;
 
     public:
         application(int width, int height, camera::ptr cam, callback_t<camera::ptr> render_callback, callback_t<camera::ptr> reshape_callback = nullptr);

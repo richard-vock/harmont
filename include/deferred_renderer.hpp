@@ -14,7 +14,7 @@ class deferred_renderer {
 		typedef std::weak_ptr<deferred_renderer>          wptr_t;
 		typedef std::shared_ptr<const deferred_renderer>  const_ptr_t;
 		typedef std::weak_ptr<const deferred_renderer>    const_wptr_t;
-		typedef shadow_pass::render_callback_t            render_callback_t;
+		typedef shadow_pass::geometry_callback_t          geometry_callback_t;
 		typedef Eigen::AlignedBox<float, 3>               bounding_box_t;
 
 		struct render_parameters_t {
@@ -24,6 +24,7 @@ class deferred_renderer {
             bool two_sided;
 			std::string hdr_map;
 		};
+
 		struct shadow_parameters_t {
 			uint32_t resolution;
 			uint32_t sample_count;
@@ -74,7 +75,8 @@ class deferred_renderer {
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
-		void render(const render_callback_t& render_callback, camera::ptr cam, const bounding_box_t& bbox);
+		void init(const geometry_callback_t& init_callback);
+		void render(const geometry_callback_t& render_callback, camera::ptr cam, const bounding_box_t& bbox);
 		void reshape(camera::ptr cam);
 
 	protected:

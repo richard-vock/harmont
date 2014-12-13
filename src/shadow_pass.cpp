@@ -47,7 +47,11 @@ const std::vector<float>& shadow_pass::poisson_disk() const {
     return disk_;
 }
 
-void shadow_pass::render(const render_callback_t& render_callback, int width, int height, bool clipping, float clipping_z) {
+void shadow_pass::init(const geometry_callback_t& init_callback) {
+    init_callback(pass_->program(), SHADOW_GEOMETRY);
+}
+
+void shadow_pass::render(const geometry_callback_t& render_callback, int width, int height, bool clipping, float clipping_z) {
     pass_->set_uniform("shadow_matrix", mat_);
     glViewport(0, 0, res_, res_);
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -59,7 +63,7 @@ void shadow_pass::render(const render_callback_t& render_callback, int width, in
     }
     //glPolygonOffset(-1.1, 4.0);
     //glEnable(GL_POLYGON_OFFSET_FILL);
-    pass_->render(render_callback);
+    pass_->render([&] (shader_program::ptr program) { render_callback(program, SHADOW_GEOMETRY); });
     glDisable(GL_POLYGON_OFFSET_FILL);
     if (clipping) {
         glDisable(GL_CLIP_DISTANCE0);

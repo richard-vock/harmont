@@ -177,7 +177,12 @@ render_pass::const_ptr deferred_renderer::geometry_pass() const {
     return geom_pass_;
 }
 
-void deferred_renderer::render(const render_callback_t& render_callback, camera::ptr cam, const bounding_box_t& bbox) {
+void deferred_renderer::init(const geometry_callback_t& init_callback) {
+    shadow_pass_->init(init_callback);
+    init_callback(geom_pass_->program(), DISPLAY_GEOMETRY);
+}
+
+void deferred_renderer::render(const geometry_callback_t& render_callback, camera::ptr cam, const bounding_box_t& bbox) {
     glEnable(GL_DEPTH_TEST);
 
     // update near/far values
@@ -220,7 +225,7 @@ void deferred_renderer::render(const render_callback_t& render_callback, camera:
     }
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glEnable(GL_PROGRAM_POINT_SIZE);
-    geom_pass_->render(render_callback);
+    geom_pass_->render([&] (shader_program::ptr program) { render_callback(program, DISPLAY_GEOMETRY); });
     glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glDisable(GL_PROGRAM_POINT_SIZE);
     if (clipping_) {
