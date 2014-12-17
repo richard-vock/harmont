@@ -61,7 +61,6 @@ else()
 endif()
 
 file (GLOB_RECURSE obj RELATIVE "${PROJECT_SOURCE_DIR}" "src/*.cpp")
-file (GLOB_RECURSE units RELATIVE "${PROJECT_SOURCE_DIR}" "test/units/*.cpp")
 if (GLEW_FOUND AND EIGEN_FOUND)
 	include_directories(${GLEW_INCLUDE_DIRS})
 	include_directories(${EIGEN_INCLUDE_DIRS})

@@ -43,6 +43,8 @@ namespace harmont {
 
 typedef enum {POSITION, NORMAL, COLOR} data_field_t;
 
+typedef Eigen::AlignedBox<float, 3> bbox_t;
+
 template <typename... Args>
 using callback_t = std::function<void (Args...)>;
 
@@ -56,6 +58,23 @@ inline Scalar eps() {
 template <typename Scalar>
 inline Scalar tiny() {
     return Eigen::NumTraits<Scalar>::dummy_precision();
+}
+
+template <typename Derived>
+void clamp(Eigen::DenseBase<Derived>& m, typename Derived::Scalar lower, typename Derived::Scalar upper) {
+    typedef typename Eigen::DenseBase<Derived>::Index idx_t;
+    for (idx_t i = 0; i < m.outerSize(); ++i) {
+        for (idx_t j = 0; j < m.innerSize(); ++j) {
+            if (m(i,j) < lower) m(i,j) = lower;
+            if (m(i,j) > upper) m(i,j) = upper;
+        }
+    }
+}
+
+template <typename Scalar>
+void clamp(Scalar& s, const Scalar& lower, const Scalar& upper) {
+    if (s < lower) s = lower;
+    if (s > upper) s = upper;
 }
 
 inline std::string gl_type_name(GLenum type) {

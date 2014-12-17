@@ -15,8 +15,6 @@ shadow_pass::shadow_pass(uint32_t resolution, uint32_t sample_count) : res_(reso
     vertex_shader::ptr   vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"shadow.vert");
     fragment_shader::ptr frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shadow.frag");
     pass_ = std::make_shared<render_pass>(vert, frag, render_pass::textures({tex_}), dummy_tex_);
-    //tex_ = texture::depth_texture<float>(res_, res_);
-    //pass_ = std::make_shared<render_pass>(vertex_shader::from_file(vertex_shader), fragment_shader::from_file(fragment_shader), render_pass::textures(), tex_);
     disk_ = poisson_disk_(sample_count_, 1.f);
 }
 
@@ -29,6 +27,14 @@ texture::ptr shadow_pass::shadow_texture() {
 
 texture::const_ptr shadow_pass::shadow_texture() const {
     return tex_;
+}
+
+shader_program::ptr shadow_pass::program() {
+    return pass_->program();
+}
+
+shader_program::const_ptr shadow_pass::program() const {
+    return pass_->program();
 }
 
 Eigen::Matrix4f& shadow_pass::transform() {
@@ -47,27 +53,19 @@ const std::vector<float>& shadow_pass::poisson_disk() const {
     return disk_;
 }
 
-void shadow_pass::init(const geometry_callback_t& init_callback) {
-    init_callback(pass_->program(), SHADOW_GEOMETRY);
+float shadow_pass::far() const {
+    return far_;
 }
 
-void shadow_pass::render(const geometry_callback_t& render_callback, int width, int height, bool clipping, float clipping_z) {
+void shadow_pass::render(const geometry_callback_t& render_callback, int width, int height) {
     pass_->set_uniform("shadow_matrix", mat_);
     glViewport(0, 0, res_, res_);
     glClearColor(1.0, 1.0, 1.0, 1.0);
     //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    if (clipping) {
-        pass_->set_uniform("clip_normal", std::vector<float>({0.f, 0.f, 1.f}));
-        pass_->set_uniform("clip_distance", clipping_z);
-        glEnable(GL_CLIP_DISTANCE0);
-    }
     //glPolygonOffset(-1.1, 4.0);
     //glEnable(GL_POLYGON_OFFSET_FILL);
     pass_->render([&] (shader_program::ptr program) { render_callback(program, SHADOW_GEOMETRY); });
     glDisable(GL_POLYGON_OFFSET_FILL);
-    if (clipping) {
-        glDisable(GL_CLIP_DISTANCE0);
-    }
     //glPolygonOffset(0, 0);
     //glDisable(GL_POLYGON_OFFSET_FILL);
     //glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -95,6 +93,8 @@ void shadow_pass::update(const bounding_box_t& bbox, const Eigen::Vector3f& ligh
     mat_.block<3,1>(0, 3) = mat_.block<3,3>(0, 0) * (-light_pos);
     mat_.row(3) = Eigen::RowVector4f(0.f, 0.f, 0.f, 1.f);
     mat_ = ortho(-radius, radius, -radius, radius, margin, 2.f * radius + 2.f * margin) * mat_;
+
+    far_ = 2.f * radius + 2.f * margin;
 }
 
 void shadow_pass::render_(shader_program::ptr program, uint32_t num_indices) {

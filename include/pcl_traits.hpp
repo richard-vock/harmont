@@ -1,7 +1,7 @@
 #ifndef _HARMONT_PCL_TRAITS_HPP_
 #define _HARMONT_PCL_TRAITS_HPP_
 
-#include "pointcloud_traits.hpp"
+#include "pointcloud_object.hpp"
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 

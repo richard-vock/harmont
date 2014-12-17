@@ -16,7 +16,8 @@ layout(location = 6) uniform mat4 shadow_matrix;
 layout(location = 7) uniform mat4 inv_view_proj_matrix;
 layout(location = 8) uniform float shadow_bias;
 layout(location = 9) uniform sampler2D map_ssdo;
-layout(location = 10) uniform vec2 poisson_disk[PCF_SAMPLES];
+layout(location = 10) uniform vec3 background_color;
+layout(location = 11) uniform vec2 poisson_disk[PCF_SAMPLES];
 
 out vec4 out_color;
 
@@ -57,7 +58,7 @@ float in_shadow(vec3 normal, vec4 in_shadow_pos);
 void main(void) {
     uvec3 gbuffer = texture(map_gbuffer, tc).rgb;
     if (gbuffer.r == 0 && gbuffer.g == 0 && gbuffer.b == 0) {
-        out_color = vec4(1.0, 1.0, 1.0, 1.0);
+        out_color = vec4(background_color, 1.0);
         return;
     }
 

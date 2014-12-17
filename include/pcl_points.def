@@ -1,1 +1,2 @@
+INSTANTIATE_PCL_POINT(pcl::PointNormal)
 INSTANTIATE_PCL_POINT(pcl::PointXYZRGBNormal)

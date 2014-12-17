@@ -1,5 +1,7 @@
 #version 430
 
+layout(location = 0) uniform float far;
+
 in vec2 tc;
 out vec3 frag_gbuffer;
 out vec3 frag_ssdo;

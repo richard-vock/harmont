@@ -1,0 +1,215 @@
+#include <renderable.hpp>
+
+namespace harmont {
+
+typedef union {
+    struct {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+        uint8_t a;
+    };
+    float rgba;
+} internal_color_t;
+
+internal_color_t to_internal_color(const renderable::color_t& col) {
+    renderable::color_t clamped = col;
+    clamp(clamped, 0.f, 1.f);
+    internal_color_t ic;
+    ic.r = static_cast<uint8_t>(col[0] * 255.f);
+    ic.g = static_cast<uint8_t>(col[1] * 255.f);
+    ic.b = static_cast<uint8_t>(col[2] * 255.f);
+    ic.a = static_cast<uint8_t>(col[3] * 255.f);
+    return ic;
+}
+
+renderable::renderable(bool casts_shadows) : bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
+}
+
+renderable::~renderable() {
+}
+
+void renderable::init(const vertex_data_t& vertex_data, const index_data_t& index_data) {
+    shadow_array_ = std::make_shared<vertex_array>();
+    display_array_ = std::make_shared<vertex_array>();
+    vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
+    initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+    shadow_buffer_ = vbo_t::from_data(pos_data);
+    display_buffer_ = vbo_t::from_data(vertex_data);
+    index_buffer_ = ibo_t::from_data(index_data);
+    num_elements_ = index_data.rows();
+}
+
+void renderable::render(shader_program::ptr program, pass_type_t type, const bbox_t& bbox) {
+    if (!initialized()) return;
+
+    if (clipping_) {
+        float min_z = bbox.min()[2];
+        float max_z = bbox.max()[2];
+        float clip_z = min_z + clipping_height_ * (max_z - min_z);
+        ((*program)["clip_normal"]).set(std::vector<float>({0.f, 0.f, 1.f}));
+        ((*program)["clip_distance"]).set(clip_z);
+        glEnable(GL_CLIP_DISTANCE0);
+    }
+
+    Eigen::Matrix4f id = Eigen::Matrix4f::Identity();
+    ((*program))["model_matrix"].set(id);
+
+    if (type == SHADOW_GEOMETRY) {
+        shadow_array_->bind();
+    } else {
+        display_array_->bind();
+    }
+    index_buffer_->bind();
+
+    glDrawElements(gl_element_mode_(), num_elements_, GL_UNSIGNED_INT, nullptr);
+
+    if (type == SHADOW_GEOMETRY) {
+        shadow_array_->release();
+    } else {
+        display_array_->release();
+    }
+
+    if (clipping_) {
+        glDisable(GL_CLIP_DISTANCE0);
+    }
+}
+
+void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+    if (indices.size() != colors.size()) throw std::runtime_error("renderable::set_colors: Index count must match colors count"+SPOT);
+    vertex_data_t color_data = initial_color_data_;
+    for (uint32_t i = 0; i < indices.size(); ++i) {
+        uint32_t idx = indices[i];
+        if (idx < color_data.rows()) color_data(idx, 0) = to_internal_color(colors[i]).rgba;
+    }
+    set_color_data_(color_data);
+}
+
+void renderable::set_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+    std::vector<color_t> color_data(indices.size(), color);
+    set_colors(indices, color_data);
+}
+
+void renderable::set_colors(const std::vector<color_t>& colors) {
+    if (colors.size() != num_elements_) throw std::runtime_error("renderable::set_colors: Number of colors must match number of elements"+SPOT);
+    std::vector<uint32_t> indices(colors.size());
+    std::iota(indices.begin(), indices.end(), 0);
+}
+
+void renderable::set_colors(const color_t& color) {
+    std::vector<color_t> colors(num_elements_, color);
+    set_colors(colors);
+}
+
+void renderable::reset_colors() {
+    set_color_data_(initial_color_data_);
+}
+
+bool renderable::initialized() const {
+    return num_elements_ > 0;
+}
+
+uint32_t renderable::num_elements() const {
+    return num_elements_;
+}
+
+renderable::vbo_t::ptr renderable::shadow_vertex_buffer() {
+    return shadow_buffer_;
+}
+
+renderable::vbo_t::const_ptr renderable::shadow_vertex_buffer() const {
+    return shadow_buffer_;
+}
+
+renderable::vbo_t::ptr renderable::display_vertex_buffer() {
+    return display_buffer_;
+}
+
+renderable::vbo_t::const_ptr renderable::display_vertex_buffer() const {
+    return display_buffer_;
+}
+
+renderable::vao_t::ptr renderable::shadow_vertex_array() {
+    return shadow_array_;
+}
+
+renderable::vao_t::const_ptr renderable::shadow_vertex_array() const {
+    return shadow_array_;
+}
+
+renderable::vao_t::ptr renderable::display_vertex_array() {
+    return display_array_;
+}
+
+renderable::vao_t::const_ptr renderable::display_vertex_array() const {
+    return display_array_;
+}
+
+renderable::ibo_t::ptr renderable::element_index_buffer() {
+    return index_buffer_;
+}
+
+renderable::ibo_t::const_ptr renderable::element_index_buffer() const {
+    return index_buffer_;
+}
+
+bool renderable::casts_shadows() const {
+    return casts_shadows_;
+}
+
+void renderable::set_casts_shadows(bool casts_shadows) {
+    casts_shadows_ = casts_shadows;
+}
+
+void renderable::toggle_casts_shadows() {
+    casts_shadows_ = !casts_shadows_;
+}
+
+bool renderable::clipping() const {
+    return clipping_;
+}
+
+void renderable::set_clipping(bool clipping) {
+    clipping_ = clipping;
+}
+
+void renderable::toggle_clipping() {
+    clipping_ = !clipping_;
+}
+
+float renderable::clipping_height() const {
+    return clipping_height_;
+}
+
+void renderable::set_clipping_height(float height) {
+    clipping_height_ = height;
+    clamp(clipping_height_, 0.f, 1.f);
+}
+
+void renderable::delta_clipping_height(float delta) {
+    set_clipping_height(clipping_height_ + delta);
+}
+
+const renderable::transformation_t& renderable::transformation() const {
+    return transform_;
+}
+
+void renderable::set_transformation(const transformation_t& transformation) {
+    transform_ = transformation;
+    bbox_valid_ = false;
+}
+
+bbox_t renderable::bounding_box() {
+    if (!bbox_valid_) {
+        compute_bounding_box_();
+        bbox_valid_ = true;
+    }
+    return bbox_;
+}
+
+void renderable::set_color_data_(const vertex_data_t& color_data) {
+    auto mapped = display_buffer_->eigen_map<Eigen::RowMajor>();
+    mapped.row(3) = color_data;
+}
+
+} // harmont

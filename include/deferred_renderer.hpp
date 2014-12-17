@@ -4,6 +4,7 @@
 #include "harmont.hpp"
 #include "shadow_pass.hpp"
 #include "ssdo.hpp"
+#include "renderable.hpp"
 
 namespace harmont {
 
@@ -19,6 +20,7 @@ class deferred_renderer {
 
 		struct render_parameters_t {
 			Eigen::Vector3f light_dir;
+            Eigen::Vector3f background_color;
 			float exposure;
 			float shadow_bias;
             bool two_sided;
@@ -31,10 +33,11 @@ class deferred_renderer {
 		};
 
 	public:
-		deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, const bounding_box_t& bbox, int width, int height);
+		deferred_renderer(const render_parameters_t& render_parameters, const shadow_parameters_t& shadow_parameters, int width, int height);
 		virtual ~deferred_renderer();
 
-		void set_light_dir(const Eigen::Vector3f& light_dir, const bounding_box_t& bbox);
+		void set_light_dir(const Eigen::Vector3f& light_dir);
+		void set_background_color(const Eigen::Vector3f& color);
 
 		float exposure() const;
 		void set_exposure(float exposure);
@@ -47,14 +50,6 @@ class deferred_renderer {
         bool two_sided() const;
         void set_two_sided(bool two_sided);
         void toggle_two_sided();
-
-        bool clipping() const;
-        void set_clipping(bool clipping);
-        void toggle_clipping();
-
-        float clipping_height() const;
-        void  set_clipping_height(float height);
-        void  delta_clipping_height(float delta);
 
 		float ssdo_radius() const;
 		void  set_ssdo_radius(float radius);
@@ -75,13 +70,19 @@ class deferred_renderer {
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
-		void init(const geometry_callback_t& init_callback);
-		void render(const geometry_callback_t& render_callback, camera::ptr cam, const bounding_box_t& bbox);
+        void add_object(std::string identifier, renderable::ptr_t object);
+        void remove_object(std::string identifier);
+
+		void render(camera::ptr cam);
 		void reshape(camera::ptr cam);
 
 	protected:
+        void   render_geometry(shader_program::ptr program, pass_type_t type);
 		void   load_hdr_map_(std::string filename);
 		static std::pair<float, float> get_near_far(camera::const_ptr cam, const bounding_box_t& bbox);
+
+    protected:
+        typedef std::map<std::string, renderable::ptr_t> object_map_t;
 
 	protected:
 		render_pass_2d::ptr  clear_pass_;
@@ -94,14 +95,13 @@ class deferred_renderer {
 		shadow_pass::ptr_t   shadow_pass_;
 		ssdo::ptr_t          ssdo_pass_;
 		Eigen::Vector3f      light_dir_;
+		Eigen::Vector3f      background_color_;
 		float                exposure_;
         float                shadow_bias_;
         bool                 two_sided_;
-        bool                 clipping_;
-        float                clipping_height_;
-        float                clipping_min_z_;
-        float                clipping_max_z_;
         float                point_size_;
+        object_map_t         objects_;
+        bbox_t               bbox_;
 };
 
 

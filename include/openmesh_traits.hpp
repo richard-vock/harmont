@@ -1,7 +1,8 @@
 #ifndef HARMONT_OPENMESH_TRAITS_HPP_
 #define HARMONT_OPENMESH_TRAITS_HPP_
 
-#include "mesh_traits.hpp"
+#include "mesh_object.hpp"
+#include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include <OpenMesh/Core/Mesh/PolyMesh_ArrayKernelT.hh>
 #include <OpenMesh/Core/Mesh/Traits.hh>

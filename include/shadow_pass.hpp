@@ -21,14 +21,18 @@ class shadow_pass {
 		texture::ptr shadow_texture();
 		texture::const_ptr shadow_texture() const;
 
+        shader_program::ptr program();
+        shader_program::const_ptr program() const;
+
 		Eigen::Matrix4f& transform();
 		const Eigen::Matrix4f& transform() const;
 
 		std::vector<float>& poisson_disk();
 		const std::vector<float>& poisson_disk() const;
 
-        void init(const geometry_callback_t& init_callback);
-		void render(const geometry_callback_t& render_callback, int width, int height, bool clipping, float clipping_z);
+        float far() const;
+
+		void render(const geometry_callback_t& render_callback, int width, int height);
 
 		void update(const bounding_box_t& bbox, const Eigen::Vector3f& light_dir);
 
@@ -46,6 +50,7 @@ class shadow_pass {
 		texture::ptr        tex_;
 		texture::ptr        dummy_tex_;
 		std::vector<float>  disk_;
+        float               far_;
 };
 
 #include "shadow_pass.ipp"
