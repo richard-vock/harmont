@@ -25,9 +25,13 @@ class mesh_object : public  renderable {
 
 	public:
 		mesh_object(std::string path, bool smooth, bool casts_shadows = true);
+		mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows = true);
 		virtual ~mesh_object();
 
 		void init();
+
+        std::shared_ptr<MeshT> mesh();
+        std::shared_ptr<const MeshT> mesh() const;
 
 		element_type_t element_type() const;
 		bool transparent() const;

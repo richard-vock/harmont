@@ -25,9 +25,13 @@ class pointcloud_object : public  renderable {
 
 	public:
 		pointcloud_object(std::string path, bool casts_shadows = true);
+		pointcloud_object(std::shared_ptr<CloudT> pointcloud, bool casts_shadows = true);
 		virtual ~pointcloud_object();
 
 		void init();
+
+        std::shared_ptr<CloudT> cloud();
+        std::shared_ptr<const CloudT> cloud() const;
 
 		element_type_t element_type() const;
 		bool transparent() const;

@@ -8,12 +8,27 @@ inline pointcloud_object<CloudT>::pointcloud_object(std::string path, bool casts
 }
 
 template <typename CloudT>
+inline pointcloud_object<CloudT>::pointcloud_object(std::shared_ptr<CloudT> pointcloud, bool casts_shadows) : renderable(casts_shadows), pointcloud_(pointcloud) {
+    pointcloud_traits<CloudT>::buffer_data(pointcloud_, {POSITION, COLOR, NORMAL}, vertex_data_, index_data_);
+}
+
+template <typename CloudT>
 inline pointcloud_object<CloudT>::~pointcloud_object() {
 }
 
 template <typename CloudT>
 inline void pointcloud_object<CloudT>::init() {
     renderable::init(vertex_data_, index_data_);
+}
+
+template <typename CloudT>
+inline std::shared_ptr<CloudT> pointcloud_object<CloudT>::cloud() {
+    return pointcloud_;
+}
+
+template <typename CloudT>
+inline std::shared_ptr<const CloudT> pointcloud_object<CloudT>::cloud() const {
+    return pointcloud_;
 }
 
 template <typename CloudT>

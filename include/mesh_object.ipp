@@ -8,12 +8,27 @@ inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts
 }
 
 template <typename MeshT>
+inline mesh_object<MeshT>::mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows) : renderable(casts_shadows), mesh_(mesh) {
+    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL}, vertex_data_, index_data_, smooth);
+}
+
+template <typename MeshT>
 inline mesh_object<MeshT>::~mesh_object() {
 }
 
 template <typename MeshT>
 inline void mesh_object<MeshT>::init() {
     renderable::init(vertex_data_, index_data_);
+}
+
+template <typename MeshT>
+std::shared_ptr<MeshT> mesh_object<MeshT>::mesh() {
+    return mesh_;
+}
+
+template <typename MeshT>
+std::shared_ptr<const MeshT> mesh_object<MeshT>::mesh() const {
+    return mesh_;
 }
 
 template <typename MeshT>
