@@ -17,6 +17,7 @@ class deferred_renderer {
 		typedef std::weak_ptr<const deferred_renderer>    const_wptr_t;
 		typedef shadow_pass::geometry_callback_t          geometry_callback_t;
 		typedef Eigen::AlignedBox<float, 3>               bounding_box_t;
+        typedef std::map<std::string, renderable::ptr_t>  object_map_t;
 
 		struct render_parameters_t {
 			Eigen::Vector3f light_dir;
@@ -70,6 +71,9 @@ class deferred_renderer {
 		render_pass::ptr geometry_pass();
 		render_pass::const_ptr geometry_pass() const;
 
+        renderable::ptr_t object(std::string identifier);
+        renderable::const_ptr_t object(std::string identifier) const;
+        const object_map_t& objects() const;
         void add_object(std::string identifier, renderable::ptr_t object);
         void remove_object(std::string identifier);
 
@@ -80,9 +84,6 @@ class deferred_renderer {
         void   render_geometry(shader_program::ptr program, pass_type_t type);
 		void   load_hdr_map_(std::string filename);
 		static std::pair<float, float> get_near_far(camera::const_ptr cam, const bounding_box_t& bbox);
-
-    protected:
-        typedef std::map<std::string, renderable::ptr_t> object_map_t;
 
 	protected:
 		render_pass_2d::ptr  clear_pass_;

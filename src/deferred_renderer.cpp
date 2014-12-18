@@ -154,9 +154,25 @@ render_pass::const_ptr deferred_renderer::geometry_pass() const {
     return geom_pass_;
 }
 
+renderable::ptr_t deferred_renderer::object(std::string identifier) {
+    auto find_it = objects_.find(identifier);
+    if (find_it == objects_.end()) throw std::runtime_error("deferred_renderer::object(): Object \""+identifier+"\" does not exist"+SPOT);
+    return find_it->second;
+}
+
+renderable::const_ptr_t deferred_renderer::object(std::string identifier) const {
+    auto find_it = objects_.find(identifier);
+    if (find_it == objects_.end()) throw std::runtime_error("deferred_renderer::object(): Object \""+identifier+"\" does not exist"+SPOT);
+    return find_it->second;
+}
+
+const deferred_renderer::object_map_t& deferred_renderer::objects() const {
+    return objects_;
+}
+
 void deferred_renderer::add_object(std::string identifier, renderable::ptr_t object) {
     if (objects_.find(identifier) != objects_.end()) {
-        throw std::runtime_error("deferred_renderer::add_object: Trying to add already existing object \""+identifier+"\""+SPOT);
+        throw std::runtime_error("deferred_renderer::add_object(): Trying to add already existing object \""+identifier+"\""+SPOT);
     }
 
     objects_[identifier] = object;
@@ -185,6 +201,11 @@ void deferred_renderer::remove_object(std::string identifier) {
 }
 
 void deferred_renderer::render(camera::ptr cam) {
+    if (!objects_.size()) {
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        return;
+    }
     glEnable(GL_DEPTH_TEST);
 
     // compute bounding box
@@ -228,10 +249,10 @@ void deferred_renderer::render(camera::ptr cam) {
 
     clear_pass_->render([&] (shader_program::ptr) { });
 
-    shadow_pass_->render(geom_callback, cam->width(), cam->height());
-
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glEnable(GL_PROGRAM_POINT_SIZE);
+    shadow_pass_->render(geom_callback, cam->width(), cam->height(), vp_ratio);
+
     geom_pass_->render([&] (shader_program::ptr program) { geom_callback(program, DISPLAY_GEOMETRY); });
     glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glDisable(GL_PROGRAM_POINT_SIZE);

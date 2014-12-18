@@ -1,6 +1,3 @@
-#include <mesh_object.hpp>
-
-
 template <typename MeshT>
 inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts_shadows) : renderable(casts_shadows) {
     mesh_ = mesh_traits<MeshT>::load_from_file(path);

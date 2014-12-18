@@ -1,6 +1,3 @@
-#include <pointcloud_object.hpp>
-
-
 template <typename CloudT>
 inline pointcloud_object<CloudT>::pointcloud_object(std::string path, bool casts_shadows) : renderable(casts_shadows) {
     pointcloud_ = pointcloud_traits<CloudT>::load_from_file(path);

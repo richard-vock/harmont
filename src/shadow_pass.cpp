@@ -37,12 +37,8 @@ shader_program::const_ptr shadow_pass::program() const {
     return pass_->program();
 }
 
-Eigen::Matrix4f& shadow_pass::transform() {
-    return mat_;
-}
-
-const Eigen::Matrix4f& shadow_pass::transform() const {
-    return mat_;
+Eigen::Matrix4f shadow_pass::transform() {
+    return mat_proj_ * mat_view_;
 }
 
 std::vector<float>& shadow_pass::poisson_disk() {
@@ -57,8 +53,10 @@ float shadow_pass::far() const {
     return far_;
 }
 
-void shadow_pass::render(const geometry_callback_t& render_callback, int width, int height) {
-    pass_->set_uniform("shadow_matrix", mat_);
+void shadow_pass::render(const geometry_callback_t& render_callback, int width, int height, float vp_ratio) {
+    pass_->set_uniform("shadow_view", mat_view_);
+    pass_->set_uniform("shadow_proj", mat_proj_);
+    pass_->set_uniform("vp_ratio", vp_ratio);
     glViewport(0, 0, res_, res_);
     glClearColor(1.0, 1.0, 1.0, 1.0);
     //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -86,13 +84,13 @@ void shadow_pass::update(const bounding_box_t& bbox, const Eigen::Vector3f& ligh
     up.normalize();
     Eigen::Vector3f right = up.cross(forward);
 
-    mat_.block<1,3>(0, 0) = right.transpose();
-    mat_.block<1,3>(1, 0) = up.transpose();
-    mat_.block<1,3>(2, 0) = forward.transpose();
+    mat_view_.block<1,3>(0, 0) = right.transpose();
+    mat_view_.block<1,3>(1, 0) = up.transpose();
+    mat_view_.block<1,3>(2, 0) = forward.transpose();
     Eigen::Vector3f light_pos = center + (radius + margin) * light_dir;
-    mat_.block<3,1>(0, 3) = mat_.block<3,3>(0, 0) * (-light_pos);
-    mat_.row(3) = Eigen::RowVector4f(0.f, 0.f, 0.f, 1.f);
-    mat_ = ortho(-radius, radius, -radius, radius, margin, 2.f * radius + 2.f * margin) * mat_;
+    mat_view_.block<3,1>(0, 3) = mat_view_.block<3,3>(0, 0) * (-light_pos);
+    mat_view_.row(3) = Eigen::RowVector4f(0.f, 0.f, 0.f, 1.f);
+    mat_proj_ = ortho(-radius, radius, -radius, radius, margin, 2.f * radius + 2.f * margin);
 
     far_ = 2.f * radius + 2.f * margin;
 }
