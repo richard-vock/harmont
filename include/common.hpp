@@ -61,12 +61,14 @@ inline Scalar tiny() {
 }
 
 template <typename Derived>
-void clamp(Eigen::DenseBase<Derived>& m, typename Derived::Scalar lower, typename Derived::Scalar upper) {
-    typedef typename Eigen::DenseBase<Derived>::Index idx_t;
+void clamp(Eigen::PlainObjectBase<Derived>& m, typename Derived::Scalar lower, typename Derived::Scalar upper) {
+    typedef typename Eigen::PlainObjectBase<Derived>::Index idx_t;
+
     for (idx_t i = 0; i < m.outerSize(); ++i) {
         for (idx_t j = 0; j < m.innerSize(); ++j) {
-            if (m(i,j) < lower) m(i,j) = lower;
-            if (m(i,j) > upper) m(i,j) = upper;
+            int offset = i * m.innerSize() + j;
+            if (m.data()[offset] < lower) m.data()[offset] = lower;
+            if (m.data()[offset] > upper) m.data()[offset] = upper;
         }
     }
 }

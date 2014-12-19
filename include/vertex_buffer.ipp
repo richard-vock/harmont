@@ -163,14 +163,21 @@ inline void vertex_buffer<Scalar, Target>::get_data(Eigen::Matrix<S, Rows, Cols,
 
 template <typename Scalar, GLenum Target>
 template <int Options>
-Eigen::Map<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Options>> vertex_buffer<Scalar, Target>::eigen_map(GLenum access) {
+Eigen::Map<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Options>> vertex_buffer<Scalar, Target>::eigen_map(uint32_t element_count, uint32_t data_count, GLenum access) {
     typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Options> mat_t;
     typedef Eigen::Map<mat_t> map_t;
-    typename map_t::Index rows = Options & Eigen::RowMajor ? element_count_ : data_size_;
-    typename map_t::Index cols = Options & Eigen::RowMajor ? data_size_ : element_count_;
+    typename map_t::Index rows = Options & Eigen::RowMajor ? element_count : data_count;
+    typename map_t::Index cols = Options & Eigen::RowMajor ? data_count : element_count;
     bind();
     Scalar* data = reinterpret_cast<Scalar*>(glMapBuffer(Target, access));
     map_t mapped(data, rows, cols);
     release();
     return mapped;
+}
+
+template <typename Scalar, GLenum Target>
+void vertex_buffer<Scalar, Target>::unmap() {
+    bind();
+    glUnmapBuffer(Target);
+    release();
 }

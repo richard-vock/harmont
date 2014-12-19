@@ -221,8 +221,9 @@ float renderable::color_to_rgba(Eigen::Vector4f col) {
 }
 
 void renderable::set_color_data_(const vertex_data_t& color_data) {
-    auto mapped = display_buffer_->eigen_map<Eigen::RowMajor>();
-    mapped.row(3) = color_data;
+    auto mapped = display_buffer_->eigen_map<Eigen::RowMajor>(color_data.rows(), 9);
+    mapped.col(3) = color_data;
+    display_buffer_->unmap();
 }
 
 } // harmont

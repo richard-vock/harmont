@@ -99,7 +99,8 @@ class vertex_buffer {
         void get_data(Eigen::Matrix<S, Rows, Cols, Options>& matrix);
 
         template <int Options>
-        Eigen::Map<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Options>> eigen_map(GLenum access = GL_WRITE_ONLY);
+        Eigen::Map<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Options>> eigen_map(uint32_t element_count, uint32_t data_count, GLenum access = GL_WRITE_ONLY);
+		  void unmap();
 
     protected:
         void allocate_();
