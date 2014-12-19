@@ -211,6 +211,7 @@ void deferred_renderer::render(camera::ptr cam) {
     // compute bounding box
     bbox_ = bbox_t();
     for (const auto& obj : objects_) {
+        if (!obj.second->active()) continue;
         bbox_.extend(obj.second->bounding_box());
     }
     shadow_pass_->update(bbox_, light_dir_);
