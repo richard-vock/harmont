@@ -16,7 +16,7 @@ struct mesh_traits {
 };
 
 template <typename MeshT>
-class mesh_object : public  renderable {
+class mesh_object : public renderable {
 	public:
 		typedef std::shared_ptr<mesh_object>        ptr_t;
 		typedef std::weak_ptr<mesh_object>          wptr_t;

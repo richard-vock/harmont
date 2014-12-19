@@ -2,27 +2,6 @@
 
 namespace harmont {
 
-typedef union {
-    struct {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
-        uint8_t a;
-    };
-    float rgba;
-} internal_color_t;
-
-internal_color_t to_internal_color(const renderable::color_t& col) {
-    renderable::color_t clamped = col;
-    clamp(clamped, 0.f, 1.f);
-    internal_color_t ic;
-    ic.r = static_cast<uint8_t>(col[0] * 255.f);
-    ic.g = static_cast<uint8_t>(col[1] * 255.f);
-    ic.b = static_cast<uint8_t>(col[2] * 255.f);
-    ic.a = static_cast<uint8_t>(col[3] * 255.f);
-    return ic;
-}
-
 renderable::renderable(bool casts_shadows) : bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
 }
 
@@ -52,6 +31,16 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
         glEnable(GL_CLIP_DISTANCE0);
     }
 
+    if (type == DISPLAY_GEOMETRY) {
+        ((*program)["has_texture"]).set(static_cast<int>(static_cast<bool>(tex_)));
+        if (tex_) {
+            auto location = ((*program)["map_tex"]).location();
+            glUniform1i(location, 0);
+            glActiveTexture(GL_TEXTURE0);
+            tex_->bind();
+        }
+    }
+
     Eigen::Matrix4f id = Eigen::Matrix4f::Identity();
     ((*program))["model_matrix"].set(id);
 
@@ -63,6 +52,10 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
     index_buffer_->bind();
 
     glDrawElements(gl_element_mode_(), num_elements_, GL_UNSIGNED_INT, nullptr);
+
+    if (tex_) {
+        tex_->release();
+    }
 
     if (type == SHADOW_GEOMETRY) {
         shadow_array_->release();
@@ -80,7 +73,7 @@ void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vec
     vertex_data_t color_data = initial_color_data_;
     for (uint32_t i = 0; i < indices.size(); ++i) {
         uint32_t idx = indices[i];
-        if (idx < color_data.rows()) color_data(idx, 0) = to_internal_color(colors[i]).rgba;
+        if (idx < color_data.rows()) color_data(idx, 0) = color_to_rgba(colors[i]);
     }
     set_color_data_(color_data);
 }
@@ -94,6 +87,7 @@ void renderable::set_colors(const std::vector<color_t>& colors) {
     if (colors.size() != num_elements_) throw std::runtime_error("renderable::set_colors: Number of colors must match number of elements"+SPOT);
     std::vector<uint32_t> indices(colors.size());
     std::iota(indices.begin(), indices.end(), 0);
+    set_colors(indices, colors);
 }
 
 void renderable::set_colors(const color_t& color) {
@@ -199,12 +193,31 @@ void renderable::set_transformation(const transformation_t& transformation) {
     bbox_valid_ = false;
 }
 
+void renderable::set_texture(texture::ptr tex) {
+    tex_ = tex;
+}
+
+void renderable::unset_texture() {
+    tex_.reset();
+}
+
 bbox_t renderable::bounding_box() {
     if (!bbox_valid_) {
         compute_bounding_box_();
         bbox_valid_ = true;
     }
     return bbox_;
+}
+
+float renderable::color_to_rgba(Eigen::Vector4f col) {
+    renderable::color_t clamped = col;
+    clamp(clamped, 0.f, 1.f);
+    internal_color_t ic;
+    ic.r = static_cast<uint8_t>(col[0] * 255.f);
+    ic.g = static_cast<uint8_t>(col[1] * 255.f);
+    ic.b = static_cast<uint8_t>(col[2] * 255.f);
+    ic.a = static_cast<uint8_t>(col[3] * 255.f);
+    return ic.rgba;
 }
 
 void renderable::set_color_data_(const vertex_data_t& color_data) {

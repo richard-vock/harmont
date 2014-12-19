@@ -121,7 +121,7 @@ std::string shader<Stage>::render_source_(const std::string& source, const param
     Plustache::template_t t;
     return t.render(source, ctx);
 #else
-    return source
+    return source;
 #endif // USE_PLUSTACHE
 }
 

@@ -25,6 +25,16 @@ class renderable {
 
 		typedef enum {VERTS, SPLATS}                        element_type_t;
 
+        typedef union {
+            struct {
+                uint8_t r;
+                uint8_t g;
+                uint8_t b;
+                uint8_t a;
+            };
+            float rgba;
+        } internal_color_t;
+
 	public:
 		renderable(bool casts_shadows = true);
 		virtual ~renderable();
@@ -76,12 +86,18 @@ class renderable {
         const transformation_t& transformation() const;
         void set_transformation(const transformation_t& transformation);
 
+        void set_texture(texture::ptr tex);
+        void unset_texture();
+
 		bbox_t bounding_box();
+
+        static float color_to_rgba(Eigen::Vector4f col);
 
 	protected:
 		virtual void compute_bounding_box_() = 0;
 		virtual GLenum gl_element_mode_() const = 0;
 		void set_color_data_(const vertex_data_t& color_data);
+
 
 	protected:
         bool              bbox_valid_;
@@ -97,6 +113,7 @@ class renderable {
 		ibo_t::ptr        index_buffer_;
 		vertex_data_t     initial_color_data_;
         bbox_t            bbox_;
+        texture::ptr      tex_;
 };
 
 

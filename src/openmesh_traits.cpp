@@ -59,7 +59,7 @@ template <typename ColorType>
 void mesh_traits<tri_mesh<ColorType>>::buffer_data(std::shared_ptr<const tri_mesh<ColorType>> mesh, const fields_t& fields, Eigen::MatrixXf& vertex_data, Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>& indices, bool shared_vertices) {
     uint32_t columns = 0;
     for (const auto& field : fields) {
-        columns += field == COLOR ? 1 : 3;
+        columns += field == COLOR ? 1 : (field == TEXCOORDS ? 2 : 3);
     }
     uint32_t rows = shared_vertices ? mesh->n_vertices() : 3 * mesh->n_faces();
     uint32_t num_faces = mesh->n_faces();
@@ -71,7 +71,7 @@ void mesh_traits<tri_mesh<ColorType>>::buffer_data(std::shared_ptr<const tri_mes
     if (shared_vertices) {
         uint32_t begin = 0, end;
         for (const auto& field : fields) {
-            end = begin + (field == COLOR ? 1 : 3);
+            end = begin + (field == COLOR ? 1 : (field == TEXCOORDS ? 2 : 3));
 
             uint32_t idx = 0;
             for (auto it = mesh->vertices_begin(); it != mesh->vertices_end(); ++it, ++idx) {
@@ -88,6 +88,9 @@ void mesh_traits<tri_mesh<ColorType>>::buffer_data(std::shared_ptr<const tri_mes
                     Eigen::Matrix<uint8_t, 1, 4> uc_col(openmesh_color.data());
                     uint32_t* casted_ptr = (uint32_t*)(&(vertex_data(idx, begin)));
                     *casted_ptr = (uint32_t(uc_col[0]) << 16) | (uint32_t(uc_col[1]) << 8) | uint32_t(uc_col[2]) | (uint32_t(uc_col[3]) << 24);
+                }
+                if (field == TEXCOORDS) {
+                    vertex_data.block(idx, begin, 1, end-begin) = Eigen::RowVector2f::Zero();
                 }
             }
 

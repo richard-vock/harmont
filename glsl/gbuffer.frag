@@ -5,9 +5,12 @@ precision highp float;
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec4 in_color;
 layout(location = 2) in vec3 in_normal;
+layout(location = 3) in vec2 in_tex_coords;
 
 layout(location = 6) uniform mat3 normal_matrix;
 layout(location = 7) uniform bool two_sided;
+layout(location = 8) uniform bool has_texture;
+layout(location = 9) uniform sampler2D map_tex;
 
 // material parameters
 vec3  mat_diffuse = vec3(0.8, 0.8, 0.8);
@@ -26,12 +29,17 @@ void main() {
         normal *= -1.0;
     }
 
-    vec3 albedo_ycbcr = rgb_to_ycbcr(in_color.rgb);
+    vec3 frag_color = in_color.rgb;
+    if (has_texture) {
+        frag_color *= texture(map_tex, in_tex_coords).rgb;
+    }
+
+    /*vec3 albedo_ycbcr = rgb_to_ycbcr(frag_color);*/
     vec3 spec_ycbcr = rgb_to_ycbcr(mat_specular);
 
     uint final_r = floatBitsToUint(gl_FragCoord.z);//uint(clamp(gl_FragCoord.z * 255.0, 0.0, 255.0));
     uint final_g = packSnorm4x8(vec4(normal, mat_roughness));
-    uint final_b = packSnorm4x8(vec4(in_color.rgb, spec_ycbcr.x));
+    uint final_b = packSnorm4x8(vec4(frag_color, spec_ycbcr.x));
     out_color = uvec3(final_r, final_g, final_b);
 }
 

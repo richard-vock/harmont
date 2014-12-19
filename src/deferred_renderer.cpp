@@ -186,7 +186,7 @@ void deferred_renderer::add_object(std::string identifier, renderable::ptr_t obj
     object->shadow_vertex_array()->release();
 
     // display pass
-    vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}};
+    vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}, {"tex_coords", 2}};
     object->display_vertex_array()->bind();
     object->display_vertex_buffer()->bind_to_array(vbo_layout, geom_pass_->program());
     object->display_vertex_array()->release();

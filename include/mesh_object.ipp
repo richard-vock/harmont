@@ -1,12 +1,12 @@
 template <typename MeshT>
 inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts_shadows) : renderable(casts_shadows) {
     mesh_ = mesh_traits<MeshT>::load_from_file(path);
-    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL}, vertex_data_, index_data_, smooth);
+    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, smooth);
 }
 
 template <typename MeshT>
 inline mesh_object<MeshT>::mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows) : renderable(casts_shadows), mesh_(mesh) {
-    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL}, vertex_data_, index_data_, smooth);
+    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, smooth);
 }
 
 template <typename MeshT>

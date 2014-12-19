@@ -3,6 +3,7 @@
 in vec3  position;
 in float color;
 in vec3  normal;
+in vec2  tex_coords;
 
 layout(location = 0) uniform mat4  model_matrix;
 layout(location = 1) uniform mat4  view_matrix;
@@ -14,6 +15,7 @@ layout(location = 5) uniform float vp_ratio;
 layout(location = 0) out vec3 out_position;
 layout(location = 1) out vec4 out_color;
 layout(location = 2) out vec3 out_normal;
+layout(location = 3) out vec2 out_tex_coords;
 
 void main() {
     out_position = (view_matrix * model_matrix * vec4(position, 1.0)).xyz;
@@ -26,6 +28,7 @@ void main() {
     uint a = (casted >> 24) & 255;
 
     out_color = vec4(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0);
+    out_tex_coords = tex_coords;
 
     gl_ClipDistance[0] = -dot(position.xyz, clip_normal) + clip_distance;
     gl_PointSize = max(1.0, vp_ratio / out_position.z);

@@ -41,7 +41,7 @@
 
 namespace harmont {
 
-typedef enum {POSITION, NORMAL, COLOR} data_field_t;
+typedef enum {POSITION, NORMAL, COLOR, TEXCOORDS} data_field_t;
 
 typedef Eigen::AlignedBox<float, 3> bbox_t;
 
