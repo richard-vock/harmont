@@ -2,7 +2,7 @@
 
 namespace harmont {
 
-renderable::renderable(bool casts_shadows) : bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
+renderable::renderable(bool casts_shadows) : active_(true), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
 }
 
 renderable::~renderable() {
@@ -145,6 +145,18 @@ renderable::ibo_t::ptr renderable::element_index_buffer() {
 
 renderable::ibo_t::const_ptr renderable::element_index_buffer() const {
     return index_buffer_;
+}
+
+bool renderable::active() const {
+    return active_;
+}
+
+void renderable::set_active(const bool& active) {
+    active_ = active;
+}
+
+void renderable::toggle_active() {
+    active_ = !active_;
 }
 
 bool renderable::casts_shadows() const {

@@ -51,7 +51,6 @@ class renderable {
 		virtual element_type_t element_type() const = 0;
 		virtual bool transparent() const = 0;
 
-
 		bool initialized() const;
 
 		uint32_t num_elements() const;
@@ -70,6 +69,10 @@ class renderable {
 
 		ibo_t::ptr element_index_buffer();
 		ibo_t::const_ptr element_index_buffer() const;
+
+        bool active() const;
+        void set_active(const bool& active);
+        void toggle_active();
 
         bool casts_shadows() const;
         void set_casts_shadows(bool casts_shadows);
@@ -100,6 +103,7 @@ class renderable {
 
 
 	protected:
+        bool              active_;
         bool              bbox_valid_;
         bool              casts_shadows_;
 		bool              clipping_;

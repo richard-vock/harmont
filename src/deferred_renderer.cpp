@@ -272,6 +272,7 @@ void deferred_renderer::reshape(camera::ptr cam) {
 
 void deferred_renderer::render_geometry(shader_program::ptr program, pass_type_t type) {
     for (const auto& obj : objects_) {
+        if (!obj.second->active()) continue;
         if (type != SHADOW_GEOMETRY || obj.second->casts_shadows()) {
             obj.second->render(program, type, bbox_);
         }
