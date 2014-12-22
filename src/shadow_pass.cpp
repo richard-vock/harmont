@@ -14,11 +14,18 @@ shadow_pass::shadow_pass(uint32_t resolution, uint32_t sample_count) : res_(reso
     dummy_tex_ = texture::depth_texture<float>(res_, res_, GL_DEPTH_COMPONENT32F);
     vertex_shader::ptr   vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"shadow.vert");
     fragment_shader::ptr frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shadow.frag");
+    vertex_shader::ptr vert_clear = vertex_shader::from_file(std::string(GLSL_PREFIX)+"full_quad.vert");
+    fragment_shader::ptr frag_clear = fragment_shader::from_file(std::string(GLSL_PREFIX)+"clear_shadowmap.frag");
     pass_ = std::make_shared<render_pass>(vert, frag, render_pass::textures({tex_}), dummy_tex_);
+    clear_pass_ = std::make_shared<render_pass_2d>(vert_clear, frag_clear, render_pass::textures({tex_}));
     disk_ = poisson_disk_(sample_count_, 1.f);
 }
 
 shadow_pass::~shadow_pass() {
+}
+
+uint32_t shadow_pass::resolution() const {
+    return res_;
 }
 
 texture::ptr shadow_pass::shadow_texture() {
@@ -62,6 +69,7 @@ void shadow_pass::render(const geometry_callback_t& render_callback, int width, 
     //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     //glPolygonOffset(-1.1, 4.0);
     //glEnable(GL_POLYGON_OFFSET_FILL);
+    clear_pass_->render([&] (shader_program::ptr) {});
     pass_->render([&] (shader_program::ptr program) { render_callback(program, SHADOW_GEOMETRY); });
     glDisable(GL_POLYGON_OFFSET_FILL);
     //glPolygonOffset(0, 0);

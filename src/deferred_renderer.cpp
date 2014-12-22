@@ -259,6 +259,7 @@ void deferred_renderer::render(camera::ptr cam) {
     glDisable(GL_PROGRAM_POINT_SIZE);
 
     ssdo_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
+
     compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
 }
 
@@ -311,7 +312,7 @@ std::pair<float, float> deferred_renderer::get_near_far(camera::const_ptr cam, c
         }
         // compute depth
         Eigen::Vector3f proj = (vm * corner.homogeneous()).head(3);
-        float depth = fabs(proj[2]);
+        float depth = -proj[2];
         if (depth < near) near = depth;
         if (depth > far)  far = depth;
     }

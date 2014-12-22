@@ -18,6 +18,8 @@ class shadow_pass {
 		shadow_pass(uint32_t resolution, uint32_t sample_count);
 		virtual ~shadow_pass();
 
+        uint32_t resolution() const;
+
 		texture::ptr shadow_texture();
 		texture::const_ptr shadow_texture() const;
 
@@ -42,15 +44,16 @@ class shadow_pass {
 		static std::vector<float> poisson_disk_(uint32_t n, float radius, uint32_t k = 30);
 
 	protected:
-		uint32_t            res_;
-		uint32_t            sample_count_;
-		render_pass::ptr    pass_;
-		Eigen::Matrix4f     mat_view_;
-		Eigen::Matrix4f     mat_proj_;
-		texture::ptr        tex_;
-		texture::ptr        dummy_tex_;
-		std::vector<float>  disk_;
-        float               far_;
+		uint32_t              res_;
+		uint32_t              sample_count_;
+		render_pass::ptr      pass_;
+		render_pass_2d::ptr   clear_pass_;
+		Eigen::Matrix4f       mat_view_;
+		Eigen::Matrix4f       mat_proj_;
+		texture::ptr          tex_;
+		texture::ptr          dummy_tex_;
+		std::vector<float>    disk_;
+        float                 far_;
 };
 
 #include "shadow_pass.ipp"

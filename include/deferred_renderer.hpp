@@ -89,7 +89,6 @@ class deferred_renderer {
 		render_pass_2d::ptr  clear_pass_;
 		render_pass::ptr     geom_pass_;
 		render_pass_2d::ptr  compose_pass_;
-		render_pass_2d::ptr  debug_pass_;
 		texture::ptr         depth_tex_;
 		texture::ptr         gbuffer_tex_;
 		texture::ptr         diff_tex_;
