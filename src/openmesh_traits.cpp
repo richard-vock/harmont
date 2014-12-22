@@ -23,10 +23,12 @@ std::shared_ptr<typename mesh_traits<tri_mesh<ColorType>>::mesh_type_t> mesh_tra
     opt += OpenMesh::IO::Options::FaceNormal;
     opt += OpenMesh::IO::Options::VertexNormal;
     opt += OpenMesh::IO::Options::VertexColor;
+    opt += OpenMesh::IO::Options::VertexTexCoord;
 
     std::shared_ptr<mesh_type_t> mesh(new mesh_type_t());
     mesh->request_vertex_colors();
     mesh->request_vertex_normals();
+    mesh->request_vertex_texcoords2D();
     mesh->request_face_normals();
     if (!OpenMesh::IO::read_mesh(*mesh, path, opt)) {
         throw std::runtime_error("Unable to read mesh file. Aborting.");

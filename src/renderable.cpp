@@ -22,6 +22,8 @@ void renderable::init(const vertex_data_t& vertex_data, const index_data_t& inde
 void renderable::render(shader_program::ptr program, pass_type_t type, const bbox_t& bbox) {
     if (!initialized()) return;
 
+    pre_render(program, type);
+
     if (clipping_) {
         float min_z = bbox.min()[2];
         float max_z = bbox.max()[2];
@@ -66,6 +68,14 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
     if (clipping_) {
         glDisable(GL_CLIP_DISTANCE0);
     }
+
+    post_render(program, type);
+}
+
+void renderable::pre_render(shader_program::ptr program, pass_type_t type) {
+}
+
+void renderable::post_render(shader_program::ptr program, pass_type_t type) {
 }
 
 void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {

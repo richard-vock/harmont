@@ -7,6 +7,7 @@
 
 namespace harmont {
 
+
 class renderable {
 	public:
 		typedef std::shared_ptr<renderable>                 ptr_t;
@@ -41,6 +42,9 @@ class renderable {
 
 		void init(const vertex_data_t& vertex_data, const index_data_t& index_data);
 		void render(shader_program::ptr program, pass_type_t type, const bbox_t& bbox);
+
+        virtual void pre_render(shader_program::ptr program, pass_type_t type);
+        virtual void post_render(shader_program::ptr program, pass_type_t type);
 
 		void set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors);
 		void set_colors(const std::vector<uint32_t>& indices, const color_t& color);

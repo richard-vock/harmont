@@ -25,7 +25,9 @@ vec3 rgb_to_ycbcr(vec3 rgb);
 void main() {
     vec3 normal = in_normal;
     vec3 eye_dir = normalize(in_position);
-    if (two_sided && dot(normalize(normal_matrix * normal), eye_dir) > 0.0) {
+    if (dot(normal, normal) < 0.2) {
+        normal = vec3(0.0, 0.0, 0.0);
+    } else if (two_sided && dot(normalize(normal_matrix * normal), eye_dir) > 0.0) {
         normal *= -1.0;
     }
 

@@ -43,6 +43,10 @@ void main (void) {
     // get colors
     vec3 mat_diffuse, mat_specular;
     unpack_colors(gbuffer, mat_diffuse, mat_specular);
+    if (dot(normal, normal) < 0.2) {
+        light = mat_diffuse;
+        return;
+    }
 
     // get world position
     float world_z = 2.0 * unpack_depth(gbuffer) - 1.0;

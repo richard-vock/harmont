@@ -69,6 +69,11 @@ void main(void) {
     unpack_colors(gbuffer, mat_diffuse, mat_specular);
     vec3 mat_ambient = 0.03 * mat_diffuse;
 
+    if (dot(normal, normal) < 0.2) {
+        out_color = vec4(mat_diffuse, 1.0);
+        return;
+    }
+
     float window_z = unpack_depth(gbuffer);
     vec4 window_pos = vec4(tc * 2.0 - 1.0, 2.0 * window_z - 1.0, 1.0);
     vec4 world_pos = inv_view_proj_matrix * window_pos;
