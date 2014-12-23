@@ -52,6 +52,7 @@ void ssdo::compute(texture::ptr gbuffer, texture::ptr env_map, camera::ptr cam, 
     pass_sample_->set_uniform("near", cam->near());
     pass_sample_->set_uniform("far", cam->far());
     pass_sample_->set_uniform("reflective_albedo", refl_albedo_);
+    pass_sample_->set_uniform("is_first_frame", first_pass_ ? 1 : 0);
     pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {tex_noise_, "map_noise"}, {gbuffer, "map_gbuffer"}, {env_map, "map_env"}, {tex_last_, "map_last"}});
     //pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {tex_noise_, "map_noise"}, {gbuffer, "map_gbuffer"}, {env_map, "map_env"}});
     //pass_sample_->render([&] (shader_program::ptr) {}, {{tex_samples_, "map_samples"}, {gbuffer, "map_gbuffer"}});

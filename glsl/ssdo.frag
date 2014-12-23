@@ -13,6 +13,7 @@ layout(location = 9) uniform float far;
 layout(location = 10) uniform sampler2D map_env;
 layout(location = 11) uniform sampler2D map_last;
 layout(location = 12) uniform float reflective_albedo;
+layout(location = 13) uniform bool is_first_frame;
 
 in  vec2 tc;
 out vec3 light;
@@ -73,7 +74,7 @@ vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {
     vec3 global_sample;
     vec4 local_sample;
     int num_samples = textureSize(map_samples, 0).x;
-    int used_samples = 0;
+    /*int used_samples = 0;*/
     for (int i=0; i<num_samples; ++i) {
         local_sample = texelFetch(map_samples, i, 0);
         local_sample.xy = 2.0 * local_sample.xy - 1.0;
@@ -91,40 +92,40 @@ vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {
             vec3 world_sample = inverse_view_project(vec3(proj_sample.xy, 2.0 * sample_z - 1.0));
             float dist = length(world_sample - pos);
 
-            if (dist < radius) {
-                used_samples += 1;
-                float cos_theta = clamp(local_sample.z, 0.0, 1.0);
-                vec3 dir = normalize(global_sample - pos);
-                if (this_z <= ref_z) {
-                    // direct light
-                    light += 0.8 * pi * cos_theta * texture2D(map_env, dirToUV(dir)).rgb * kd;
-                } else {
-                    // indirect light
-                    float dummy;
-                    vec3 other_normal = normalize(unpack_normal(sample_g, dummy));
-                    float other_cos_theta = clamp(dot(-dir, other_normal), 0.0, 1.0);
-                    light += (reflective_albedo * radius * radius) * cos_theta * other_cos_theta * (1.0 / (dist*dist)) * texture(map_last, sample_tc).rgb * kd;
-                    /*[>light += (0.8 ) * l * cos_theta * other_cos_theta * (1.0 / dist);<]*/
-                }
+            float cos_theta = clamp(local_sample.z, 0.0, 1.0);
+            vec3 dir = normalize(global_sample - pos);
+            /*used_samples += 1;*/
+            if (dist < radius && this_z > ref_z && !is_first_frame) {
+                // indirect light
+                float dummy;
+                vec3 other_normal = normalize(unpack_normal(sample_g, dummy));
+                float other_cos_theta = clamp(dot(-dir, other_normal), 0.0, 1.0);
+                vec3 last_color = texture(map_last, sample_tc).rgb;
+                light += (reflective_albedo) * cos_theta * other_cos_theta * (1.0 / (dist*dist)) * last_color * kd;
+                /*[>light += (0.8 ) * l * cos_theta * other_cos_theta * (1.0 / dist);<]*/
+            } else {
+                // direct light
+                light += 0.8 * pi * cos_theta * texture2D(map_env, dirToUV(dir)).rgb * kd;
             }
         } else {
-            vec3 dir = global_sample - pos;
-            float ldir = length(dir);
+            vec3 dir = normalize(global_sample - pos);
+            /*float ldir = length(dir);*/
 
-            if (ldir < radius) {
-                dir /= ldir;
+            /*if (ldir < radius) {*/
+                /*dir /= ldir;*/
                 float cos_theta = clamp(local_sample.z, 0.0, 1.0);
                 vec3 l = 0.8 * pi * cos_theta * texture2D(map_env, dirToUV(dir)).rgb * kd;
-                used_samples += 1;
+                /*used_samples += 1;*/
                 light += l;
-            }
+            /*}*/
         }
     }
-    if (used_samples > 1) {
-        light /= float(used_samples);
-    } else {
-        light = vec3(0.0, 0.0, 0.0);
-    }
+    light /= float(num_samples);
+    /*if (used_samples > 1) {*/
+        /*light /= float(used_samples);*/
+    /*} else {*/
+        /*light = vec3(0.0, 0.0, 0.0);*/
+    /*}*/
     light.x = pow(light.x, exponent);
     light.y = pow(light.y, exponent);
     light.z = pow(light.z, exponent);
