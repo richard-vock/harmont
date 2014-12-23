@@ -85,6 +85,8 @@ vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {
 
         vec2 sample_tc = 0.5 * (proj_sample.xy + vec2(1.0));
         uvec3 sample_g = texture(map_gbuffer, sample_tc).rgb;
+        vec3 nlocal = normalize(local_sample.xyz);
+        float cos_theta = clamp(nlocal.z, 0.0, 1.0);
         if (sample_g.r != 0 || sample_g.g != 0 || sample_g.b != 0) {
             float sample_z = unpack_depth(sample_g);
             float this_z = linearize_depth(0.5 * (proj_sample.z + 1.0));
@@ -92,32 +94,24 @@ vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {
             vec3 world_sample = inverse_view_project(vec3(proj_sample.xy, 2.0 * sample_z - 1.0));
             float dist = length(world_sample - pos);
 
-            float cos_theta = clamp(local_sample.z, 0.0, 1.0);
             vec3 dir = normalize(global_sample - pos);
-            /*used_samples += 1;*/
             if (dist < radius && this_z > ref_z && !is_first_frame) {
                 // indirect light
                 float dummy;
                 vec3 other_normal = normalize(unpack_normal(sample_g, dummy));
                 float other_cos_theta = clamp(dot(-dir, other_normal), 0.0, 1.0);
                 vec3 last_color = texture(map_last, sample_tc).rgb;
-                light += (reflective_albedo) * cos_theta * other_cos_theta * (1.0 / (dist*dist)) * last_color * kd;
-                /*[>light += (0.8 ) * l * cos_theta * other_cos_theta * (1.0 / dist);<]*/
+                float di = dist;
+                if (di < 1.0) di = 1.0;
+                light += reflective_albedo * cos_theta * other_cos_theta * (1.0 / (di*di)) * last_color * kd;
             } else {
                 // direct light
                 light += 0.8 * pi * cos_theta * texture2D(map_env, dirToUV(dir)).rgb * kd;
             }
         } else {
             vec3 dir = normalize(global_sample - pos);
-            /*float ldir = length(dir);*/
-
-            /*if (ldir < radius) {*/
-                /*dir /= ldir;*/
-                float cos_theta = clamp(local_sample.z, 0.0, 1.0);
-                vec3 l = 0.8 * pi * cos_theta * texture2D(map_env, dirToUV(dir)).rgb * kd;
-                /*used_samples += 1;*/
-                light += l;
-            /*}*/
+            vec3 l = 0.8 * pi * cos_theta * texture2D(map_env, dirToUV(dir)).rgb * kd;
+            light += l;
         }
     }
     light /= float(num_samples);
