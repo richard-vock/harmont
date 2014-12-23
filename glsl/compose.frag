@@ -67,34 +67,35 @@ void main(void) {
 
     vec3 mat_diffuse, mat_specular;
     unpack_colors(gbuffer, mat_diffuse, mat_specular);
-    vec3 mat_ambient = 0.03 * mat_diffuse;
 
     if (dot(normal, normal) < 0.2) {
         out_color = vec4(mat_diffuse, 1.0);
         return;
+    } else {
+        vec3 mat_ambient = 0.03 * mat_diffuse;
+
+        float window_z = unpack_depth(gbuffer);
+        vec4 window_pos = vec4(tc * 2.0 - 1.0, 2.0 * window_z - 1.0, 1.0);
+        vec4 world_pos = inv_view_proj_matrix * window_pos;
+        world_pos /= world_pos.w;
+        vec4 in_shadow_pos = shadow_matrix * world_pos;
+
+        vec3 env_col = texture2D(map_diffuse, dirToUV(normal)).rgb * vec3(1.0, 1.0, 1.0);
+        float visibility = 1.0 - in_shadow(normal, in_shadow_pos);
+
+        vec3 ssdo = texture(map_ssdo, tc).rgb;
+
+        vec3 ambient = mat_ambient * env_col;// * ssdo;
+        vec3 diffuse = ssdo; // env_col;// * ssdo;
+        vec3 hdr_color = vec3(0.0, 0.0, 0.0); //ambient;
+        hdr_color += clamp(visibility, min_diffuse, 1.0) * diffuse;
+        if (visibility > 0.0) {
+            vec3 specular = specular(roughness, mat_specular, normal, eye_dir, light_dir) * light_emission;
+            hdr_color += visibility * specular;
+        }
+
+        out_color = vec4(tone_map(hdr_color), 1.0);
     }
-
-    float window_z = unpack_depth(gbuffer);
-    vec4 window_pos = vec4(tc * 2.0 - 1.0, 2.0 * window_z - 1.0, 1.0);
-    vec4 world_pos = inv_view_proj_matrix * window_pos;
-    world_pos /= world_pos.w;
-    vec4 in_shadow_pos = shadow_matrix * world_pos;
-
-    vec3 env_col = texture2D(map_diffuse, dirToUV(normal)).rgb * vec3(1.0, 1.0, 1.0);
-    float visibility = 1.0 - in_shadow(normal, in_shadow_pos);
-
-    vec3 ssdo = texture(map_ssdo, tc).rgb;
-
-    vec3 ambient = mat_ambient * env_col;// * ssdo;
-    vec3 diffuse = ssdo; // env_col;// * ssdo;
-    vec3 hdr_color = vec3(0.0, 0.0, 0.0); //ambient;
-    hdr_color += clamp(visibility, min_diffuse, 1.0) * diffuse;
-    if (visibility > 0.0) {
-        vec3 specular = specular(roughness, mat_specular, normal, eye_dir, light_dir) * light_emission;
-        hdr_color += visibility * specular;
-    }
-
-    out_color = vec4(tone_map(hdr_color), 1.0);
 }
 
 vec3 unpack_normal(uvec3 gbuffer, out float roughness) {

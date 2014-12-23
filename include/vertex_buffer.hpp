@@ -85,9 +85,17 @@ class vertex_buffer {
         void set_data(const C<eigen_vector<Scalar, Dim>, A<eigen_vector<Scalar, Dim>>>& vector_sequence);
         template <int Dim, template <typename, typename> class C, typename S, template <typename> class A>
         void set_data(const C<eigen_vector<S, Dim>, A<eigen_vector<S, Dim>>>& vector_sequence);
-        template <int Rows, int Cols, int Options>
+        template <int Dim, int Options>
+        void set_data(const Eigen::Matrix<Scalar, Dim, 1, Options>& matrix);
+        template <int Dim, int Options>
+        void set_data(const Eigen::Matrix<Scalar, 1, Dim, Options>& matrix);
+        template <int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
         void set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix);
-        template <typename S, int Rows, int Cols, int Options>
+        template <typename S, int Dim, int Options>
+        void set_data(const Eigen::Matrix<S, Dim, 1, Options>& matrix);
+        template <typename S, int Dim, int Options>
+        void set_data(const Eigen::Matrix<S, 1, Dim, Options>& matrix);
+        template <typename S, int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
         void set_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix);
 
         void get_data(Scalar* data);

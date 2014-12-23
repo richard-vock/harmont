@@ -45,28 +45,27 @@ void main (void) {
     unpack_colors(gbuffer, mat_diffuse, mat_specular);
     if (dot(normal, normal) < 0.2) {
         light = mat_diffuse;
-        return;
+    } else {
+        // get world position
+        float world_z = 2.0 * unpack_depth(gbuffer) - 1.0;
+        vec3 world_pos = inverse_view_project(vec3(tc * 2.0 - 1.0, world_z));
+
+        vec2 tc_noise = tc * (vec2(textureSize(map_gbuffer, 0)) / vec2(textureSize(map_noise, 0)));
+        vec2 noise = 0.5 * (texture(map_noise, tc_noise).rg - vec2(1.0, 1.0));
+
+        // compute local coordinate system
+        /*vec3 tangent = abs(normal.x) > 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);*/
+        int amax = argmax(normal);
+        vec3 tangent = vec3(0.0, 0.0, 0.0);
+        tangent[amax] = 1.0;
+        tangent[(amax + 1) % 3] = noise.x;
+        tangent[(amax + 2) % 3] = noise.y;
+        tangent = normalize(tangent);
+        tangent = normalize(tangent - dot(tangent, normal) * normal);
+        mat3 local = mat3(tangent, cross(normal, tangent), normal);
+
+        light = ssdo(local, world_pos, mat_diffuse);
     }
-
-    // get world position
-    float world_z = 2.0 * unpack_depth(gbuffer) - 1.0;
-    vec3 world_pos = inverse_view_project(vec3(tc * 2.0 - 1.0, world_z));
-
-    vec2 tc_noise = tc * (vec2(textureSize(map_gbuffer, 0)) / vec2(textureSize(map_noise, 0)));
-    vec2 noise = 0.5 * (texture(map_noise, tc_noise).rg - vec2(1.0, 1.0));
-
-    // compute local coordinate system
-    /*vec3 tangent = abs(normal.x) > 0.999 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);*/
-    int amax = argmax(normal);
-    vec3 tangent = vec3(0.0, 0.0, 0.0);
-    tangent[amax] = 1.0;
-    tangent[(amax + 1) % 3] = noise.x;
-    tangent[(amax + 2) % 3] = noise.y;
-    tangent = normalize(tangent);
-    tangent = normalize(tangent - dot(tangent, normal) * normal);
-    mat3 local = mat3(tangent, cross(normal, tangent), normal);
-
-	light = ssdo(local, world_pos, mat_diffuse);
 }
 
 vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {

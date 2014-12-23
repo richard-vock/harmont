@@ -13,7 +13,6 @@ layout(location = 8) uniform bool has_texture;
 layout(location = 9) uniform sampler2D map_tex;
 
 // material parameters
-vec3  mat_diffuse = vec3(0.8, 0.8, 0.8);
 vec3  mat_specular = vec3(0.1, 0.1, 0.1);
 float mat_roughness  = 0.7;
 

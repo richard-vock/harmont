@@ -46,6 +46,8 @@ class renderable {
         virtual void pre_render(shader_program::ptr program, pass_type_t type);
         virtual void post_render(shader_program::ptr program, pass_type_t type);
 
+        void update_geometry(const vertex_data_t& vertex_data);
+
 		void set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors);
 		void set_colors(const std::vector<uint32_t>& indices, const color_t& color);
 		void set_colors(const std::vector<color_t>& colors);

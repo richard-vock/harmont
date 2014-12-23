@@ -131,15 +131,15 @@ void vertex_buffer<Scalar, Target>::bind_to_array(const layout_t& layout, render
 
 template <typename Scalar, GLenum Target>
 void vertex_buffer<Scalar, Target>::set_data(const Scalar* data, uint32_t element_count) {
-    if (!bound()) {
-        throw std::runtime_error("vertex_buffer::set_data(): Buffer not bound." + SPOT);
-    }
+    bool was_bound = bound();
+    if (!was_bound) bind();
     if (element_count != element_count_) {
         element_count_ = element_count;
         data_size_ = element_count * sizeof(Scalar);
         allocate_();
     }
     glBufferSubData(Target, 0, data_size_, reinterpret_cast<const GLvoid*>(data));
+    if (!was_bound) release();
 }
 
 template <typename Scalar, GLenum Target>

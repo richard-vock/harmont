@@ -108,7 +108,19 @@ inline void vertex_buffer<Scalar, Target>::set_data(const C<eigen_vector<S, Dim>
 }
 
 template <typename Scalar, GLenum Target>
-template <int Rows, int Cols, int Options>
+template <int Dim, int Options>
+inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, Dim, 1, Options>& matrix) {
+    this->set_data(matrix.data(), Dim);
+}
+
+template <typename Scalar, GLenum Target>
+template <int Dim, int Options>
+inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, 1, Dim, Options>& matrix) {
+    this->set_data(matrix.data(), Dim);
+}
+
+template <typename Scalar, GLenum Target>
+template <int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
 inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix) {
     if (Options & Eigen::RowMajor) {
         this->set_data(matrix.data(), matrix.rows() * matrix.cols());
@@ -118,7 +130,19 @@ inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, 
 }
 
 template <typename Scalar, GLenum Target>
-template <typename S, int Rows, int Cols, int Options>
+template <typename S, int Dim, int Options>
+inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<S, Dim, 1, Options>& matrix) {
+    this->set_data(matrix.template cast<Scalar>());
+}
+
+template <typename Scalar, GLenum Target>
+template <typename S, int Dim, int Options>
+inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<S, 1, Dim, Options>& matrix) {
+    this->set_data(matrix.template cast<Scalar>());
+}
+
+template <typename Scalar, GLenum Target>
+template <typename S, int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols != 1>...>
 inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<S, Rows, Cols, Options>& matrix) {
     this->set_data(matrix.template cast<Scalar>());
 }

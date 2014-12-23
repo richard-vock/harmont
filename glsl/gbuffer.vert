@@ -20,7 +20,13 @@ layout(location = 3) out vec2 out_tex_coords;
 void main() {
     out_position = (view_matrix * model_matrix * vec4(position, 1.0)).xyz;
 	gl_Position = projection_matrix * vec4(out_position, 1.0);
-    out_normal = normalize(normal);
+
+    if (dot(normal, normal) < 0.2) {
+        out_normal = vec3(0.0, 0.0, 0.0);
+    } else {
+        out_normal = normalize(normal);
+    }
+
     uint casted = floatBitsToUint(color);
     uint r = (casted >> 16) & 255;
     uint g = (casted >>  8) & 255;

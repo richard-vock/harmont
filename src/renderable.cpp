@@ -19,6 +19,14 @@ void renderable::init(const vertex_data_t& vertex_data, const index_data_t& inde
     num_elements_ = index_data.rows();
 }
 
+void renderable::update_geometry(const vertex_data_t& vertex_data) {
+    if (vertex_data.rows() != num_elements_) throw std::runtime_error("renderable::update_geometry(): Vertex data size does not match prior element count"+SPOT);
+    vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
+    initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+    shadow_buffer_->set_data(vertex_data);
+    display_buffer_->set_data(vertex_data);
+}
+
 void renderable::render(shader_program::ptr program, pass_type_t type, const bbox_t& bbox) {
     if (!initialized()) return;
 
