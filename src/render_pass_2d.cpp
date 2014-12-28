@@ -11,6 +11,14 @@ render_pass_2d::render_pass_2d(vertex_shader::ptr vs, fragment_shader::ptr fs, g
     init_quad_geometry_();
 }
 
+render_pass_2d::render_pass_2d(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const textures& outputs, texture::ptr depth_texture) : render_pass(vs, fs, outputs, depth_texture) {
+    init_quad_geometry_();
+}
+
+render_pass_2d::render_pass_2d(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const std::vector<geometry_shader::ptr>& gs, const textures& outputs, texture::ptr depth_texture) : render_pass(vs, fs, gs, outputs, depth_texture) {
+    init_quad_geometry_();
+}
+
 render_pass_2d::~render_pass_2d() {
 }
 

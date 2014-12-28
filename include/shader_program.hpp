@@ -37,7 +37,9 @@ class shader_program {
 
 	public:
 		shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, bool link_now = true);
+        shader_program(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, bool link_now = true);
 		shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, bool link_now = true);
+        shader_program(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const std::vector<geometry_shader::ptr>& gs, bool link_now = true);
         virtual ~shader_program();
 
         GLuint handle() const;
@@ -60,9 +62,6 @@ class shader_program {
 
 	protected:
 		GLuint                handle_;
-		vertex_shader::ptr    vs_;
-		fragment_shader::ptr  fs_;
-		geometry_shader::ptr  gs_;
 		GLint                 link_status_;
         variables             uniforms_;
         variables             attributes_;

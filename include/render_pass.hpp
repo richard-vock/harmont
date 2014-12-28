@@ -33,6 +33,8 @@ class render_pass {
     public:
         render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
         render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
+        render_pass(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
+        render_pass(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const std::vector<geometry_shader::ptr>& gs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
         virtual ~render_pass();
 
         shader_program::ptr program();

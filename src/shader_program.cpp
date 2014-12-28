@@ -51,12 +51,25 @@ shader_program::variable_t::description_t variable_for_name(GLuint program, std:
 shader_program::shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, bool link_now) : shader_program(vs, fs, nullptr, link_now) {
 }
 
-shader_program::shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, bool link_now) : handle_(0), vs_(vs), fs_(fs), gs_(gs), link_status_(0) {
+shader_program::shader_program(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, bool link_now) : shader_program(vs, fs, std::vector<geometry_shader::ptr>(), link_now) {
+}
+
+shader_program::shader_program(vertex_shader::ptr vs, fragment_shader::ptr fs, geometry_shader::ptr gs, bool link_now) : handle_(0), link_status_(0) {
     handle_ = glCreateProgram();
 
-    if (vs_) attach_shader_<GL_VERTEX_SHADER>(vs_);
-    if (fs_) attach_shader_<GL_FRAGMENT_SHADER>(fs_);
-    if (gs_) attach_shader_<GL_GEOMETRY_SHADER>(gs_);
+    if (vs) attach_shader_<GL_VERTEX_SHADER>(vs);
+    if (fs) attach_shader_<GL_FRAGMENT_SHADER>(fs);
+    if (gs) attach_shader_<GL_GEOMETRY_SHADER>(gs);
+
+    if (link_now) link();
+}
+
+shader_program::shader_program(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const std::vector<geometry_shader::ptr>& gs, bool link_now) : handle_(0), link_status_(0) {
+    handle_ = glCreateProgram();
+
+    for (auto s : vs) if (s) attach_shader_<GL_VERTEX_SHADER>(s);
+    for (auto s : fs) if (s) attach_shader_<GL_FRAGMENT_SHADER>(s);
+    for (auto s : gs) if (s) attach_shader_<GL_GEOMETRY_SHADER>(s);
 
     if (link_now) link();
 }

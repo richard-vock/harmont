@@ -13,6 +13,15 @@ render_pass::render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, geometr
     fbo_ = std::make_shared<framebuffer>(outputs, depth_texture);
 }
 
+render_pass::render_pass(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const textures& outputs, texture::ptr depth_texture) : render_pass(vs, fs, std::vector<geometry_shader::ptr>(), outputs, depth_texture) {
+}
+
+render_pass::render_pass(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const std::vector<geometry_shader::ptr>& gs, const textures& outputs, texture::ptr depth_texture) {
+    program_ = std::make_shared<shader_program>(vs, fs, gs, false);
+    program_->link();
+    fbo_ = std::make_shared<framebuffer>(outputs, depth_texture);
+}
+
 render_pass::~render_pass() {
 }
 
