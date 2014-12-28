@@ -207,6 +207,8 @@ void deferred_renderer::render(camera::ptr cam) {
         return;
     }
     glEnable(GL_DEPTH_TEST);
+    glHint(GL_POINT_SMOOTH, GL_NICEST);
+    glEnable(GL_POINT_SMOOTH);
 
     // compute bounding box
     bbox_ = bbox_t();
@@ -261,6 +263,8 @@ void deferred_renderer::render(camera::ptr cam) {
     ssdo_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
 
     compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
+
+    glDisable(GL_POINT_SMOOTH);
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {

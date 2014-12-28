@@ -29,11 +29,13 @@ void lines_object::init() {
 }
 
 void lines_object::pre_render(shader_program::ptr program, pass_type_t type) {
+    glEnable(GL_LINE_SMOOTH);
     glLineWidth(line_width_);
 }
 
 void lines_object::post_render(shader_program::ptr program, pass_type_t type) {
     glLineWidth(1.f);
+    glDisable(GL_LINE_SMOOTH);
 }
 
 typename lines_object::element_type_t lines_object::element_type() const {

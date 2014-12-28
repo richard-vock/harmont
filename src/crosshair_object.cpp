@@ -42,11 +42,13 @@ void crosshair_object::init() {
 }
 
 void crosshair_object::pre_render(shader_program::ptr program, pass_type_t type) {
+    glEnable(GL_LINE_SMOOTH);
     glLineWidth(line_width_);
 }
 
 void crosshair_object::post_render(shader_program::ptr program, pass_type_t type) {
     glLineWidth(1.f);
+    glDisable(GL_LINE_SMOOTH);
 }
 
 typename crosshair_object::element_type_t crosshair_object::element_type() const {

@@ -3,3 +3,4 @@ build
 *.o
 *.so
 examples/simple_application/simple_application
+include/config.hpp
