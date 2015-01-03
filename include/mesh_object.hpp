@@ -34,7 +34,6 @@ class mesh_object : public renderable {
         std::shared_ptr<const MeshT> mesh() const;
 
 		element_type_t element_type() const;
-		bool transparent() const;
 
 	protected:
 		void compute_bounding_box_();

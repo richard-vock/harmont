@@ -34,6 +34,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
 
     vertex_shader::parameters_t params = {{"sample_count", std::to_string(shadow_parameters.sample_count)}, {"shadow_res", std::to_string(shadow_parameters.resolution)}};
     fragment_shader::ptr gbuffer_glsl = fragment_shader::from_file(std::string(GLSL_PREFIX)+"gbuffer.glsl");
+    fragment_shader::ptr shading_glsl = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shading.glsl");
     fragment_shader::ptr utility_glsl = fragment_shader::from_file(std::string(GLSL_PREFIX)+"utility.glsl");
     fragment_shader::ptr shadow_glsl = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shadow.glsl", params);
     vertex_shader::ptr full_quad_vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"full_quad.vert");
@@ -47,7 +48,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     clear_textures.insert(clear_textures.end(), ssdo_clear_textures.begin(), ssdo_clear_textures.end());
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, clear_textures);
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
-    compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, utility_glsl, shadow_glsl}));
+    compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, shading_glsl, utility_glsl, shadow_glsl}));
 }
 
 deferred_renderer::~deferred_renderer() {

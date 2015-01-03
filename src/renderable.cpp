@@ -2,7 +2,7 @@
 
 namespace harmont {
 
-renderable::renderable(bool casts_shadows) : active_(true), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
+renderable::renderable(bool casts_shadows) : active_(true), transparent_(false), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
 }
 
 renderable::~renderable() {
@@ -12,6 +12,8 @@ void renderable::init(const vertex_data_t& vertex_data, const index_data_t& inde
     shadow_array_ = std::make_shared<vertex_array>();
     display_array_ = std::make_shared<vertex_array>();
     vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
+    vertex_data_t col_data = vertex_data.col(3);
+    transparent_ = is_transparent(col_data);
     initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
     shadow_buffer_ = vbo_t::from_data(pos_data);
     display_buffer_ = vbo_t::from_data(vertex_data);
@@ -115,6 +117,10 @@ void renderable::set_colors(const color_t& color) {
 
 void renderable::reset_colors() {
     set_color_data_(initial_color_data_);
+}
+
+bool renderable::transparent() const {
+    return transparent_;
 }
 
 bool renderable::initialized() const {
@@ -250,10 +256,28 @@ float renderable::color_to_rgba(Eigen::Vector4f col) {
     return ic.rgba;
 }
 
+float renderable::alpha_from_rgba(float rgba) {
+    internal_color_t ic;
+    ic.rgba = rgba;
+    return static_cast<float>(ic.a) / 255.f;
+}
+
 void renderable::set_color_data_(const vertex_data_t& color_data) {
     auto mapped = display_buffer_->eigen_map<Eigen::RowMajor>(color_data.rows(), 9);
     mapped.col(3) = color_data;
     display_buffer_->unmap();
+    transparent_ = is_transparent(color_data);
+}
+
+bool renderable::is_transparent(const vertex_data_t& color_data) {
+    bool transparent = false;
+    for (uint32_t i = 0; i < color_data.rows(); ++i) {
+        if (alpha_from_rgba(color_data(i,0)) < 1.f) {
+            transparent = true;
+            break;
+        }
+    }
+    return transparent;
 }
 
 } // harmont

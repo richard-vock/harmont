@@ -55,7 +55,7 @@ class renderable {
 		void reset_colors();
 
 		virtual element_type_t element_type() const = 0;
-		virtual bool transparent() const = 0;
+		virtual bool transparent() const;
 
 		bool initialized() const;
 
@@ -101,15 +101,18 @@ class renderable {
 		bbox_t bounding_box();
 
         static float color_to_rgba(Eigen::Vector4f col);
+        static float alpha_from_rgba(float rgba);
 
 	protected:
 		virtual void compute_bounding_box_() = 0;
 		virtual GLenum gl_element_mode_() const = 0;
 		void set_color_data_(const vertex_data_t& color_data);
+        static bool is_transparent(const vertex_data_t& color_data);
 
 
 	protected:
         bool              active_;
+        bool              transparent_;
         bool              bbox_valid_;
         bool              casts_shadows_;
 		bool              clipping_;

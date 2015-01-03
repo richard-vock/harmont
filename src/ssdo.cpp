@@ -33,7 +33,8 @@ void ssdo::init(int width, int height) {
     auto fs_gbuffer = fragment_shader::from_file(std::string(GLSL_PREFIX)+"gbuffer.glsl");
     auto fs_projection = fragment_shader::from_file(std::string(GLSL_PREFIX)+"projection.glsl");
     auto fs_util = fragment_shader::from_file(std::string(GLSL_PREFIX)+"utility.glsl");
-    pass_sample_ = render_pass_2d::ptr(new render_pass_2d({vs_quad}, {fs_sample, fs_gbuffer, fs_projection, fs_util}, render_pass::textures({tex_ssdo_})));
+    auto fs_shading = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shading.glsl");
+    pass_sample_ = render_pass_2d::ptr(new render_pass_2d({vs_quad}, {fs_sample, fs_gbuffer, fs_projection, fs_util, fs_shading}, render_pass::textures({tex_ssdo_})));
     pass_blur_h_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_h, render_pass::textures({tex_work_}));
     pass_blur_v_ = std::make_shared<render_pass_2d>(vs_quad, fs_blur_v, render_pass::textures({tex_ssdo_, tex_last_}));
     pass_blur_h_->set_uniform("dimension", 0);
