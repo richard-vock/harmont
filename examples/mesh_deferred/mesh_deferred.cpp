@@ -32,6 +32,7 @@ void init() {
     };
     renderer_g = std::make_shared<deferred_renderer>(r_params, s_params, app_g->current_camera()->width(), app_g->current_camera()->height());
     mesh_g->init();
+    mesh_g->set_colors(Eigen::Vector4f(1.f, 1.f, 1.f, 0.7f));
     renderer_g->add_object("mesh", mesh_g);
 }
 

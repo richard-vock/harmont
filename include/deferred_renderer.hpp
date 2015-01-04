@@ -81,17 +81,25 @@ class deferred_renderer {
 		void reshape(camera::ptr cam);
 
 	protected:
-        void   render_geometry(shader_program::ptr program, pass_type_t type);
+        typedef enum {OPAQUE, TRANSPARENT, BOTH} geometry_visibility_t;
+
+    protected:
+        void   render_geometry_(shader_program::ptr program, pass_type_t type, geometry_visibility_t visibility);
 		void   load_hdr_map_(std::string filename);
-		static std::pair<float, float> get_near_far(camera::const_ptr cam, const bounding_box_t& bbox);
+		static std::pair<float, float> get_near_far_(camera::const_ptr cam, const bounding_box_t& bbox);
+		std::pair<bool, bool> object_predicates_() const;
 
 	protected:
 		render_pass_2d::ptr  clear_pass_;
 		render_pass::ptr     geom_pass_;
 		render_pass_2d::ptr  compose_pass_;
+		render_pass::ptr     transp_geom_pass_;
+		render_pass_2d::ptr  transp_compose_pass_;
 		texture::ptr         depth_tex_;
 		texture::ptr         gbuffer_tex_;
 		texture::ptr         diff_tex_;
+		texture::ptr         transp_accum_tex_;
+		texture::ptr         transp_count_tex_;
 		shadow_pass::ptr_t   shadow_pass_;
 		ssdo::ptr_t          ssdo_pass_;
 		Eigen::Vector3f      light_dir_;
