@@ -70,7 +70,7 @@ void shadow_pass::render(const geometry_callback_t& render_callback, int width, 
     //glPolygonOffset(-1.1, 4.0);
     //glEnable(GL_POLYGON_OFFSET_FILL);
     clear_pass_->render([&] (shader_program::ptr) {});
-    pass_->render([&] (shader_program::ptr program) { render_callback(program, SHADOW_GEOMETRY); });
+    pass_->render([&] (shader_program::ptr program) { render_callback(program, SHADOW_GEOMETRY); }, {true, true, true});
     glDisable(GL_POLYGON_OFFSET_FILL);
     //glPolygonOffset(0, 0);
     //glDisable(GL_POLYGON_OFFSET_FILL);

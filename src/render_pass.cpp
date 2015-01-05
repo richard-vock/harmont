@@ -53,7 +53,7 @@ framebuffer::ptr render_pass::fbo() {
     return fbo_;
 }
 
-void render_pass::render(const draw_callback_t& draw_call, const named_textures& inputs, bool clear_depth_buffer) {
+void render_pass::render(const draw_callback_t& draw_call, const depth_params_t& depth_params, const named_textures& inputs) {
     program_->bind();
     fbo_->bind();
 
@@ -66,8 +66,23 @@ void render_pass::render(const draw_callback_t& draw_call, const named_textures&
                     }
     );
     fbo_->bind(textures);
-    if (clear_depth_buffer) {
+    if (depth_params.clear_depth) {
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
         glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    glDepthMask(depth_params.write_depth ? GL_TRUE : GL_FALSE);
+    if (depth_params.test_depth) {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+    } else {
+        if (depth_params.write_depth) {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_ALWAYS);
+        } else {
+            glDepthFunc(GL_LESS);
+            glDisable(GL_DEPTH_TEST);
+        }
     }
     draw_call(program_);
     fbo_->release();

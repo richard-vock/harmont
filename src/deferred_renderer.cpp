@@ -31,6 +31,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
 
     depth_tex_ = texture::depth_texture<float>(width, height);
     gbuffer_tex_ = texture::texture_2d<unsigned int>(width, height, 3);
+    compose_tex_ = texture::texture_2d<float>(width, height, 4);
     transp_accum_tex_ = texture::texture_2d<float>(width, height, 4);
     transp_count_tex_ = texture::texture_2d<float>(width, height, 1);
 
@@ -54,6 +55,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, clear_textures);
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, shading_glsl, utility_glsl, shadow_glsl}));
+    compose_tex_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, shading_glsl, utility_glsl, shadow_glsl}, render_pass::textures({compose_tex_})));
     transp_geom_pass_ = render_pass::ptr(new render_pass({transp_geom_vert}, {transp_geom_frag, shading_glsl, shadow_glsl}, render_pass::textures({transp_accum_tex_, transp_count_tex_}), depth_tex_));
     transp_compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {transp_compose_frag, shading_glsl}));
 }
@@ -219,8 +221,14 @@ void deferred_renderer::render(camera::ptr cam) {
         //return;
     //}
 
+    int width = cam->width();
+    int height = cam->height();
+    glViewport(0, 0, width, height);
+
     bool has_opaque, has_transp;
     std::tie(has_opaque, has_transp) = object_predicates_();
+
+    render_pass::depth_params_t depth_params;
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
@@ -248,7 +256,7 @@ void deferred_renderer::render(camera::ptr cam) {
     geom_pass_->set_uniform("view_matrix", cam->view_matrix());
     geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
-    float vp_ratio = -2.f * point_size_ * cam->near() * cam->height() / (cam->frustum_height() * 100.f);
+    float vp_ratio = -2.f * point_size_ * cam->near() * height / (cam->frustum_height() * 100.f);
     geom_pass_->set_uniform("vp_ratio", vp_ratio);
 
     // update compose pass
@@ -264,6 +272,14 @@ void deferred_renderer::render(camera::ptr cam) {
 	compose_pass_->set_uniform("shadow_bias", shadow_bias_);
 	compose_pass_->set_uniform("background_color", bg_col_vec);
 	compose_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
+    compose_tex_pass_->set_uniform("light_dir", light_dir_vec);
+    compose_tex_pass_->set_uniform("eye_dir", eye_dir);
+    compose_tex_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
+    compose_tex_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
+    compose_tex_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
+	compose_tex_pass_->set_uniform("shadow_bias", shadow_bias_);
+	compose_tex_pass_->set_uniform("background_color", bg_col_vec);
+	compose_tex_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
 
     clear_pass_->render([&] (shader_program::ptr) { });
 
@@ -273,13 +289,14 @@ void deferred_renderer::render(camera::ptr cam) {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     if (has_opaque) {
-        geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, OPAQUE); });
+        depth_params.write_depth = true;
+        depth_params.test_depth = true;
+        depth_params.clear_depth = true;
+        geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, OPAQUE); }, depth_params);
     }
     glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glDisable(GL_PROGRAM_POINT_SIZE);
 
-    glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
 
     if (has_opaque) {
         ssdo_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
@@ -288,6 +305,7 @@ void deferred_renderer::render(camera::ptr cam) {
     if (!has_transp) {
         compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
     } else {
+        compose_tex_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
         transp_geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
         transp_geom_pass_->set_uniform("view_matrix", cam->view_matrix());
         transp_geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
@@ -296,37 +314,34 @@ void deferred_renderer::render(camera::ptr cam) {
         transp_geom_pass_->set_uniform("light_dir", light_dir_vec);
         transp_geom_pass_->set_uniform("eye_dir", eye_dir);
 
-        glEnable(GL_DEPTH_TEST);
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
         glEnable(GL_PROGRAM_POINT_SIZE);
-        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDepthMask(GL_FALSE);
+        glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_ONE, GL_ONE);
-        glEnable(GL_BLEND);
-        transp_geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, TRANSPARENT); }, {{diff_tex_, "map_hdr"}});
+        depth_params.write_depth = false;
+        depth_params.test_depth = has_opaque;
+        depth_params.clear_depth = !has_opaque;
+        transp_geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, TRANSPARENT); }, depth_params, {{diff_tex_, "map_hdr"}});
         glDisable(GL_BLEND);
         glDisable(GL_PROGRAM_POINT_SIZE);
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-        glDisable(GL_DEPTH_TEST);
 
-        transp_compose_pass_->set_uniform("background_color", bg_col_vec);
         transp_compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
-        transp_compose_pass_->render([&] (shader_program::ptr) { }, {{transp_accum_tex_, "map_accum"}, {transp_count_tex_, "map_count"}});
+        transp_compose_pass_->render({{transp_accum_tex_, "map_accum"}, {transp_count_tex_, "map_count"}, {compose_tex_, "map_opaque"}});
     }
 
     glDisable(GL_POINT_SMOOTH);
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {
-    std::cout << "reshape" << "\n";
     int width = cam->width();
     int height = cam->height();
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
     transp_geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
     depth_tex_->resize(width, height);
     gbuffer_tex_->resize(width, height);
+    compose_tex_->resize(width, height);
     transp_accum_tex_->resize(width, height);
     transp_count_tex_->resize(width, height);
     ssdo_pass_->reshape(width, height);

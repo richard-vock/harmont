@@ -2,7 +2,7 @@
 
 namespace harmont {
 
-renderable::renderable(bool casts_shadows) : active_(true), transparent_(false), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), num_elements_(0), transform_(transformation_t::Identity()) {
+renderable::renderable(bool casts_shadows) : active_(true), transparent_(false), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), clipping_normal_(0.f, 0.f, 1.f), invert_clipping_(false), num_elements_(0), transform_(transformation_t::Identity()) {
 }
 
 renderable::~renderable() {
@@ -38,8 +38,10 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
         float min_z = bbox.min()[2];
         float max_z = bbox.max()[2];
         float clip_z = min_z + clipping_height_ * (max_z - min_z);
-        ((*program)["clip_normal"]).set(std::vector<float>({0.f, 0.f, 1.f}));
-        ((*program)["clip_distance"]).set(clip_z);
+        float factor = invert_clipping_ ? -1.f : 1.f;
+        Eigen::Vector3f clip_n = factor * clipping_normal_;
+        ((*program)["clip_normal"]).set(std::vector<float>(clip_n.data(), clip_n.data()+3));
+        ((*program)["clip_distance"]).set(factor * clip_z);
         glEnable(GL_CLIP_DISTANCE0);
     }
 
@@ -218,6 +220,26 @@ void renderable::set_clipping_height(float height) {
 
 void renderable::delta_clipping_height(float delta) {
     set_clipping_height(clipping_height_ + delta);
+}
+
+const Eigen::Vector3f& renderable::clipping_normal() const {
+    return clipping_normal_;
+}
+
+void renderable::set_clipping_normal(const Eigen::Vector3f& clipping_normal) {
+    clipping_normal_ = clipping_normal;
+}
+
+bool renderable::invert_clipping() const {
+    return invert_clipping_;
+}
+
+void renderable::set_invert_clipping(const bool& invert_clipping) {
+    invert_clipping_ = invert_clipping;
+}
+
+void renderable::toggle_invert_clipping() {
+    invert_clipping_ = !invert_clipping_;
 }
 
 const renderable::transformation_t& renderable::transformation() const {

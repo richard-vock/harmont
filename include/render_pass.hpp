@@ -29,6 +29,12 @@ class render_pass {
         using named_uniform = std::pair<std::string, T>;
         typedef std::function<void (shader_program::ptr)> draw_callback_t;
 
+        struct depth_params_t {
+            bool test_depth;
+            bool write_depth;
+            bool clear_depth;
+        };
+
 
     public:
         render_pass(vertex_shader::ptr vs, fragment_shader::ptr fs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
@@ -49,7 +55,7 @@ class render_pass {
         framebuffer::ptr fbo();
         framebuffer::const_ptr fbo() const;
 
-        virtual void render(const draw_callback_t& draw_call, const named_textures& inputs = named_textures(), bool clear_depth_buffer = true);
+        virtual void render(const draw_callback_t& draw_call, const depth_params_t& depth_params, const named_textures& inputs = named_textures());
 
         void bind_program();
         void release_program();

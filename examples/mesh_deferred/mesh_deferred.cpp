@@ -12,7 +12,7 @@ typedef mesh_object<mesh_t>  mesh_obj_t;
 
 freeglut_application::ptr   app_g;
 deferred_renderer::ptr_t    renderer_g;
-mesh_obj_t::ptr_t           mesh_g;
+mesh_obj_t::ptr_t           mesh_g, transp_mesh_g;
 
 
 void init() {
@@ -32,8 +32,11 @@ void init() {
     };
     renderer_g = std::make_shared<deferred_renderer>(r_params, s_params, app_g->current_camera()->width(), app_g->current_camera()->height());
     mesh_g->init();
-    mesh_g->set_colors(Eigen::Vector4f(1.f, 1.f, 1.f, 0.7f));
+    transp_mesh_g->init();
+    transp_mesh_g->toggle_invert_clipping();
+    transp_mesh_g->set_colors(Eigen::Vector4f(1.f, 0.0f, 0.0f, 0.3f));
     renderer_g->add_object("mesh", mesh_g);
+    renderer_g->add_object("transp_mesh", transp_mesh_g);
 }
 
 void display(camera::ptr cam) {
@@ -46,10 +49,11 @@ void reshape(camera::ptr cam) {
 
 int main (int argc, char* argv[]) {
     mesh_g = std::make_shared<mesh_obj_t>(argv[1], false);
+    transp_mesh_g = std::make_shared<mesh_obj_t>(argv[1], false);
 
     app_g = freeglut_application::create<orbit_camera_model>(800, 600, &display, &reshape);
     app_g->init(argc, argv, "Render Mesh", &init);
-    app_g->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { mesh_g->delta_clipping_height(-delta[1] * 0.01f); app_g->update(); });
+    app_g->on_drag_left([&] (Eigen::Vector2i pos, Eigen::Vector2i delta) { mesh_g->delta_clipping_height(-delta[1] * 0.01f); transp_mesh_g->delta_clipping_height(-delta[1] * 0.01f); app_g->update(); });
     app_g->on_click_left([&] (Eigen::Vector2i pos) { Eigen::Vector3f dir = app_g->current_camera()->forward().normalized(); renderer_g->set_light_dir(dir); app_g->update(); });
     app_g->on_char([&] (unsigned char key) {
         if (key == 'b') renderer_g->delta_shadow_bias(-0.001);
@@ -60,8 +64,14 @@ int main (int argc, char* argv[]) {
         if (key == 'R') renderer_g->delta_ssdo_radius(0.01f);
         if (key == 'a') renderer_g->delta_ssdo_reflective_albedo(-0.1f);
         if (key == 'A') renderer_g->delta_ssdo_reflective_albedo(0.1f);
-        if (key == 'c' || key == 'C') mesh_g->toggle_clipping();
-        if (key == 's' || key == 'S') mesh_g->toggle_casts_shadows();
+        if (key == 'c' || key == 'C') {
+            mesh_g->toggle_clipping();
+            transp_mesh_g->toggle_clipping();
+        }
+        if (key == 's' || key == 'S') {
+            mesh_g->toggle_casts_shadows();
+            transp_mesh_g->toggle_casts_shadows();
+        }
         app_g->update();
     });
 

@@ -22,10 +22,7 @@ render_pass_2d::render_pass_2d(const std::vector<vertex_shader::ptr>& vs, const 
 render_pass_2d::~render_pass_2d() {
 }
 
-void render_pass_2d::render(const draw_callback_t& pre_draw_call, const named_textures& inputs, bool clear_depth_buffer) {
-    GLboolean depth_enabled;
-    glGetBooleanv(GL_DEPTH_TEST, &depth_enabled);
-    glDisable(GL_DEPTH_TEST);
+void render_pass_2d::render(const draw_callback_t& pre_draw_call, const named_textures& inputs) {
     render_pass::render(
         [&] (shader_program::ptr prog) {
             vao_->bind();
@@ -35,12 +32,23 @@ void render_pass_2d::render(const draw_callback_t& pre_draw_call, const named_te
             ibo_->release();
             vao_->release();
         },
-        inputs,
-        clear_depth_buffer
+        {false, false, false},
+        inputs
     );
-    if (depth_enabled) {
-        glEnable(GL_DEPTH_TEST);
-    }
+}
+
+void render_pass_2d::render(const named_textures& inputs) {
+    render_pass::render(
+        [&] (shader_program::ptr prog) {
+            vao_->bind();
+            ibo_->bind();
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+            ibo_->release();
+            vao_->release();
+        },
+        {false, false, false},
+        inputs
+    );
 }
 
 void render_pass_2d::init_quad_geometry_() {

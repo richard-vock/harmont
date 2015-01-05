@@ -4,8 +4,8 @@ in vec2 tc;
 
 layout(location = 0) uniform sampler2D  map_accum;
 layout(location = 1) uniform sampler2D  map_count;
-layout(location = 2) uniform float      l_white;
-layout(location = 3) uniform vec3       background_color;
+layout(location = 2) uniform sampler2D  map_opaque;
+layout(location = 3) uniform float      l_white;
 
 out vec4 out_color;
 
@@ -15,6 +15,7 @@ void main(void) {
     vec4 accum = texture(map_accum, tc).rgba;
     float count = texture(map_count, tc).r;
 
+    vec3 background_color = texture(map_opaque, tc).rgb;
     if (count == 0.0) {
         out_color = vec4(background_color, 1.0);
         return;

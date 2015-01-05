@@ -20,7 +20,8 @@ class render_pass_2d : public render_pass {
         render_pass_2d(const std::vector<vertex_shader::ptr>& vs, const std::vector<fragment_shader::ptr>& fs, const std::vector<geometry_shader::ptr>& gs, const textures& outputs = textures(), texture::ptr depth_texture = nullptr);
         virtual ~render_pass_2d();
 
-        void render(const draw_callback_t& pre_draw_call, const named_textures& inputs = named_textures(), bool clear_depth_buffer = true);
+        void render(const draw_callback_t& pre_draw_call, const named_textures& inputs = named_textures());
+        void render(const named_textures& inputs = named_textures());
 
     protected:
         void init_quad_geometry_();

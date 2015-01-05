@@ -92,6 +92,13 @@ class renderable {
 		void set_clipping_height(float height);
 		void delta_clipping_height(float delta);
 
+        const Eigen::Vector3f& clipping_normal() const;
+        void set_clipping_normal(const Eigen::Vector3f& clipping_normal);
+
+        bool invert_clipping() const;
+        void set_invert_clipping(const bool& invert_clipping);
+        void toggle_invert_clipping();
+
         const transformation_t& transformation() const;
         void set_transformation(const transformation_t& transformation);
 
@@ -117,6 +124,8 @@ class renderable {
         bool              casts_shadows_;
 		bool              clipping_;
 		float             clipping_height_;
+        Eigen::Vector3f   clipping_normal_;
+        bool              invert_clipping_;
 		uint32_t          num_elements_;
 		transformation_t  transform_;
 		vbo_t::ptr        shadow_buffer_;

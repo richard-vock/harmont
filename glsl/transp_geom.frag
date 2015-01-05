@@ -43,7 +43,7 @@ void main() {
         frag_color *= texture(map_tex, in_tex_coords).rgb;
     }
 
-    vec3 diff = 0.4 * frag_color * sample_hdr(normal, map_hdr);
+    vec3 diff = 0.6 * frag_color * sample_hdr(normal, map_hdr);
     vec3 spec = specular(mat_roughness, mat_specular, normal, eye_dir, light_dir) * light_emission;
     float alpha = in_color.a;
     out_accum = vec4(alpha * (diff + spec), alpha);
