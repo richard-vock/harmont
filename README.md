@@ -29,8 +29,8 @@ Optional dependencies are:
   for HDR loading capabilities, necessary for deferred_renderer helper.
 - freeglut library (http://freeglut.sourceforge.net/)
   for freeglut_application helper, necessary for all examples.
-- OpenMesh library (http://openmesh.org/)
-  for openmesh_traits helper, necessary for mesh_deferred example.
+- cartan library (https://github.com/paulhilbert/cartan)
+  for geometric traits helper, necessary for mesh_deferred example.
 - PCL library (http://pointclouds.org/)
   for pcl_traits helper, necessary for pcl_deferred example.
 

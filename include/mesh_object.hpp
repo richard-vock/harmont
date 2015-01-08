@@ -3,6 +3,12 @@
 
 #include "renderable.hpp"
 
+
+#ifdef USE_CARTAN
+#include <cartan/mesh_traits.hpp>
+#include <cartan/eigen_color_cast.hpp>
+#endif
+
 namespace harmont {
 
 template <typename T>
