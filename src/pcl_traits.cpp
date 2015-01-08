@@ -50,7 +50,9 @@ template <typename PointType, template <typename> class PtrT>
 bbox_t pointcloud_traits<cloud<PointType>, PtrT>::bounding_box(PtrT<const cloud_t> cloud, const Eigen::Matrix4f& transformation) {
     bbox_t bbox;
     for (const auto& p : *cloud) {
-        bbox.extend(p.getVector3fMap());
+        Eigen::Vector4f pos;
+        pos << p.getVector3fMap(), 1.f;
+        bbox.extend((transformation * pos).head(3));
     }
     return bbox;
 }

@@ -8,7 +8,7 @@
 namespace harmont {
 
 
-ssdo::ssdo(uint32_t variation, uint32_t num_samples, float radius) : variation_(variation), num_samples_(num_samples), radius_(radius), exponent_(0.8f), first_pass_(true), refl_albedo_(0.1) {
+ssdo::ssdo(uint32_t variation, uint32_t num_samples, float radius) : variation_(variation), num_samples_(num_samples), radius_(radius), exponent_(0.8f), first_pass_(true), refl_albedo_(1.0) {
 }
 
 ssdo::~ssdo() {

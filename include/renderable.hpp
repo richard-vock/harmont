@@ -101,6 +101,7 @@ class renderable {
 
         const transformation_t& transformation() const;
         void set_transformation(const transformation_t& transformation);
+        void move(const transformation_t& transformation);
 
         void set_texture(texture::ptr tex);
         void unset_texture();

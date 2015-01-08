@@ -35,8 +35,8 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
     pre_render(program, type);
 
     if (clipping_) {
-        float min_z = bbox.min()[2];
-        float max_z = bbox.max()[2];
+        float min_z = bbox_.min()[2];
+        float max_z = bbox_.max()[2];
         float clip_z = min_z + clipping_height_ * (max_z - min_z);
         float factor = invert_clipping_ ? -1.f : 1.f;
         Eigen::Vector3f clip_n = factor * clipping_normal_;
@@ -55,8 +55,7 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
         }
     }
 
-    Eigen::Matrix4f id = Eigen::Matrix4f::Identity();
-    ((*program))["model_matrix"].set(id);
+    ((*program))["model_matrix"].set(transform_);
 
     if (type == SHADOW_GEOMETRY) {
         shadow_array_->bind();
@@ -249,6 +248,10 @@ const renderable::transformation_t& renderable::transformation() const {
 void renderable::set_transformation(const transformation_t& transformation) {
     transform_ = transformation;
     bbox_valid_ = false;
+}
+
+void renderable::move(const transformation_t& transformation) {
+    set_transformation(transformation * transform_);
 }
 
 void renderable::set_texture(texture::ptr tex) {
