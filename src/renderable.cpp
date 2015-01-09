@@ -1,4 +1,5 @@
 #include <renderable.hpp>
+#include <set>
 
 namespace harmont {
 
@@ -15,6 +16,7 @@ void renderable::init(const vertex_data_t& vertex_data, const index_data_t& inde
     vertex_data_t col_data = vertex_data.col(3);
     transparent_ = is_transparent(col_data);
     initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+    current_color_data_ = initial_color_data_;
     shadow_buffer_ = vbo_t::from_data(pos_data);
     display_buffer_ = vbo_t::from_data(vertex_data);
     index_buffer_ = ibo_t::from_data(index_data);
@@ -25,6 +27,7 @@ void renderable::update_geometry(const vertex_data_t& vertex_data) {
     if (vertex_data.rows() != num_elements_) throw std::runtime_error("renderable::update_geometry(): Vertex data size does not match prior element count"+SPOT);
     vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
     initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+    current_color_data_ = initial_color_data_;
     shadow_buffer_->set_data(vertex_data);
     display_buffer_->set_data(vertex_data);
 }
@@ -87,33 +90,6 @@ void renderable::pre_render(shader_program::ptr program, pass_type_t type) {
 }
 
 void renderable::post_render(shader_program::ptr program, pass_type_t type) {
-}
-
-void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
-    if (indices.size() != colors.size()) throw std::runtime_error("renderable::set_colors: Index count must match colors count"+SPOT);
-    vertex_data_t color_data = initial_color_data_;
-    for (uint32_t i = 0; i < indices.size(); ++i) {
-        uint32_t idx = indices[i];
-        if (idx < color_data.rows()) color_data(idx, 0) = color_to_rgba(colors[i]);
-    }
-    set_color_data_(color_data);
-}
-
-void renderable::set_colors(const std::vector<uint32_t>& indices, const color_t& color) {
-    std::vector<color_t> color_data(indices.size(), color);
-    set_colors(indices, color_data);
-}
-
-void renderable::set_colors(const std::vector<color_t>& colors) {
-    if (colors.size() != num_elements_) throw std::runtime_error("renderable::set_colors: Number of colors must match number of elements"+SPOT);
-    std::vector<uint32_t> indices(colors.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    set_colors(indices, colors);
-}
-
-void renderable::set_colors(const color_t& color) {
-    std::vector<color_t> colors(num_elements_, color);
-    set_colors(colors);
 }
 
 void renderable::reset_colors() {
@@ -281,10 +257,45 @@ float renderable::color_to_rgba(Eigen::Vector4f col) {
     return ic.rgba;
 }
 
-float renderable::alpha_from_rgba(float rgba) {
+Eigen::Vector4f renderable::rgba_to_color(float rgba) {
     internal_color_t ic;
     ic.rgba = rgba;
-    return static_cast<float>(ic.a) / 255.f;
+    return Eigen::Vector4f(ic.r, ic.g, ic.b, ic.a) / 255.f;
+}
+
+float renderable::alpha_from_rgba(float rgba) {
+    return rgba_to_color(rgba)[3];
+}
+
+void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+    if (indices.size() != colors.size()) throw std::runtime_error("renderable::set_colors: Index count must match colors count"+SPOT);
+    vertex_data_t color_data = current_color_data_;
+    for (uint32_t i = 0; i < indices.size(); ++i) {
+        uint32_t idx = indices[i];
+        if (idx < color_data.rows()) {
+            color_data(idx, 0) = color_to_rgba(colors[i]);
+        } else {
+            throw std::runtime_error("renderable::set_colors(): Trying to set color for out-of-bound index"+SPOT);
+        }
+    }
+    set_color_data_(color_data);
+}
+
+void renderable::set_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+    std::vector<color_t> color_data(indices.size(), color);
+    set_colors(indices, color_data);
+}
+
+void renderable::set_colors(const std::vector<color_t>& colors) {
+    if (colors.size() != num_elements_) throw std::runtime_error("renderable::set_colors: Number of colors must match number of elements"+SPOT);
+    std::vector<uint32_t> indices(colors.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    set_colors(indices, colors);
+}
+
+void renderable::set_colors(const color_t& color) {
+    std::vector<color_t> colors(num_elements_, color);
+    set_colors(colors);
 }
 
 void renderable::set_color_data_(const vertex_data_t& color_data) {
@@ -292,6 +303,7 @@ void renderable::set_color_data_(const vertex_data_t& color_data) {
     mapped.col(3) = color_data;
     display_buffer_->unmap();
     transparent_ = is_transparent(color_data);
+    current_color_data_ = color_data;
 }
 
 bool renderable::is_transparent(const vertex_data_t& color_data) {

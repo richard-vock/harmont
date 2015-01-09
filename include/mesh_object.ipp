@@ -34,17 +34,25 @@ bbox_t mesh_traits<MeshT>::bounding_box(std::shared_ptr<const MeshT> mesh, const
 }
 
 template <typename MeshT>
-void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fields_t& fields, Eigen::MatrixXf& vertex_data, Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>& indices, bool shared_vertices) {
+void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fields_t& fields, Eigen::MatrixXf& vertex_data, Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>& indices, index_map_t& vertex_index_map, index_map_t& face_index_map, bool shared_vertices) {
     typedef cartan::mesh_traits<MeshT> mt;
 
     uint32_t columns = 0;
     for (const auto& field : fields) {
         columns += field == COLOR ? 1 : (field == TEXCOORDS ? 2 : 3);
     }
-    uint32_t num_faces = mt::num_faces(*mesh);
-    uint32_t rows = shared_vertices ? mt::num_vertices(*mesh) : 3 * num_faces;
+    uint32_t num_faces = mt::num_faces(*mesh), num_vertices = mt::num_vertices(*mesh);
+    uint32_t rows = shared_vertices ? num_vertices : 3 * num_faces;
     vertex_data.resize(rows, columns);
     indices.resize(3*num_faces);
+    vertex_index_map.resize(num_vertices);
+    face_index_map.resize(num_faces);
+    for (auto& v : vertex_index_map) {
+        v = std::vector<uint32_t>();
+    }
+    for (auto& f : face_index_map) {
+        f = std::vector<uint32_t>();
+    }
 
     if (shared_vertices) {
         uint32_t begin = 0, end;
@@ -71,6 +79,8 @@ void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fi
                 if (field == TEXCOORDS) {
                     vertex_data.block(idx, begin, 1, end-begin) = Eigen::RowVector2f::Zero();
                 }
+
+                vertex_index_map[idx].push_back(idx);
             }
 
             begin = end;
@@ -79,8 +89,11 @@ void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fi
         auto face_handles = mt::face_handles(*mesh);
         uint32_t idx = 0;
         for (const auto& face_handle : mt::face_handles(*mesh)) {
+            uint32_t face_idx = mt::face_index(*mesh, face_handle);
             for (const auto& vertex_handle : mt::face_vertices(*mesh, face_handle)) {
-                indices[idx++] = mt::vertex_index(*mesh, vertex_handle);
+                uint32_t buf_idx = idx++;
+                indices[buf_idx] = mt::vertex_index(*mesh, vertex_handle);
+                face_index_map[face_idx].push_back(buf_idx);
             }
         }
     } else {
@@ -114,9 +127,23 @@ void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fi
                     auto p1 = mt::eigen_vertex_position(*mesh, vertex_handles[1]);
                     auto p2 = mt::eigen_vertex_position(*mesh, vertex_handles[2]);
                     Eigen::RowVector3f nrm = ((p1-p0).cross(p2-p0).normalized()).transpose();
-                    vertex_data.block(idx++, begin, 1, end-begin) = nrm;
-                    vertex_data.block(idx++, begin, 1, end-begin) = nrm;
-                    vertex_data.block(idx++, begin, 1, end-begin) = nrm;
+                    uint32_t buf_idx0 = idx++;
+                    uint32_t buf_idx1 = idx++;
+                    uint32_t buf_idx2 = idx++;
+                    uint32_t mesh_idx0 = mt::vertex_index(*mesh, vertex_handles[0]);
+                    uint32_t mesh_idx1 = mt::vertex_index(*mesh, vertex_handles[1]);
+                    uint32_t mesh_idx2 = mt::vertex_index(*mesh, vertex_handles[2]);
+                    vertex_index_map[mesh_idx0].push_back(buf_idx0);
+                    vertex_index_map[mesh_idx1].push_back(buf_idx1);
+                    vertex_index_map[mesh_idx2].push_back(buf_idx2);
+                    vertex_data.block(buf_idx0, begin, 1, end-begin) = nrm;
+                    vertex_data.block(buf_idx1, begin, 1, end-begin) = nrm;
+                    vertex_data.block(buf_idx2, begin, 1, end-begin) = nrm;
+
+                    uint32_t face_index = mt::face_index(*mesh, face_handle);
+                    face_index_map[face_index].push_back(buf_idx0);
+                    face_index_map[face_index].push_back(buf_idx1);
+                    face_index_map[face_index].push_back(buf_idx2);
                 }
             }
 
@@ -134,12 +161,12 @@ void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fi
 template <typename MeshT>
 inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts_shadows) : renderable(casts_shadows) {
     mesh_ = mesh_traits<MeshT>::load_from_file(path);
-    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, smooth);
+    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, vertex_index_map_, face_index_map_, smooth);
 }
 
 template <typename MeshT>
 inline mesh_object<MeshT>::mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows) : renderable(casts_shadows), mesh_(mesh) {
-    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, smooth);
+    vertex_index_map_ = mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, smooth);
 }
 
 template <typename MeshT>
@@ -164,6 +191,74 @@ std::shared_ptr<const MeshT> mesh_object<MeshT>::mesh() const {
 template <typename MeshT>
 inline typename mesh_object<MeshT>::element_type_t mesh_object<MeshT>::element_type() const {
     return VERTS;
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+    if (indices.size() != colors.size()) throw std::runtime_error("mesh_object::set_vertex_colors: Index count must match colors count"+SPOT);
+    std::vector<uint32_t> buffer_indices;
+    std::vector<color_t> buffer_colors;
+    for (uint32_t i=0; i<indices.size(); ++i) {
+        for (const auto& buffer_index : vertex_index_map_[indices[i]]) {
+            buffer_indices.push_back(buffer_index);
+            buffer_colors.push_back(colors[i]);
+        }
+    }
+    renderable::set_colors(buffer_indices, buffer_colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+    std::vector<color_t> colors(indices.size(), color);
+    set_vertex_colors(indices, colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_vertex_colors(const std::vector<color_t>& colors) {
+    std::vector<uint32_t> indices(colors.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    set_vertex_colors(indices, colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_vertex_colors(const color_t& color) {
+    uint32_t num_vertices = vertex_index_map_.size();
+    std::vector<color_t> colors(num_vertices, color);
+    set_vertex_colors(colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+    if (indices.size() != colors.size()) throw std::runtime_error("mesh_object::set_face_colors: Index count must match colors count"+SPOT);
+    std::vector<uint32_t> buffer_indices;
+    std::vector<color_t> buffer_colors;
+    for (uint32_t i=0; i<indices.size(); ++i) {
+        for (const auto& buffer_index : face_index_map_[indices[i]]) {
+            buffer_indices.push_back(buffer_index);
+            buffer_colors.push_back(colors[i]);
+        }
+    }
+    renderable::set_colors(buffer_indices, buffer_colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+    std::vector<color_t> colors(indices.size(), color);
+    set_face_colors(indices, colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_face_colors(const std::vector<color_t>& colors) {
+    std::vector<uint32_t> indices(colors.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    set_face_colors(indices, colors);
+}
+
+template <typename MeshT>
+void mesh_object<MeshT>::set_face_colors(const color_t& color) {
+    uint32_t num_faces = face_index_map_.size();
+    std::vector<color_t> colors(num_faces, color);
+    set_face_colors(colors);
 }
 
 template <typename MeshT>

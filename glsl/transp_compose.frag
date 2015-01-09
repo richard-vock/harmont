@@ -24,6 +24,6 @@ void main(void) {
     vec3 avg_rgb = accum.rgb / accum.a;
     float avg_a  = accum.a / count;
 
-    float T = pow(1.0 - avg_a, count);
+    float T = avg_a > 0.99999 ? 0.0 : pow(1.0 - avg_a, count);
     out_color = vec4((1.0 - T) * tone_map(avg_rgb, l_white) + T * background_color, 1.0);
 }

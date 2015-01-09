@@ -48,10 +48,6 @@ class renderable {
 
         void update_geometry(const vertex_data_t& vertex_data);
 
-		void set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors);
-		void set_colors(const std::vector<uint32_t>& indices, const color_t& color);
-		void set_colors(const std::vector<color_t>& colors);
-		void set_colors(const color_t& color);
 		void reset_colors();
 
 		virtual element_type_t element_type() const = 0;
@@ -109,9 +105,15 @@ class renderable {
 		bbox_t bounding_box();
 
         static float color_to_rgba(Eigen::Vector4f col);
+        static Eigen::Vector4f rgba_to_color(float rgba);
         static float alpha_from_rgba(float rgba);
 
 	protected:
+		void set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors);
+		void set_colors(const std::vector<uint32_t>& indices, const color_t& color);
+		void set_colors(const std::vector<color_t>& colors);
+		void set_colors(const color_t& color);
+
 		virtual void compute_bounding_box_() = 0;
 		virtual GLenum gl_element_mode_() const = 0;
 		void set_color_data_(const vertex_data_t& color_data);
@@ -135,6 +137,7 @@ class renderable {
 		vao_t::ptr        display_array_;
 		ibo_t::ptr        index_buffer_;
 		vertex_data_t     initial_color_data_;
+		vertex_data_t     current_color_data_;
         bbox_t            bbox_;
         texture::ptr      tex_;
 };

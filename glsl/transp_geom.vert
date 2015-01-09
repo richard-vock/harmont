@@ -36,6 +36,6 @@ void main() {
     out_color = vec4(float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0);
     out_tex_coords = tex_coords;
 
-    gl_ClipDistance[0] = -dot(position.xyz, clip_normal) + clip_distance;
+    gl_ClipDistance[0] = -dot((model_matrix * vec4(position, 1.0)).xyz, clip_normal) + clip_distance;
     gl_PointSize = max(1.0, vp_ratio / out_position.z);
 }
