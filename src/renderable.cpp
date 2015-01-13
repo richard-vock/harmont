@@ -9,18 +9,9 @@ renderable::renderable(bool casts_shadows) : active_(true), transparent_(false),
 renderable::~renderable() {
 }
 
-void renderable::init(const vertex_data_t& vertex_data, const index_data_t& index_data) {
-    shadow_array_ = std::make_shared<vertex_array>();
-    display_array_ = std::make_shared<vertex_array>();
-    vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
-    vertex_data_t col_data = vertex_data.col(3);
-    transparent_ = is_transparent(col_data);
-    initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
-    current_color_data_ = initial_color_data_;
-    shadow_buffer_ = vbo_t::from_data(pos_data);
-    display_buffer_ = vbo_t::from_data(vertex_data);
-    index_buffer_ = ibo_t::from_data(index_data);
-    num_elements_ = index_data.rows();
+void renderable::init() {
+    compute_vertex_data();
+    init_(vertex_data_, index_data_);
 }
 
 void renderable::update_geometry(const vertex_data_t& vertex_data) {
@@ -36,10 +27,11 @@ void renderable::render(shader_program::ptr program, pass_type_t type, const bbo
     if (!initialized()) return;
 
     pre_render(program, type);
+    float margin = 0.0001f * (bbox_.max()[2] - bbox_.min()[2]);
 
     if (clipping_) {
-        float min_z = bbox_.min()[2];
-        float max_z = bbox_.max()[2];
+        float min_z = bbox_.min()[2] - margin;
+        float max_z = bbox_.max()[2] + margin;
         float clip_z = min_z + clipping_height_ * (max_z - min_z);
         float factor = invert_clipping_ ? -1.f : 1.f;
         Eigen::Vector3f clip_n = factor * clipping_normal_;
@@ -265,6 +257,20 @@ Eigen::Vector4f renderable::rgba_to_color(float rgba) {
 
 float renderable::alpha_from_rgba(float rgba) {
     return rgba_to_color(rgba)[3];
+}
+
+void renderable::init_(const vertex_data_t& vertex_data, const index_data_t& index_data) {
+    shadow_array_ = std::make_shared<vertex_array>();
+    display_array_ = std::make_shared<vertex_array>();
+    vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
+    vertex_data_t col_data = vertex_data.col(3);
+    transparent_ = is_transparent(col_data);
+    initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+    current_color_data_ = initial_color_data_;
+    shadow_buffer_ = vbo_t::from_data(pos_data);
+    display_buffer_ = vbo_t::from_data(vertex_data);
+    index_buffer_ = ibo_t::from_data(index_data);
+    num_elements_ = index_data.rows();
 }
 
 void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {

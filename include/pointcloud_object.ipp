@@ -1,12 +1,10 @@
 template <typename CloudT, template <typename> class PtrT>
 inline pointcloud_object<CloudT, PtrT>::pointcloud_object(std::string path, bool casts_shadows) : renderable(casts_shadows) {
     pointcloud_ = pointcloud_traits<CloudT, PtrT>::load_from_file(path);
-    pointcloud_traits<CloudT, PtrT>::buffer_data(pointcloud_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_);
 }
 
 template <typename CloudT, template <typename> class PtrT>
 inline pointcloud_object<CloudT, PtrT>::pointcloud_object(PtrT<CloudT> pointcloud, bool casts_shadows) : renderable(casts_shadows), pointcloud_(pointcloud) {
-    pointcloud_traits<CloudT, PtrT>::buffer_data(pointcloud_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_);
 }
 
 template <typename CloudT, template <typename> class PtrT>
@@ -14,8 +12,8 @@ inline pointcloud_object<CloudT, PtrT>::~pointcloud_object() {
 }
 
 template <typename CloudT, template <typename> class PtrT>
-inline void pointcloud_object<CloudT, PtrT>::init() {
-    renderable::init(vertex_data_, index_data_);
+inline void pointcloud_object<CloudT, PtrT>::compute_vertex_data() {
+    pointcloud_traits<CloudT, PtrT>::buffer_data(pointcloud_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_);
 }
 
 template <typename CloudT, template <typename> class PtrT>
@@ -34,8 +32,29 @@ inline typename pointcloud_object<CloudT, PtrT>::element_type_t pointcloud_objec
 }
 
 template <typename CloudT, template <typename> class PtrT>
-inline bool pointcloud_object<CloudT, PtrT>::transparent() const {
-    return false;
+inline void pointcloud_object<CloudT, PtrT>::set_point_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+    if (indices.size() != colors.size()) throw std::runtime_error("pointcloud_object::set_point_colors: Index count must match colors count"+SPOT);
+    renderable::set_colors(indices, colors);
+}
+
+template <typename CloudT, template <typename> class PtrT>
+void pointcloud_object<CloudT, PtrT>::set_point_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+    std::vector<color_t> colors(indices.size(), color);
+    set_point_colors(indices, colors);
+}
+
+template <typename CloudT, template <typename> class PtrT>
+void pointcloud_object<CloudT, PtrT>::set_point_colors(const std::vector<color_t>& colors) {
+    std::vector<uint32_t> indices(colors.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    set_point_colors(indices, colors);
+}
+
+template <typename CloudT, template <typename> class PtrT>
+void pointcloud_object<CloudT, PtrT>::set_point_colors(const color_t& color) {
+    uint32_t num_points = pointcloud_->size();
+    std::vector<color_t> colors(num_points, color);
+    set_point_colors(colors);
 }
 
 template <typename CloudT, template <typename> class PtrT>

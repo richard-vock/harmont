@@ -21,6 +21,8 @@ class crosshair_object : public renderable {
 		crosshair_object(const vertices_t& vertices, const colors_t& colors, float size = 1.f, float line_width = 1.f, bool casts_shadows = false);
 		virtual ~crosshair_object();
 
+		void compute_vertex_data();
+
         float size() const;
         void set_size(const float& size);
 
@@ -36,13 +38,10 @@ class crosshair_object : public renderable {
 		bool transparent() const;
 
 	protected:
-		void compute_geometry_();
 		void compute_bounding_box_();
 		GLenum gl_element_mode_() const;
 
 	protected:
-		renderable::vertex_data_t  vertex_data_;
-		renderable::index_data_t   index_data_;
 		vertices_t                 vertices_;
 		colors_t                   colors_;
         float                      size_;

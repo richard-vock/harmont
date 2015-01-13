@@ -16,5 +16,6 @@
 #include "application.hpp"
 #include "freeglut_application.hpp"
 #include "mesh_object.hpp"
+#include "renderable_group.hpp"
 
 #endif /* HARMONT_HPP_ */

@@ -24,7 +24,7 @@ class lines_object : public  renderable {
         float line_width() const;
         void set_line_width(const float& line_width);
 
-		void init();
+		void compute_vertex_data();
 
         void pre_render(shader_program::ptr program, pass_type_t type);
         void post_render(shader_program::ptr program, pass_type_t type);
@@ -33,14 +33,12 @@ class lines_object : public  renderable {
 		bool transparent() const;
 
 	protected:
-		void compute_geometry_(const colors_t& colors);
 		void compute_bounding_box_();
 		GLenum gl_element_mode_() const;
 
 	protected:
-		renderable::vertex_data_t  vertex_data_;
-		renderable::index_data_t   index_data_;
 		vertices_t                 vertices_;
+        colors_t                   colors_;
         float                      line_width_;
         mode_t                     mode_;
 };

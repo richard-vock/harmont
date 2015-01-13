@@ -28,13 +28,17 @@ class pointcloud_object : public  renderable {
 		pointcloud_object(PtrT<CloudT> pointcloud, bool casts_shadows = true);
 		virtual ~pointcloud_object();
 
-		void init();
+		void compute_vertex_data();
 
         PtrT<CloudT> cloud();
         PtrT<const CloudT> cloud() const;
 
 		element_type_t element_type() const;
-		bool transparent() const;
+
+		void set_point_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors);
+		void set_point_colors(const std::vector<uint32_t>& indices, const color_t& color);
+		void set_point_colors(const std::vector<color_t>& colors);
+		void set_point_colors(const color_t& color);
 
 	protected:
 		void compute_bounding_box_();
@@ -42,8 +46,6 @@ class pointcloud_object : public  renderable {
 
 	protected:
         PtrT<CloudT>    pointcloud_;
-		renderable::vertex_data_t  vertex_data_;
-		renderable::index_data_t   index_data_;
 };
 
 #include "pointcloud_object.ipp"

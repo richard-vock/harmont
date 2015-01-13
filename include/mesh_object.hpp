@@ -36,7 +36,7 @@ class mesh_object : public renderable {
 		mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows = true);
 		virtual ~mesh_object();
 
-		void init();
+		void compute_vertex_data();
 
 		std::shared_ptr<MeshT> mesh();
 		std::shared_ptr<const MeshT> mesh() const;
@@ -58,9 +58,8 @@ class mesh_object : public renderable {
 		GLenum gl_element_mode_() const;
 
 	protected:
+        bool                       smooth_;
 		std::shared_ptr<MeshT>     mesh_;
-		renderable::vertex_data_t  vertex_data_;
-		renderable::index_data_t   index_data_;
 		index_map_t                vertex_index_map_;
 		index_map_t                face_index_map_;
 };

@@ -159,14 +159,13 @@ void mesh_traits<MeshT>::buffer_data(std::shared_ptr<const MeshT> mesh, const fi
 
 
 template <typename MeshT>
-inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts_shadows) : renderable(casts_shadows) {
+inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts_shadows) : renderable(casts_shadows), smooth_(smooth) {
     mesh_ = mesh_traits<MeshT>::load_from_file(path);
-    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, vertex_index_map_, face_index_map_, smooth);
 }
 
 template <typename MeshT>
 inline mesh_object<MeshT>::mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows) : renderable(casts_shadows), mesh_(mesh) {
-    vertex_index_map_ = mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, smooth);
+    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, vertex_index_map_, face_index_map_, smooth);
 }
 
 template <typename MeshT>
@@ -174,17 +173,17 @@ inline mesh_object<MeshT>::~mesh_object() {
 }
 
 template <typename MeshT>
-inline void mesh_object<MeshT>::init() {
-    renderable::init(vertex_data_, index_data_);
+inline void mesh_object<MeshT>::compute_vertex_data() {
+    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, vertex_index_map_, face_index_map_, smooth_);
 }
 
 template <typename MeshT>
-std::shared_ptr<MeshT> mesh_object<MeshT>::mesh() {
+inline std::shared_ptr<MeshT> mesh_object<MeshT>::mesh() {
     return mesh_;
 }
 
 template <typename MeshT>
-std::shared_ptr<const MeshT> mesh_object<MeshT>::mesh() const {
+inline std::shared_ptr<const MeshT> mesh_object<MeshT>::mesh() const {
     return mesh_;
 }
 
@@ -194,7 +193,7 @@ inline typename mesh_object<MeshT>::element_type_t mesh_object<MeshT>::element_t
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+inline void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
     if (indices.size() != colors.size()) throw std::runtime_error("mesh_object::set_vertex_colors: Index count must match colors count"+SPOT);
     std::vector<uint32_t> buffer_indices;
     std::vector<color_t> buffer_colors;
@@ -208,27 +207,27 @@ void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices,
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+inline void mesh_object<MeshT>::set_vertex_colors(const std::vector<uint32_t>& indices, const color_t& color) {
     std::vector<color_t> colors(indices.size(), color);
     set_vertex_colors(indices, colors);
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_vertex_colors(const std::vector<color_t>& colors) {
+inline void mesh_object<MeshT>::set_vertex_colors(const std::vector<color_t>& colors) {
     std::vector<uint32_t> indices(colors.size());
     std::iota(indices.begin(), indices.end(), 0);
     set_vertex_colors(indices, colors);
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_vertex_colors(const color_t& color) {
+inline void mesh_object<MeshT>::set_vertex_colors(const color_t& color) {
     uint32_t num_vertices = vertex_index_map_.size();
     std::vector<color_t> colors(num_vertices, color);
     set_vertex_colors(colors);
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
+inline void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
     if (indices.size() != colors.size()) throw std::runtime_error("mesh_object::set_face_colors: Index count must match colors count"+SPOT);
     std::vector<uint32_t> buffer_indices;
     std::vector<color_t> buffer_colors;
@@ -242,20 +241,20 @@ void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, c
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, const color_t& color) {
+inline void mesh_object<MeshT>::set_face_colors(const std::vector<uint32_t>& indices, const color_t& color) {
     std::vector<color_t> colors(indices.size(), color);
     set_face_colors(indices, colors);
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_face_colors(const std::vector<color_t>& colors) {
+inline void mesh_object<MeshT>::set_face_colors(const std::vector<color_t>& colors) {
     std::vector<uint32_t> indices(colors.size());
     std::iota(indices.begin(), indices.end(), 0);
     set_face_colors(indices, colors);
 }
 
 template <typename MeshT>
-void mesh_object<MeshT>::set_face_colors(const color_t& color) {
+inline void mesh_object<MeshT>::set_face_colors(const color_t& color) {
     uint32_t num_faces = face_index_map_.size();
     std::vector<color_t> colors(num_faces, color);
     set_face_colors(colors);

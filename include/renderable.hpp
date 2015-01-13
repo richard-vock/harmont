@@ -7,8 +7,11 @@
 
 namespace harmont {
 
+class renderable_group;
 
 class renderable {
+    friend class renderable_group;
+
 	public:
 		typedef std::shared_ptr<renderable>                 ptr_t;
 		typedef std::weak_ptr<renderable>                   wptr_t;
@@ -40,7 +43,9 @@ class renderable {
 		renderable(bool casts_shadows = true);
 		virtual ~renderable();
 
-		void init(const vertex_data_t& vertex_data, const index_data_t& index_data);
+        virtual void compute_vertex_data() = 0;
+
+		void init();
 		void render(shader_program::ptr program, pass_type_t type, const bbox_t& bbox);
 
         virtual void pre_render(shader_program::ptr program, pass_type_t type);
@@ -109,6 +114,7 @@ class renderable {
         static float alpha_from_rgba(float rgba);
 
 	protected:
+		void init_(const vertex_data_t& vertex_data, const index_data_t& index_data);
 		void set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors);
 		void set_colors(const std::vector<uint32_t>& indices, const color_t& color);
 		void set_colors(const std::vector<color_t>& colors);
@@ -140,6 +146,8 @@ class renderable {
 		vertex_data_t     current_color_data_;
         bbox_t            bbox_;
         texture::ptr      tex_;
+        vertex_data_t     vertex_data_;
+        index_data_t      index_data_;
 };
 
 

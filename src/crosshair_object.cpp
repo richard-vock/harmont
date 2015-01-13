@@ -13,53 +13,12 @@ crosshair_object::crosshair_object(const vertices_t& vertices, const colors_t& c
     if (colors.size() != vertices.size()) {
         throw std::runtime_error("crosshair_object::crosshair_object(): Number of colors must equal number of vertices"+SPOT);
     }
-    compute_geometry_();
 }
 
 crosshair_object::~crosshair_object() {
 }
 
-float crosshair_object::size() const {
-    return size_;
-}
-
-void crosshair_object::set_size(const float& size) {
-    size_ = size;
-    compute_geometry_();
-    update_geometry(vertex_data_);
-}
-
-float crosshair_object::line_width() const {
-    return line_width_;
-}
-
-void crosshair_object::set_line_width(const float& line_width) {
-    line_width_ = line_width;
-}
-
-void crosshair_object::init() {
-    renderable::init(vertex_data_, index_data_);
-}
-
-void crosshair_object::pre_render(shader_program::ptr program, pass_type_t type) {
-    glEnable(GL_LINE_SMOOTH);
-    glLineWidth(line_width_);
-}
-
-void crosshair_object::post_render(shader_program::ptr program, pass_type_t type) {
-    glLineWidth(1.f);
-    glDisable(GL_LINE_SMOOTH);
-}
-
-typename crosshair_object::element_type_t crosshair_object::element_type() const {
-    return VERTS;
-}
-
-bool crosshair_object::transparent() const {
-    return false;
-}
-
-void crosshair_object::compute_geometry_() {
+void crosshair_object::compute_vertex_data() {
     std::vector<float> cols(colors_.size());
     std::transform(colors_.begin(), colors_.end(), cols.begin(), [&] (const Eigen::Vector4f& c) { return renderable::color_to_rgba(c); });
 
@@ -79,6 +38,42 @@ void crosshair_object::compute_geometry_() {
         }
     }
     compute_bounding_box_();
+}
+
+float crosshair_object::size() const {
+    return size_;
+}
+
+void crosshair_object::set_size(const float& size) {
+    size_ = size;
+    compute_vertex_data();
+    update_geometry(vertex_data_);
+}
+
+float crosshair_object::line_width() const {
+    return line_width_;
+}
+
+void crosshair_object::set_line_width(const float& line_width) {
+    line_width_ = line_width;
+}
+
+void crosshair_object::pre_render(shader_program::ptr program, pass_type_t type) {
+    glEnable(GL_LINE_SMOOTH);
+    glLineWidth(line_width_);
+}
+
+void crosshair_object::post_render(shader_program::ptr program, pass_type_t type) {
+    glLineWidth(1.f);
+    glDisable(GL_LINE_SMOOTH);
+}
+
+typename crosshair_object::element_type_t crosshair_object::element_type() const {
+    return VERTS;
+}
+
+bool crosshair_object::transparent() const {
+    return false;
 }
 
 void crosshair_object::compute_bounding_box_() {

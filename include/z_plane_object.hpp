@@ -17,7 +17,7 @@ class z_plane_object : public renderable {
 		z_plane_object(float z, float x_size, float y_size, bool casts_shadows = true);
 		virtual ~z_plane_object();
 
-		void init();
+        void compute_vertex_data();
 
 		element_type_t element_type() const;
 		bool transparent() const;
@@ -33,7 +33,6 @@ class z_plane_object : public renderable {
 
 
 	protected:
-        void compute_geometry_();
 		void compute_bounding_box_();
 		GLenum gl_element_mode_() const;
 
