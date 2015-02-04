@@ -79,7 +79,8 @@ bool crosshair_object::transparent() const {
 void crosshair_object::compute_bounding_box_() {
     bbox_ = bbox_t();
     for (uint32_t i = 0; i < vertices_.size(); ++i) {
-        bbox_.extend(vertices_[i]);
+        Eigen::Vector3f p = (transform_ * vertices_[i].homogeneous()).head(3);
+        bbox_.extend(p);
     }
     bbox_.extend(bbox_.max() + size_ * Eigen::Vector3f::Ones());
     bbox_.extend(bbox_.min() - size_ * Eigen::Vector3f::Ones());

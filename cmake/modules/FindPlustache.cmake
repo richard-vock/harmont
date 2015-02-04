@@ -8,13 +8,13 @@
 # PLUSTACHE_LIBRARIES - Plustache library files.
 
 find_path(PLUSTACHE_INCLUDE_DIR plustache
-    HINTS "/usr/include" "/usr/local/include" "$ENV{PROGRAMFILES}")
+    HINTS "/usr/include" "/usr/local/include" "/usr/x86_64-w64-mingw32/include" "$ENV{PROGRAMFILES}")
 
-find_library(PLUSTACHE_LIBRARY_PATH plustache HINTS "/usr/lib" "/usr/local/lib")
+find_library(PLUSTACHE_LIBRARY_PATH plustache HINTS "/usr/lib" "/usr/local/lib" "/usr/x86_64-w64-mingw32/lib")
 
 if(EXISTS ${PLUSTACHE_LIBRARY_PATH})
 get_filename_component(PLUSTACHE_LIBRARY ${PLUSTACHE_LIBRARY_PATH} NAME)
-find_path(PLUSTACHE_LIBRARY_DIR ${PLUSTACHE_LIBRARY} HINTS "/usr/lib" "/usr/local/lib")
+find_path(PLUSTACHE_LIBRARY_DIR ${PLUSTACHE_LIBRARY} HINTS "/usr/lib" "/usr/local/lib" "/usr/x86_64-w64-mingw32/lib")
 endif()
 
 set(PLUSTACHE_INCLUDE_DIRS ${PLUSTACHE_INCLUDE_DIR})
