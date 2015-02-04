@@ -8,13 +8,17 @@
 # CARTAN_LIBRARIES - Cartan library files.
 
 find_path(CARTAN_INCLUDE_DIR cartan
-    HINTS "/usr/include" "/usr/local/include" "$ENV{PROGRAMFILES}")
+    HINTS "/usr/include" "/usr/local/include" "/usr/x86_64-w64-mingw32/include" "$ENV{PROGRAMFILES}")
 
-find_library(CARTAN_LIBRARY_PATH cartan HINTS "/usr/lib" "/usr/local/lib")
+if (WIN32)
+    find_library(CARTAN_LIBRARY_PATH cartan HINTS "/usr/x86_64-w64-mingw32/bin")
+else()
+    find_library(CARTAN_LIBRARY_PATH cartan HINTS "/usr/lib" "/usr/local/lib")
+endif()
 
 if(EXISTS ${CARTAN_LIBRARY_PATH})
 get_filename_component(CARTAN_LIBRARY ${CARTAN_LIBRARY_PATH} NAME)
-find_path(CARTAN_LIBRARY_DIR ${CARTAN_LIBRARY} HINTS "/usr/lib" "/usr/local/lib")
+find_path(CARTAN_LIBRARY_DIR ${CARTAN_LIBRARY} HINTS "/usr/lib" "/usr/local/lib" "/usr/x86_64-w64-mingw32/lib/")
 endif()
 
 set(CARTAN_INCLUDE_DIRS ${CARTAN_INCLUDE_DIR})

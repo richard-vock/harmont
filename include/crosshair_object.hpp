@@ -29,8 +29,6 @@ class crosshair_object : public renderable {
 		float line_width() const;
 		void set_line_width(const float& line_width);
 
-		void init();
-
 		void pre_render(shader_program::ptr program, pass_type_t type);
 		void post_render(shader_program::ptr program, pass_type_t type);
 
