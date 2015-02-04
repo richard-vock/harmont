@@ -305,11 +305,28 @@ void renderable::set_colors(const color_t& color) {
 }
 
 void renderable::set_color_data_(const vertex_data_t& color_data) {
+    float* data = new float[color_data.rows() * 9];
+
+    display_buffer_->bind();
+    display_buffer_->get_data(data);
+
+    typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> mat_t;
+    typedef Eigen::Map<mat_t> map_t;
+    map_t mapped(data, color_data.rows(), 9);
+    mapped.col(3) = color_data;
+
+    display_buffer_->set_data(data, color_data.rows() * 9);
+    display_buffer_->release();
+
+    /*
     auto mapped = display_buffer_->eigen_map<Eigen::RowMajor>(color_data.rows(), 9);
     mapped.col(3) = color_data;
     display_buffer_->unmap();
+    */
     transparent_ = is_transparent(color_data);
     current_color_data_ = color_data;
+
+    delete [] data;
 }
 
 bool renderable::is_transparent(const vertex_data_t& color_data) {
