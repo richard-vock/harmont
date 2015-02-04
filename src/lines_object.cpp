@@ -3,7 +3,7 @@
 namespace harmont {
 
 
-lines_object::lines_object(const vertices_t& vertices, Eigen::Vector4f color, float line_width, mode_t mode, bool casts_shadows) : lines_object(vertices, colors_t(1, color), line_width, mode, casts_shadows) {
+lines_object::lines_object(const vertices_t& vertices, Eigen::Vector4f color, float line_width, mode_t mode, bool casts_shadows) : lines_object(vertices, colors_t(vertices.size(), color), line_width, mode, casts_shadows) {
 }
 
 lines_object::lines_object(const vertices_t& vertices, const colors_t& colors, float line_width, mode_t mode, bool casts_shadows) : renderable(casts_shadows), vertices_(vertices), colors_(colors), line_width_(line_width), mode_(mode) {

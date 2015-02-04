@@ -164,8 +164,7 @@ inline mesh_object<MeshT>::mesh_object(std::string path, bool smooth, bool casts
 }
 
 template <typename MeshT>
-inline mesh_object<MeshT>::mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows) : renderable(casts_shadows), mesh_(mesh) {
-    mesh_traits<MeshT>::buffer_data(mesh_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, vertex_index_map_, face_index_map_, smooth);
+inline mesh_object<MeshT>::mesh_object(std::shared_ptr<MeshT> mesh, bool smooth, bool casts_shadows) : renderable(casts_shadows), smooth_(smooth), mesh_(mesh) {
 }
 
 template <typename MeshT>

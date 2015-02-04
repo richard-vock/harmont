@@ -129,8 +129,8 @@ void camera::toggle_ortho() {
 camera::ray_t camera::pick_ray(int x, int y) const {
     mat4_t view_mat = model_->view_matrix();
     Eigen::Matrix<int,4,1> viewport(0, 0, width_, height_);
-    vec3_t origin = unproject(vec3_t(static_cast<float>(x), static_cast<float>(y), near_), view_mat, projection_, viewport);
-    vec3_t direction = unproject(vec3_t(static_cast<float>(x), static_cast<float>(y), far_), view_mat, projection_, viewport) - origin;
+    vec3_t origin = unproject(vec3_t(static_cast<float>(x), static_cast<float>(y), 0.f), view_mat, projection_, viewport);
+    vec3_t direction = unproject(vec3_t(static_cast<float>(x), static_cast<float>(y), 1.f), view_mat, projection_, viewport) - origin;
     direction.normalize();
     return {origin, direction};
 }
