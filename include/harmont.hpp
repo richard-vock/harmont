@@ -6,6 +6,7 @@
 #include "common.hpp"
 #include "framebuffer.hpp"
 #include "orbit_camera_model.hpp"
+#include "fly_camera_model.hpp"
 #include "render_pass.hpp"
 #include "render_pass_2d.hpp"
 #include "shader_program.hpp"
