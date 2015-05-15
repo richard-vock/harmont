@@ -7,6 +7,7 @@
 # RGBE_LIBRARY_DIRS - Directories containing the RGBE library.
 # RGBE_LIBRARIES - RGBE library files.
 
+if(WIN32)
 find_path(RGBE_INCLUDE_DIR rgbe
     HINTS "/usr/include" "/usr/local/include" "/usr/x86_64-w64-mingw32/include" "$ENV{PROGRAMFILES}")
 
@@ -16,6 +17,17 @@ if(EXISTS ${RGBE_LIBRARY_PATH})
 get_filename_component(RGBE_LIBRARY ${RGBE_LIBRARY_PATH} NAME)
 find_path(RGBE_LIBRARY_DIR ${RGBE_LIBRARY} HINTS "/usr/lib" "/usr/local/lib" "/usr/x86_64-w64-mingw32/lib")
 endif()
+else(WIN32)
+find_path(RGBE_INCLUDE_DIR rgbe
+    HINTS "/usr/include" "/usr/local/include" "$ENV{PROGRAMFILES}")
+
+find_library(RGBE_LIBRARY_PATH rgbe HINTS "/usr/lib" "/usr/local/lib")
+
+if(EXISTS ${RGBE_LIBRARY_PATH})
+get_filename_component(RGBE_LIBRARY ${RGBE_LIBRARY_PATH} NAME)
+find_path(RGBE_LIBRARY_DIR ${RGBE_LIBRARY} HINTS "/usr/lib" "/usr/local/lib")
+endif()
+endif(WIN32)
 
 set(RGBE_INCLUDE_DIRS ${RGBE_INCLUDE_DIR})
 set(RGBE_LIBRARY_DIRS ${RGBE_LIBRARY_DIR})

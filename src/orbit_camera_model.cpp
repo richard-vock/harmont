@@ -79,15 +79,15 @@ void orbit_camera_model::move_to(camera_model::ptr other) {
 }
 
 void orbit_camera_model::update_(vec3_t translational, vec3_t rotational, bool ortho_projection) {
-    if (translational.head(2).squaredNorm() > tiny<float>()) {
+    if (translational.head(2).squaredNorm() > eps<float>()) {
         pan_(vec2_t(translational[0], -translational[1]));
     }
 
-    if (fabs(translational[2]) > tiny<float>()) {
+    if (fabs(translational[2]) > eps<float>()) {
         zoom_(translational[2], ortho_projection);
     }
 
-    if (rotational.squaredNorm() > tiny<float>()) {
+    if (rotational.squaredNorm() > eps<float>()) {
         rot_(rotational);
     }
 
