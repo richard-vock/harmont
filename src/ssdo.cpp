@@ -91,7 +91,7 @@ texture::ptr ssdo::noise_texture() {
 }
 
 render_pass::textures ssdo::clear_textures() {
-    return render_pass::textures({tex_ssdo_});
+    return render_pass::textures({tex_ssdo_, tex_last_});
 }
 
 uint32_t ssdo::variation() const {

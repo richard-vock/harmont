@@ -133,6 +133,7 @@ texture::ptr texture::depth_texture(int width, int height, GLenum format) {
 }
 
 texture::~texture() {
+    glDeleteTextures(1, &handle_);
 }
 
 GLuint texture::handle() const {
