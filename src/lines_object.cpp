@@ -59,7 +59,14 @@ bool lines_object::transparent() const {
 void lines_object::compute_bounding_box_() {
     bbox_ = bbox_t();
     for (uint32_t i = 0; i < vertices_.size(); ++i) {
-        bbox_.extend(vertices_[i]);
+        bbox_.extend((transform_ * vertices_[i].homogeneous()).head(3));
+    }
+    Eigen::Vector3f range = bbox_.max() - bbox_.min();
+    for (uint32_t i = 0; i < 3; ++i) {
+        if (range[i] < 1.f) {
+            bbox_.min()[i] -= 5.f;
+            bbox_.max()[i] += 5.f;
+        }
     }
 }
 

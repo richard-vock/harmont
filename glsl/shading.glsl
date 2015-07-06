@@ -12,6 +12,7 @@ const float toe_d = 0.3;
 float spec_d(float roughness, vec3 n, vec3 h) {
     // computes ndf as suggested by disney (GGX/Trowbridge-Reitz)
     float nh = dot(n, h);
+    if (nh < 0.001) return 0.0;
     float tmp = nh * nh * (roughness - 1) + 1;
     return roughness / (pi * tmp * tmp);
 }
@@ -29,7 +30,7 @@ float spec_g(float roughness, vec3 n, vec3 v, vec3 l) {
 vec3 spec_f(vec3 ks, vec3 v, vec3 h) {
     // simplified schlick approximation
     float vh = dot(v,h);
-    if (vh < 0.0) return vec3(0.0, 0.0, 0.0);
+    if (vh < 0.001) return vec3(0.0, 0.0, 0.0);
     return ks + (vec3(1.0, 1.0, 1.0) - ks) * pow(2.0, (-5.55473*vh - 6.98316) * vh);
     /*return (1-ks) * pow(2.0, (-5.55473*vh - 6.98316) * vh);*/
 }
@@ -38,7 +39,7 @@ vec3 specular(float roughness, vec3 ks, vec3 n, vec3 v, vec3 l) {
     // modified cook-torrance as suggested by crytek/disney
     float nl = dot(n, l);
     float nv = dot(n, v);
-    if (nl < 0.0 || nv < 0.0) return vec3(0.0, 0.0, 0.0);
+    if (nl < 0.001 || nv < 0.001) return vec3(0.0, 0.0, 0.0);
     vec3 h = normalize(l + v);
     float sd = spec_d(roughness, n, h);
     vec3 sf = spec_f(ks, v, h);

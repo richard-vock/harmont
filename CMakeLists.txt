@@ -26,6 +26,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wall)
     add_definitions(-Wno-unused-function)
     add_definitions(-Wno-unused-local-typedefs)
+    add_definitions(-Wno-deprecated-declarations)
 endif()
 
 find_package(Eigen)

@@ -103,7 +103,7 @@ void orbit_camera_model::zoom_(float delta, bool ortho) {
     if (ortho) {
         scale_ += delta;
     } else {
-        radius_ = std::max((radius_ - delta), tiny<float>());
+        radius_ = std::max((radius_ - delta), eps<float>());
     }
 }
 

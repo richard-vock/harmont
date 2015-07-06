@@ -4,6 +4,7 @@ namespace harmont {
 
 
 renderable_group::renderable_group(const std::vector<renderable::ptr_t>& objects) : objects_(objects), clipping_height_(0.5f) {
+    set_clipping_height(0.5f);
 }
 
 renderable_group::~renderable_group() {

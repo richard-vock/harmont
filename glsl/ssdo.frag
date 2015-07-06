@@ -127,13 +127,4 @@ vec3 ssdo(mat3 local, vec3 pos, vec3 kd) {
     light.y = pow(light.y, exponent);
     light.z = pow(light.z, exponent);
     return light;
-
-    /*if (light_sum.x > 0.001) light.x /= light_sum.x;*/
-    /*if (light_sum.y > 0.001) light.y /= light_sum.y;*/
-    /*if (light_sum.y > 0.001) light.z /= light_sum.z;*/
-    /*return light;*/
-    /*return occlusion / num_samples;*/
-    /*return occlusion;*/
-    /*return 1.0 - pow(occlusion, exponent);*/
-    /*return pow(occlusion, exponent);*/
 }
