@@ -3,15 +3,18 @@
 namespace harmont {
 
 
-triangles_object::triangles_object(const vertices_t& vertices, Eigen::Vector4f color, bool casts_shadows) : triangles_object(vertices, colors_t(vertices.size(), color), casts_shadows) {
+triangles_object::triangles_object(const vertices_t& vertices, Eigen::Vector4f color, const texcoords_t& texcoords, bool casts_shadows) : triangles_object(vertices, colors_t(vertices.size(), color), texcoords, casts_shadows) {
 }
 
-triangles_object::triangles_object(const vertices_t& vertices, const colors_t& colors, bool casts_shadows) : renderable(casts_shadows), vertices_(vertices), colors_(colors) {
+triangles_object::triangles_object(const vertices_t& vertices, const colors_t& colors, const texcoords_t& texcoords, bool casts_shadows) : renderable(casts_shadows), vertices_(vertices), colors_(colors), texcoords_(texcoords) {
     if (colors.size() != vertices.size()) {
         throw std::runtime_error("triangles_object::triangles_object(): Number of colors must equal number of vertices"+SPOT);
     }
     if (vertices.size() % 3 != 0) {
         throw std::runtime_error("triangles_object::triangles_object(): Number of vertices must be a multiple of 3"+SPOT);
+    }
+    if (texcoords.size() && texcoords.size() != vertices.size()) {
+        throw std::runtime_error("triangles_object::triangles_object(): Number of texcoords must match number of vertices"+SPOT);
     }
 
     normals_.resize(vertices.size());
@@ -38,6 +41,9 @@ void triangles_object::compute_vertex_data() {
         vertex_data_.block(i, 4, 1, 3) = normals_[i].transpose();
         vertex_data_(i, 3) = cols[i];
         index_data_(i, 0) = i;
+        if (texcoords_.size()) {
+            vertex_data_.block(i, 7, 1, 2) = texcoords_[i].transpose();
+        }
     }
     colors_.clear();
 }

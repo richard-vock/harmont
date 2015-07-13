@@ -14,8 +14,8 @@ struct pointcloud_traits<cloud<PointType>, PtrT> {
     typedef std::vector<data_field_t> fields_t;
 
 	static PtrT<cloud_t> load_from_file(const std::string& path);
-	static bbox_t bounding_box(PtrT<const cloud_t> cloud, const Eigen::Matrix4f& transformation);
-	static void buffer_data(PtrT<const cloud_t> cloud, const fields_t& fields, renderable::vertex_data_t& vertex_data, renderable::index_data_t& indices, const Eigen::Vector4f& default_color = Eigen::Vector4f::Ones());
+	static bbox_t bounding_box(PtrT<const cloud_t> cloud, const Eigen::Matrix4f& transformation, const std::vector<int>& subset = std::vector<int>());
+	static void buffer_data(PtrT<const cloud_t> cloud, const fields_t& fields, renderable::vertex_data_t& vertex_data, renderable::index_data_t& indices, const Eigen::Vector4f& default_color = Eigen::Vector4f::Ones(), const std::vector<int>& subset = std::vector<int>());
 };
 
 template <typename PointT>
@@ -47,25 +47,33 @@ PtrT<typename pointcloud_traits<cloud<PointType>, PtrT>::cloud_t> pointcloud_tra
 }
 
 template <typename PointType, template <typename> class PtrT>
-bbox_t pointcloud_traits<cloud<PointType>, PtrT>::bounding_box(PtrT<const cloud_t> cloud, const Eigen::Matrix4f& transformation) {
+bbox_t pointcloud_traits<cloud<PointType>, PtrT>::bounding_box(PtrT<const cloud_t> cloud, const Eigen::Matrix4f& transformation, const std::vector<int>& subset) {
     bbox_t bbox;
-    for (const auto& p : *cloud) {
-        Eigen::Vector4f pos;
-        pos << p.getVector3fMap(), 1.f;
-        bbox.extend((transformation * pos).head(3));
+    if (subset.size()) {
+        for (int i : subset) {
+            Eigen::Vector4f pos;
+            pos << cloud->points[i].getVector3fMap(), 1.f;
+            bbox.extend((transformation * pos).head(3));
+        }
+    } else {
+        for (const auto& p : *cloud) {
+            Eigen::Vector4f pos;
+            pos << p.getVector3fMap(), 1.f;
+            bbox.extend((transformation * pos).head(3));
+        }
     }
     return bbox;
 }
 
 template <typename PointType, template <typename> class PtrT>
-void pointcloud_traits<cloud<PointType>, PtrT>::buffer_data(PtrT<const cloud_t> cloud, const fields_t& fields, Eigen::MatrixXf& point_data, Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>& indices, const Eigen::Vector4f& default_color) {
+void pointcloud_traits<cloud<PointType>, PtrT>::buffer_data(PtrT<const cloud_t> cloud, const fields_t& fields, Eigen::MatrixXf& point_data, Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>& indices, const Eigen::Vector4f& default_color, const std::vector<int>& subset) {
     uint32_t columns = 0;
     for (const auto& field : fields) {
         columns += field == COLOR ? 1 : (field == TEXCOORDS ? 2 : 3);
     }
-    uint32_t rows = cloud->size();
+    uint32_t rows = subset.size() ? subset.size() : cloud->size();
     point_data.resize(rows, columns);
-    indices.resize(cloud->size());
+    indices.resize(rows);
     for (uint32_t i = 0; i < indices.size(); ++i) {
         indices[i] = i;
     }
@@ -75,15 +83,16 @@ void pointcloud_traits<cloud<PointType>, PtrT>::buffer_data(PtrT<const cloud_t> 
         end = begin + (field == COLOR ? 1 : (field == TEXCOORDS ? 2 : 3));
 
         uint32_t idx = 0;
-        for (const auto& p : *cloud) {
+        for (uint32_t r = 0; r < rows; ++r) {
+            uint32_t i = subset.size() ? subset[r] : r;
             if (field == POSITION) {
-                point_data.block(idx, begin, 1, end-begin) = p.getVector3fMap().transpose();
+                point_data.block(idx, begin, 1, end-begin) = cloud->points[i].getVector3fMap().transpose();
             }
             if (field == NORMAL) {
-                point_data.block(idx, begin, 1, end-begin) = p.getNormalVector3fMap().normalized().transpose();
+                point_data.block(idx, begin, 1, end-begin) = cloud->points[i].getNormalVector3fMap().transpose();
             }
             if (field == COLOR) {
-                float rgb = pcl_color_traits<PointType>::get_rgb(p, default_color);
+                float rgb = pcl_color_traits<PointType>::get_rgb(cloud->points[i], default_color);
                 point_data(idx, begin) = rgb;
             }
             if (field == TEXCOORDS) {

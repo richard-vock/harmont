@@ -304,6 +304,19 @@ void renderable::set_colors(const color_t& color) {
     set_colors(colors);
 }
 
+void renderable::set_indices(const std::vector<uint32_t>& indices) {
+    index_data_t index_data(indices.size(), 1);
+    for (uint32_t i = 0; i < indices.size(); ++i) {
+        index_data[i] = indices[i];
+    }
+    set_indices(index_data);
+}
+
+void renderable::set_indices(const index_data_t& index_data) {
+    index_buffer_ = ibo_t::from_data(index_data);
+    num_elements_ = index_data.rows();
+}
+
 void renderable::set_color_data_(const vertex_data_t& color_data) {
     float* data = new float[color_data.rows() * 9];
 

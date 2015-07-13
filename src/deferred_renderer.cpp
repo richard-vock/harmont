@@ -241,8 +241,8 @@ void deferred_renderer::render(camera::ptr cam) {
         if (!obj.second->active()) continue;
         bbox_.extend(obj.second->bounding_box());
     }
-	 bbox_.min() -= Eigen::Vector3f::Constant(0.001f);
-	 bbox_.max() += Eigen::Vector3f::Constant(0.001f);
+	bbox_.min() -= Eigen::Vector3f::Constant(0.001f);
+    bbox_.max() += Eigen::Vector3f::Constant(0.001f);
     shadow_pass_->update(bbox_, light_dir_);
 
     // update near/far values

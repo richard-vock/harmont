@@ -4,7 +4,7 @@ inline pointcloud_object<CloudT, PtrT>::pointcloud_object(std::string path, bool
 }
 
 template <typename CloudT, template <typename> class PtrT>
-inline pointcloud_object<CloudT, PtrT>::pointcloud_object(PtrT<CloudT> pointcloud, bool casts_shadows) : renderable(casts_shadows), pointcloud_(pointcloud) {
+inline pointcloud_object<CloudT, PtrT>::pointcloud_object(PtrT<const CloudT> pointcloud, bool casts_shadows, const std::vector<int>& subset) : renderable(casts_shadows), pointcloud_(pointcloud), subset_(subset) {
 }
 
 template <typename CloudT, template <typename> class PtrT>
@@ -13,12 +13,7 @@ inline pointcloud_object<CloudT, PtrT>::~pointcloud_object() {
 
 template <typename CloudT, template <typename> class PtrT>
 inline void pointcloud_object<CloudT, PtrT>::compute_vertex_data() {
-    pointcloud_traits<CloudT, PtrT>::buffer_data(pointcloud_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_);
-}
-
-template <typename CloudT, template <typename> class PtrT>
-inline PtrT<CloudT> pointcloud_object<CloudT, PtrT>::cloud() {
-    return pointcloud_;
+    pointcloud_traits<CloudT, PtrT>::buffer_data(pointcloud_, {POSITION, COLOR, NORMAL, TEXCOORDS}, vertex_data_, index_data_, Eigen::Vector4f::Ones(), subset_);
 }
 
 template <typename CloudT, template <typename> class PtrT>
@@ -52,14 +47,14 @@ void pointcloud_object<CloudT, PtrT>::set_point_colors(const std::vector<color_t
 
 template <typename CloudT, template <typename> class PtrT>
 void pointcloud_object<CloudT, PtrT>::set_point_colors(const color_t& color) {
-    uint32_t num_points = pointcloud_->size();
+    uint32_t num_points = subset_.size() ? subset_.size() : pointcloud_->size();
     std::vector<color_t> colors(num_points, color);
     set_point_colors(colors);
 }
 
 template <typename CloudT, template <typename> class PtrT>
 inline void pointcloud_object<CloudT, PtrT>::compute_bounding_box_() {
-    bbox_ = pointcloud_traits<CloudT, PtrT>::bounding_box(pointcloud_, transform_);
+    bbox_ = pointcloud_traits<CloudT, PtrT>::bounding_box(pointcloud_, transform_, subset_);
 }
 
 template <typename CloudT, template <typename> class PtrT>
