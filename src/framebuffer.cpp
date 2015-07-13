@@ -46,6 +46,7 @@ framebuffer::framebuffer(const textures& output_textures, texture::ptr depth_tex
 }
 
 framebuffer::~framebuffer() {
+	glDeleteFramebuffers(1, &handle_);
 }
 
 GLuint framebuffer::handle() const {
@@ -84,7 +85,7 @@ void framebuffer::bind(const named_textures& input_textures, bool only_bind_inpu
             buffers[i] = GL_COLOR_ATTACHMENT0 + i;
         }
         glDrawBuffers(outputs_.size(), buffers);
-        delete buffers;
+        delete [] buffers;
     }
 
     for (uint32_t i = 0; i < input_textures.size(); ++i) {

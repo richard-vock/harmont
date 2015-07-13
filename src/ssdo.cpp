@@ -188,7 +188,6 @@ void ssdo::init_noise_() {
         for (uint32_t j = 0; j < variation_; ++j) {
             data[i*variation_*2 + j*2 + 0] = distribution(generator);
             data[i*variation_*2 + j*2 + 1] = distribution(generator);
-            data[i*variation_*2 + j*2 + 2] = distribution(generator);
         }
     }
     tex_noise_->set_data(data);

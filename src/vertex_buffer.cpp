@@ -28,6 +28,7 @@ vertex_buffer<Scalar, Target>::vertex_buffer(uint32_t element_count, GLenum usag
 
 template <typename Scalar, GLenum Target>
 vertex_buffer<Scalar, Target>::~vertex_buffer() {
+	glDeleteBuffers(1, &handle_);
 }
 
 template <typename Scalar, GLenum Target>

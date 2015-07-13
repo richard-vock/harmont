@@ -15,10 +15,11 @@ class triangles_object : public  renderable {
 		typedef std::vector<Eigen::Vector3f>        vertices_t;
 		typedef std::vector<Eigen::Vector3f>        normals_t;
 		typedef std::vector<Eigen::Vector4f>        colors_t;
+		typedef std::vector<Eigen::Vector2f>        texcoords_t;
 
 	public:
-		triangles_object(const vertices_t& vertices, Eigen::Vector4f color, bool casts_shadows = true);
-		triangles_object(const vertices_t& vertices, const colors_t& colors, bool casts_shadows = true);
+		triangles_object(const vertices_t& vertices, Eigen::Vector4f color, const texcoords_t& texcoords = texcoords_t(), bool casts_shadows = true);
+		triangles_object(const vertices_t& vertices, const colors_t& colors, const texcoords_t& texcoords = texcoords_t(), bool casts_shadows = true);
 		virtual ~triangles_object();
 
 		void compute_vertex_data();
@@ -37,6 +38,7 @@ class triangles_object : public  renderable {
 		vertices_t                 vertices_;
         colors_t                   colors_;
         normals_t                  normals_;
+        texcoords_t                texcoords_;
 
 };
 

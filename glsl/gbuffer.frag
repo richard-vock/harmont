@@ -32,7 +32,9 @@ void main() {
 
     vec3 frag_color = in_color.rgb;
     if (has_texture) {
-        frag_color *= texture(map_tex, in_tex_coords).rgb;
+        vec4 tex_color = texture(map_tex, in_tex_coords);
+        if (tex_color.a < 0.00001) discard;
+        frag_color *= tex_color.rgb;
     }
 
     /*vec3 albedo_ycbcr = rgb_to_ycbcr(frag_color);*/

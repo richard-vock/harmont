@@ -20,6 +20,7 @@
 #include "pointcloud_object.hpp"
 #include "lines_object.hpp"
 #include "triangles_object.hpp"
+#include "crosshair_object.hpp"
 #include "renderable_group.hpp"
 
 #endif /* HARMONT_HPP_ */

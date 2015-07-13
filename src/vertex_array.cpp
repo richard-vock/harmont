@@ -22,6 +22,7 @@ vertex_array::vertex_array() {
 }
 
 vertex_array::~vertex_array() {
+	glDeleteVertexArrays(1, &handle_);
 }
 
 GLuint vertex_array::handle() const {
