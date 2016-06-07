@@ -13,6 +13,7 @@ struct pointcloud_traits {
 	static PtrT<T> load_from_file(const std::string& path);
 	static bbox_t bounding_box(PtrT<const T> pointcloud, const Eigen::Matrix4f& transformation, const std::vector<int>& subset = std::vector<int>());
 	static void buffer_data(PtrT<const T> pointcloud, const fields_t& fields, renderable::vertex_data_t& vertex_data, renderable::index_data_t& indices, const Eigen::Vector4f& default_color = Eigen::Vector4f::Ones(), const std::vector<int>& subset = std::vector<int>());
+	static void buffer_data(uint32_t point_count, renderable::vertex_data_t& vertex_data, renderable::index_data_t& indices, const Eigen::Vector4f& default_color = Eigen::Vector4f::Ones());
 };
 
 template <typename CloudT, template <typename> class PtrT = std::shared_ptr>
@@ -26,6 +27,7 @@ class pointcloud_object : public  renderable {
 	public:
 		pointcloud_object(std::string path, bool casts_shadows = true);
 		pointcloud_object(PtrT<const CloudT> pointcloud, bool casts_shadows = true, const std::vector<int>& subset = std::vector<int>());
+		pointcloud_object(uint32_t point_count, bool casts_shadows = true);
 		virtual ~pointcloud_object();
 
 		void compute_vertex_data();
@@ -46,6 +48,7 @@ class pointcloud_object : public  renderable {
 	protected:
         PtrT<const CloudT>    pointcloud_;
         std::vector<int>      subset_;
+        uint32_t              point_count_;
 };
 
 #include "pointcloud_object.ipp"

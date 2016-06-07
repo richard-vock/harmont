@@ -18,6 +18,7 @@
 #include <memory>
 #include <stdexcept>
 #include <cassert>
+#include <numeric>
 
 // common includes
 #include <GL/glew.h>

@@ -1,6 +1,8 @@
 #ifndef UNIFORM_DISPATCH_HPP_
 #define UNIFORM_DISPATCH_HPP_
 
+#include <vector>
+
 namespace harmont {
 
 struct uniform_dispatch {

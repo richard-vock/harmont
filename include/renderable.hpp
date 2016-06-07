@@ -27,6 +27,9 @@ class renderable {
         typedef Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>  index_data_t;
         typedef Eigen::Vector4f                             color_t;
 
+        typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> map_matrix_t;
+        typedef Eigen::Map<map_matrix_t>                    map_t;
+
         typedef enum {VERTS, SPLATS}                        element_type_t;
 
         typedef union {
@@ -51,7 +54,14 @@ class renderable {
         virtual void pre_render(shader_program::ptr program, pass_type_t type);
         virtual void post_render(shader_program::ptr program, pass_type_t type);
 
-        void update_geometry(const vertex_data_t& vertex_data);
+        void update_geometry(const vertex_data_t& vertex_data, bool ignore_colors = false);
+
+        vertex_data_t get_geometry();
+
+        Eigen::Map<map_matrix_t> eigen_map_display_buffer();
+        Eigen::Map<map_matrix_t> eigen_map_shadow_buffer();
+        void unmap_display_buffer();
+        void unmap_shadow_buffer();
 
         void reset_colors();
 
@@ -108,6 +118,7 @@ class renderable {
         void unset_texture();
 
         bbox_t bounding_box();
+        void set_bounding_box(bbox_t bbox);
 
         static float color_to_rgba(Eigen::Vector4f col);
         static Eigen::Vector4f rgba_to_color(float rgba);
@@ -150,6 +161,7 @@ class renderable {
         texture::ptr      tex_;
         vertex_data_t     vertex_data_;
         index_data_t      index_data_;
+        bool              initialized_;
 };
 
 

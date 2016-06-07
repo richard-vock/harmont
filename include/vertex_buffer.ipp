@@ -124,6 +124,7 @@ template <int Rows, int Cols, int Options, std::enable_if_t<Rows != 1 && Cols !=
 inline void vertex_buffer<Scalar, Target>::set_data(const Eigen::Matrix<Scalar, Rows, Cols, Options>& matrix) {
     if (Options & Eigen::RowMajor) {
         this->set_data(matrix.data(), matrix.rows() * matrix.cols());
+        return;
     }
     Eigen::Matrix<Scalar, Rows, Cols, (Options ^ Eigen::ColMajor) | Eigen::RowMajor> data_transposed = matrix;
     set_data(data_transposed.data(), matrix.rows() * matrix.cols());
@@ -180,7 +181,7 @@ inline void vertex_buffer<Scalar, Target>::get_data(Eigen::Matrix<S, Rows, Cols,
     Scalar* data = new Scalar[element_count_];
     get_data(data);
 
-    matrix = Eigen::Map<Eigen::Matrix<Scalar, Rows, Cols, Options>>(data).template cast<S>();
+    matrix = Eigen::Map<Eigen::Matrix<Scalar, Rows, Cols, Options>>(data, matrix.rows(), matrix.cols()).template cast<S>();
 
     delete [] data;
 }

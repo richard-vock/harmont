@@ -24,6 +24,13 @@ const std::vector<renderable::ptr_t>& renderable_group::objects() const {
     return objects_;
 }
 
+void renderable_group::add_object(renderable::ptr_t object) {
+    bool active_clipping = objects_.size() && all_clipping();
+    objects_.push_back(object);
+    set_clipping_height(clipping_height_);
+    object->set_clipping(active_clipping);
+}
+
 bool renderable_group::all_active() const {
     bool active = true;
     for (const auto& o : objects_) {

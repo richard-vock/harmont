@@ -21,6 +21,8 @@ class renderable_group {
 		std::vector<renderable::ptr_t>& objects();
 		const std::vector<renderable::ptr_t>& objects() const;
 
+        void add_object(renderable::ptr_t object);
+
 		bool all_active() const;
 		bool any_active() const;
 		void set_active(const bool& active);

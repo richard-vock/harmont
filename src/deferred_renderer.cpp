@@ -24,7 +24,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
         shadow_parameters.sample_count
     );
 
-    ssdo_pass_ = std::make_shared<ssdo>(4, 40, 2.1f);
+    ssdo_pass_ = std::make_shared<ssdo>(4, 40, 0.7f);
     ssdo_pass_->init(width, height);
 
     load_hdr_map_(render_parameters.hdr_map);

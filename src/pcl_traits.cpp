@@ -16,6 +16,7 @@ struct pointcloud_traits<cloud<PointType>, PtrT> {
 	static PtrT<cloud_t> load_from_file(const std::string& path);
 	static bbox_t bounding_box(PtrT<const cloud_t> cloud, const Eigen::Matrix4f& transformation, const std::vector<int>& subset = std::vector<int>());
 	static void buffer_data(PtrT<const cloud_t> cloud, const fields_t& fields, renderable::vertex_data_t& vertex_data, renderable::index_data_t& indices, const Eigen::Vector4f& default_color = Eigen::Vector4f::Ones(), const std::vector<int>& subset = std::vector<int>());
+	static void buffer_data(uint32_t point_count, renderable::vertex_data_t& vertex_data, renderable::index_data_t& indices, const Eigen::Vector4f& default_color = Eigen::Vector4f::Ones());
 };
 
 template <typename PointT>
@@ -101,6 +102,19 @@ void pointcloud_traits<cloud<PointType>, PtrT>::buffer_data(PtrT<const cloud_t> 
             ++idx;
         }
         begin = end;
+    }
+}
+
+template <typename PointType, template <typename> class PtrT>
+void pointcloud_traits<cloud<PointType>, PtrT>::buffer_data(uint32_t point_count, Eigen::MatrixXf& point_data, Eigen::Matrix<uint32_t, Eigen::Dynamic, 1>& indices, const Eigen::Vector4f& default_color) {
+    float rgba = renderable::color_to_rgba(default_color);
+    point_data = Eigen::MatrixXf::Zero(point_count, 9);
+    //point_data.block(0, 0, point_count, 3) = Eigen::VectorXf::Random(point_count, 3);
+    point_data.col(3) = Eigen::VectorXf::Constant(point_count, rgba);
+    //point_data.col(4) = Eigen::VectorXf::Ones(point_count);
+    indices.resize(point_count);
+    for (uint32_t i = 0; i < indices.size(); ++i) {
+        indices[i] = i;
     }
 }
 

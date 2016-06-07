@@ -3,7 +3,7 @@
 
 namespace harmont {
 
-renderable::renderable(bool casts_shadows) : active_(true), transparent_(false), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), clipping_normal_(0.f, 0.f, 1.f), invert_clipping_(false), num_elements_(0), transform_(transformation_t::Identity()) {
+renderable::renderable(bool casts_shadows) : active_(true), transparent_(false), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), clipping_normal_(0.f, 0.f, 1.f), invert_clipping_(false), num_elements_(0), transform_(transformation_t::Identity()), initialized_(false) {
 }
 
 renderable::~renderable() {
@@ -14,13 +14,38 @@ void renderable::init() {
     init_(vertex_data_, index_data_);
 }
 
-void renderable::update_geometry(const vertex_data_t& vertex_data) {
+void renderable::update_geometry(const vertex_data_t& vertex_data, bool ignore_colors) {
     if (vertex_data.rows() != num_elements_) throw std::runtime_error("renderable::update_geometry(): Vertex data size does not match prior element count"+SPOT);
     vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
-    initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
-    current_color_data_ = initial_color_data_;
-    shadow_buffer_->set_data(vertex_data);
+    if (!ignore_colors) {
+        initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+        current_color_data_ = initial_color_data_;
+    }
+    //shadow_buffer_->set_data(vertex_data);
+    shadow_buffer_->set_data(pos_data);
     display_buffer_->set_data(vertex_data);
+}
+
+renderable::vertex_data_t renderable::get_geometry() {
+    vertex_data_t data(num_elements_, 9);
+    display_buffer_->get_data(data);
+    return data;
+}
+
+Eigen::Map<renderable::map_matrix_t> renderable::eigen_map_display_buffer() {
+    return display_buffer_->eigen_map<Eigen::RowMajor>(num_elements_, 9);
+}
+
+Eigen::Map<renderable::map_matrix_t> renderable::eigen_map_shadow_buffer() {
+    return shadow_buffer_->eigen_map<Eigen::RowMajor>(num_elements_, 3);
+}
+
+void renderable::unmap_display_buffer() {
+    return display_buffer_->unmap();
+}
+
+void renderable::unmap_shadow_buffer() {
+    return shadow_buffer_->unmap();
 }
 
 void renderable::render(shader_program::ptr program, pass_type_t type, const bbox_t& bbox) {
@@ -93,7 +118,7 @@ bool renderable::transparent() const {
 }
 
 bool renderable::initialized() const {
-    return num_elements_ > 0;
+    return initialized_;
 }
 
 uint32_t renderable::num_elements() const {
@@ -238,6 +263,10 @@ bbox_t renderable::bounding_box() {
     return bbox_;
 }
 
+void renderable::set_bounding_box(bbox_t bbox) {
+    bbox_ = bbox;
+}
+
 float renderable::color_to_rgba(Eigen::Vector4f col) {
     renderable::color_t clamped = col;
     clamp(clamped, 0.f, 1.f);
@@ -271,6 +300,7 @@ void renderable::init_(const vertex_data_t& vertex_data, const index_data_t& ind
     display_buffer_ = vbo_t::from_data(vertex_data);
     index_buffer_ = ibo_t::from_data(index_data);
     num_elements_ = index_data.rows();
+    initialized_ = true;
 }
 
 void renderable::set_colors(const std::vector<uint32_t>& indices, const std::vector<color_t>& colors) {
