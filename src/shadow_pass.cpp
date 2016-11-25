@@ -6,6 +6,8 @@
 #include <list>
 #include <random>
 
+#include <Eigen/Geometry>
+
 namespace harmont {
 
 
@@ -79,6 +81,74 @@ void shadow_pass::render(const geometry_callback_t& render_callback, int width, 
     glClearColor(0.0, 0.0, 0.0, 1.0);
 }
 
+std::vector<Eigen::Vector3f> shadow_pass::update(const bounding_box_t& bbox, const std::vector<Eigen::Vector3f>& frustum_corners, const Eigen::Vector3f& light_dir) {
+    //const float margin = 0;//0.01f;
+    //Eigen::Vector3f center = bbox.center();
+    //float radius = (bbox.max() - center).norm();
+
+    // Z
+    Eigen::Vector3f forward = light_dir.normalized();
+
+    // Y
+    Eigen::Vector3f up = Eigen::Vector3f::UnitZ();
+    if (fabs(up.dot(forward)) + Eigen::NumTraits<float>::dummy_precision() > 1.f) {
+        up = Eigen::Vector3f::UnitY();
+    }
+    up -= up.dot(forward) * forward;
+    up.normalize();
+
+    // X
+    Eigen::Vector3f right = up.cross(forward);
+
+    mat_view_ = Eigen::Matrix4f::Identity();
+
+    // linear part is to local light base
+    Eigen::Matrix3f local;
+    local <<
+        right.transpose(),
+        up.transpose(),
+        forward.transpose();
+
+    //local = Eigen::Matrix4f::Identity();
+    local = Eigen::AngleAxisf(0.25f * M_PI, Eigen::Vector3f::UnitX()).matrix();
+    //std::cout << local << "\n";
+
+    // create light-local bounding boxes of scene bbox as well as frustum corners
+    // intersection then yields orthographic camera parameters
+    bounding_box_t lbb_scene;
+    for (uint32_t corner = 0; corner < 8; ++corner) {
+        Eigen::Vector3f c;
+        c[0] =  (corner < 4) ? bbox.min()[0] : bbox.max()[0];
+        c[1] =  (corner % 2) ? bbox.min()[1] : bbox.max()[1];
+        c[2] = !(corner % 2) ? bbox.min()[2] : bbox.max()[2];
+        lbb_scene.extend(local * c);
+    }
+    Eigen::Vector3f lbb_min = lbb_scene.min();
+    Eigen::Vector3f lbb_max = lbb_scene.max();
+
+    //std::cout << radius << "\n";
+    //std::cout << "min: " << lbb_min.transpose() << "\n";
+    //std::cout << "max: " << lbb_max.transpose() << "\n";
+    //mat_proj_ = ortho(-radius, radius, -radius, radius, margin, 2.f * radius + 2.f * margin);
+    mat_proj_ = ortho(lbb_min[0], lbb_max[0], lbb_min[1], lbb_max[1], lbb_min[2], lbb_max[2]);
+
+    std::vector<Eigen::Vector3f> debug(8);
+    debug[0] = local.transpose() * Eigen::Vector3f(lbb_min[0], lbb_min[1], lbb_min[2]);
+    debug[1] = local.transpose() * Eigen::Vector3f(lbb_max[0], lbb_min[1], lbb_min[2]);
+    debug[2] = local.transpose() * Eigen::Vector3f(lbb_max[0], lbb_min[1], lbb_max[2]);
+    debug[3] = local.transpose() * Eigen::Vector3f(lbb_min[0], lbb_min[1], lbb_max[2]);
+    debug[4] = local.transpose() * Eigen::Vector3f(lbb_min[0], lbb_max[1], lbb_min[2]);
+    debug[5] = local.transpose() * Eigen::Vector3f(lbb_max[0], lbb_max[1], lbb_min[2]);
+    debug[6] = local.transpose() * Eigen::Vector3f(lbb_max[0], lbb_max[1], lbb_max[2]);
+    debug[7] = local.transpose() * Eigen::Vector3f(lbb_min[0], lbb_max[1], lbb_max[2]);
+
+    mat_view_.topLeftCorner<3,3>() = local;
+
+    far_ = lbb_max[2];
+    return debug;
+}
+
+/*
 void shadow_pass::update(const bounding_box_t& bbox, const Eigen::Vector3f& light_dir) {
     const float margin = 0.01f;
     Eigen::Vector3f center = bbox.center();
@@ -102,6 +172,7 @@ void shadow_pass::update(const bounding_box_t& bbox, const Eigen::Vector3f& ligh
 
     far_ = 2.f * radius + 2.f * margin;
 }
+*/
 
 void shadow_pass::render_(shader_program::ptr program, uint32_t num_indices) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

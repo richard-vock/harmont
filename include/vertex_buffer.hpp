@@ -16,6 +16,13 @@
 
 #include "render_pass.hpp"
 
+namespace std {
+
+template<bool _Cond, typename _Tp = void>
+using enable_if_t = typename enable_if<_Cond, _Tp>::type;
+
+} // std
+
 namespace harmont {
 
 template <typename Scalar, GLenum Target = GL_ARRAY_BUFFER>

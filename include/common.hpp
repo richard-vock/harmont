@@ -19,11 +19,14 @@
 #include <stdexcept>
 #include <cassert>
 #include <numeric>
+#include <vector>
 
 // common includes
+#ifndef OMIT_GLEW
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif // OMIT_GLEW
 #include <Eigen/Dense>
 #include "config.hpp"
 
@@ -95,7 +98,7 @@ inline std::string gl_type_name(GLenum type) {
         case GL_UNSIGNED_INT_VEC2: return "GL_UNSIGNED_INT_VEC2"; break;
         case GL_UNSIGNED_INT_VEC3: return "GL_UNSIGNED_INT_VEC3"; break;
         case GL_UNSIGNED_INT_VEC4: return "GL_UNSIGNED_INT_VEC4"; break;
-        case GL_UNSIGNED_INT_ATOMIC_COUNTER: return "GL_UNSIGNED_INT_ATOMIC_COUNTER"; break;
+        //case GL_UNSIGNED_INT_ATOMIC_COUNTER: return "GL_UNSIGNED_INT_ATOMIC_COUNTER"; break;
         case GL_FLOAT_MAT2: return "GL_FLOAT_MAT2"; break;
         case GL_FLOAT_MAT3: return "GL_FLOAT_MAT3"; break;
         case GL_FLOAT_MAT4: return "GL_FLOAT_MAT4"; break;

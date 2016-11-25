@@ -80,6 +80,9 @@ class deferred_renderer {
 		void render(camera::ptr cam);
 		void reshape(camera::ptr cam);
 
+        void light_debug_add();
+        void light_debug_rem();
+
 	protected:
         typedef enum {OPAQUE, TRANSPARENT, BOTH} geometry_visibility_t;
 
@@ -112,6 +115,9 @@ class deferred_renderer {
         float                point_size_;
         object_map_t         objects_;
         bbox_t               bbox_;
+
+        // debug
+        std::vector<Eigen::Vector3f> light_debug_;
 };
 
 

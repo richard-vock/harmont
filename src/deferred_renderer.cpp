@@ -4,6 +4,7 @@
 #ifdef BUILD_DEFERRED_RENDERER
 
 #include <limits>
+#include "box_object.hpp"
 
 extern "C" {
 #include <rgbe/rgbe.h>
@@ -241,14 +242,30 @@ void deferred_renderer::render(camera::ptr cam) {
         if (!obj.second->active()) continue;
         bbox_.extend(obj.second->bounding_box());
     }
+
+    //auto frustum =
+    light_debug_ = shadow_pass_->update(bbox_, cam->frustum_corners(), light_dir_);
+
 	bbox_.min() -= Eigen::Vector3f::Constant(0.001f);
     bbox_.max() += Eigen::Vector3f::Constant(0.001f);
-    shadow_pass_->update(bbox_, light_dir_);
 
     // update near/far values
     float near, far;
     std::tie(near, far) = get_near_far_(cam, bbox_);
     cam->set_near_far(near, far);
+
+    //bbox_t bb_shadow;
+    //typedef Eigen::Vector3f vec3_t;
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(0), static_cast<float>(0), 0.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(width), static_cast<float>(0), 0.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(width), static_cast<float>(height), 0.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(0), static_cast<float>(height), 0.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(0), static_cast<float>(0), 1.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(width), static_cast<float>(0), 1.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(width), static_cast<float>(height), 1.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+    //bb_shadow.extend(unproject(vec3_t(static_cast<float>(0), static_cast<float>(height), 1.f), cam->view_matrix(), cam->projection_matrix(), Eigen::Matrix<int,4,1>(0, 0, width, height)));
+
+    //shadow_pass_->update(bb_shadow, light_dir_);
 
     // update clear pass
     //clear_pass_->set_uniform("far", shadow_pass_->far());
@@ -347,6 +364,16 @@ void deferred_renderer::reshape(camera::ptr cam) {
     transp_accum_tex_->resize(width, height);
     transp_count_tex_->resize(width, height);
     ssdo_pass_->reshape(width, height);
+}
+
+void deferred_renderer::light_debug_add() {
+    auto fr = std::make_shared<box_object>(light_debug_, Eigen::Vector4f(1.f, 0.f, 1.f, 1.f), true, 2.f);
+    fr->init();
+    add_object("light_frustum", fr);
+}
+
+void deferred_renderer::light_debug_rem() {
+    remove_object("light_frustum");
 }
 
 void deferred_renderer::render_geometry_(shader_program::ptr program, pass_type_t type, geometry_visibility_t visibility) {

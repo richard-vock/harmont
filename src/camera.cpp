@@ -126,6 +126,24 @@ void camera::toggle_ortho() {
     reshape(width_, height_);
 }
 
+std::vector<camera::vec3_t> camera::frustum_corners() const {
+    mat4_t ivp = inverse_view_projection_matrix();
+
+    Eigen::Matrix<float, 4, 8> c;
+    c << -1.f,  1.f,  1.f, -1.f, -1.f,  1.f,  1.f, -1.f,
+         -1.f, -1.f,  1.f,  1.f, -1.f, -1.f,  1.f,  1.f,
+         -1.f, -1.f, -1.f, -1.f,  1.f,  1.f,  1.f,  1.f,
+          1.f,  1.f,  1.f,  1.f,  1.f,  1.f,  1.f,  1.f;
+    Eigen::Matrix<float, 4, 8> p = ivp * c;
+
+    std::vector<camera::vec3_t> result(8);
+    for (uint32_t i = 0; i < result.size(); ++i) {
+        result[i] = p.block<3,1>(0, i) / p(3, i);
+    }
+
+    return result;
+}
+
 camera::ray_t camera::pick_ray(int x, int y) const {
     mat4_t view_mat = model_->view_matrix();
     Eigen::Matrix<int,4,1> viewport(0, 0, width_, height_);

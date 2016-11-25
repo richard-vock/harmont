@@ -241,7 +241,7 @@ inline GLint uniform_dispatch::element_size_(GLenum data_type) {
         case GL_UNSIGNED_INT_VEC2: return 2; break;
         case GL_UNSIGNED_INT_VEC3: return 3; break;
         case GL_UNSIGNED_INT_VEC4: return 4; break;
-        case GL_UNSIGNED_INT_ATOMIC_COUNTER: return 1; break;
+        //case GL_UNSIGNED_INT_ATOMIC_COUNTER: return 1; break;
         case GL_FLOAT_MAT2: return 4; break;
         case GL_FLOAT_MAT3: return 9; break;
         case GL_FLOAT_MAT4: return 16; break;

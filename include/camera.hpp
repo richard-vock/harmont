@@ -59,6 +59,8 @@ class camera {
         void set_ortho(bool state);
         void toggle_ortho();
 
+        std::vector<vec3_t> frustum_corners() const;
+
         ray_t pick_ray(int x, int y) const;
 
         void reshape(int width, int height);

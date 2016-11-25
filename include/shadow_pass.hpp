@@ -35,7 +35,8 @@ class shadow_pass {
 
 		void render(const geometry_callback_t& render_callback, int width, int height, float vp_ratio);
 
-		void update(const bounding_box_t& bbox, const Eigen::Vector3f& light_dir);
+		//void update(const bounding_box_t& bbox, const Eigen::Vector3f& light_dir);
+        std::vector<Eigen::Vector3f> update(const bounding_box_t& bbox, const std::vector<Eigen::Vector3f>& frustum_corners, const Eigen::Vector3f& light_dir);
 
 	protected:
 		void render_(shader_program::ptr program, uint32_t num_indices);
