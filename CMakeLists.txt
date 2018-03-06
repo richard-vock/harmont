@@ -29,6 +29,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(-Wno-ignored-attributes)
     add_definitions(-Wno-deprecated-declarations)
     add_definitions(-Wno-misleading-indentation)
+    add_definitions(-Wno-int-in-bool-context)
 endif()
 
 find_package(Eigen)

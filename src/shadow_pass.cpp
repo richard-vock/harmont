@@ -148,7 +148,6 @@ std::vector<Eigen::Vector3f> shadow_pass::update(const bounding_box_t& bbox, con
     return debug;
 }
 
-/*
 void shadow_pass::update(const bounding_box_t& bbox, const Eigen::Vector3f& light_dir) {
     const float margin = 0.01f;
     Eigen::Vector3f center = bbox.center();
@@ -172,7 +171,6 @@ void shadow_pass::update(const bounding_box_t& bbox, const Eigen::Vector3f& ligh
 
     far_ = 2.f * radius + 2.f * margin;
 }
-*/
 
 void shadow_pass::render_(shader_program::ptr program, uint32_t num_indices) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

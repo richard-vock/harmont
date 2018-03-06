@@ -80,7 +80,7 @@ class deferred_renderer {
 		void render(camera::ptr cam);
 		void reshape(camera::ptr cam);
 
-        void light_debug_add();
+        //void light_debug_add();
         void light_debug_rem();
 
 	protected:

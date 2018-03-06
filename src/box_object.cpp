@@ -101,10 +101,6 @@ void box_object::compute_bounding_box_() {
             bbox_.max()[i] += 5.f;
         }
     }
-
-    std::cout << "rendered box bb:" << "\n";
-    std::cout << bbox_.min().transpose() << "\n";
-    std::cout << bbox_.max().transpose() << "\n";
 }
 
 GLenum box_object::gl_element_mode_() const {

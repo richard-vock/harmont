@@ -244,10 +244,11 @@ void deferred_renderer::render(camera::ptr cam) {
     }
 
     //auto frustum =
-    light_debug_ = shadow_pass_->update(bbox_, cam->frustum_corners(), light_dir_);
+    //light_debug_ = shadow_pass_->update(bbox_, cam->frustum_corners(), light_dir_);
 
 	bbox_.min() -= Eigen::Vector3f::Constant(0.001f);
     bbox_.max() += Eigen::Vector3f::Constant(0.001f);
+    shadow_pass_->update(bbox_, light_dir_);
 
     // update near/far values
     float near, far;
@@ -366,11 +367,11 @@ void deferred_renderer::reshape(camera::ptr cam) {
     ssdo_pass_->reshape(width, height);
 }
 
-void deferred_renderer::light_debug_add() {
-    auto fr = std::make_shared<box_object>(light_debug_, Eigen::Vector4f(1.f, 0.f, 1.f, 1.f), true, 2.f);
-    fr->init();
-    add_object("light_frustum", fr);
-}
+//void deferred_renderer::light_debug_add() {
+    //auto fr = std::make_shared<box_object>(light_debug_, Eigen::Vector4f(1.f, 0.f, 1.f, 1.f), true, 2.f);
+    //fr->init();
+    //add_object("light_frustum", fr);
+//}
 
 void deferred_renderer::light_debug_rem() {
     remove_object("light_frustum");
@@ -423,7 +424,7 @@ std::pair<float, float> deferred_renderer::get_near_far_(camera::const_ptr cam, 
         if (depth < near) near = depth;
         if (depth > far)  far = depth;
     }
-    near = std::max(near, 0.01f);
+    near = std::max(near, 0.1f);
 
     return {near, far};
 }
