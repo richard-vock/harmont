@@ -16,16 +16,12 @@
 #include <iostream>
 #include <fstream>
 #include <streambuf>
+#include <regex>
 
 #include <cstdio>
 #include <cstdlib>
 
 #include <stdexcept>
-
-#ifdef USE_PLUSTACHE
-#include <plustache/plustache_types.hpp>
-#include <plustache/template.hpp>
-#endif // USE_PLUSTACHE
 
 
 namespace harmont {
@@ -113,16 +109,12 @@ std::string shader<Stage>::load_file_(const std::string& filename) {
 
 template <int Stage>
 std::string shader<Stage>::render_source_(const std::string& source, const parameters_t& params) {
-#ifdef USE_PLUSTACHE
-    PlustacheTypes::ObjectType ctx;
-    for (const auto& param : params) {
-        ctx[param.first] = param.second;
+    std::string tmpl = source;
+    for (auto && [var,value] : params) {
+        std::regex re_var("\\{\\{\\s*" + var + "\\s*\\}\\}", std::regex::ECMAScript | std::regex::icase);
+        tmpl = std::regex_replace(tmpl, re_var, value);
     }
-    Plustache::template_t t;
-    return t.render(source, ctx);
-#else
-    return source;
-#endif // USE_PLUSTACHE
+    return tmpl;
 }
 
 } // harmont
