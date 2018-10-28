@@ -6,6 +6,9 @@
 #include <limits>
 #include "box_object.hpp"
 
+#include <png++/png.hpp>
+#include <png++/rgb_pixel.hpp>
+
 extern "C" {
 #include <rgbe/rgbe.h>
 }
@@ -215,6 +218,48 @@ void deferred_renderer::remove_object(std::string identifier) {
     objects_.erase(find_iter);
 }
 
+void deferred_renderer::dump_objects(const fs::path& filepath) const {
+    if (std::ofstream out(filepath.string(), std::ios_base::out | std::ios_base::binary); out.good()) {
+        // for potential backwards compat in future versions
+        int version = 1;
+        out.write((const char*) &version, sizeof(int));
+
+        int count = objects_.size();
+        out.write((const char*) &count, sizeof(int));
+
+        for (const auto& obj : objects_) {
+            int name_size = obj.first.size();
+            out.write((const char*) &name_size, sizeof(int));
+            out.write((const char*) obj.first.c_str(), name_size);
+            obj.second->dump(out);
+        }
+    }
+}
+
+void deferred_renderer::reconstruct_objects(const fs::path& filepath) {
+    if (std::ifstream in(filepath.string(), std::ios_base::in | std::ios_base::binary); in.good()) {
+        // for potential backwards compat in future versions
+        int version = 1;
+        in.read((char*) &version, sizeof(int));
+
+        int count = 0;
+        in.read((char*) &count, sizeof(int));
+
+        for (int i = 0; i < count; ++i) {
+            int name_size = 0;
+            in.read((char*) &name_size, sizeof(int));
+            char* buf = new char[name_size + 1];
+            buf[name_size] = '\0';
+            in.read(buf, name_size);
+
+            std::string name(buf);
+            delete [] buf;
+            auto obj = renderable::reconstruct(in);
+            add_object(name + "__recontr", obj);
+        }
+    }
+}
+
 void deferred_renderer::render(camera::ptr cam) {
     //if (!objects_.size()) {
         //glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0);
@@ -367,14 +412,36 @@ void deferred_renderer::reshape(camera::ptr cam) {
     ssdo_pass_->reshape(width, height);
 }
 
-//void deferred_renderer::light_debug_add() {
-    //auto fr = std::make_shared<box_object>(light_debug_, Eigen::Vector4f(1.f, 0.f, 1.f, 1.f), true, 2.f);
-    //fr->init();
-    //add_object("light_frustum", fr);
-//}
+void deferred_renderer::light_debug_add() {
+    auto fr = std::make_shared<box_object>(light_debug_, Eigen::Vector4f(1.f, 0.f, 1.f, 1.f), true, 2.f);
+    fr->init();
+    add_object("light_frustum", fr);
+}
 
 void deferred_renderer::light_debug_rem() {
     remove_object("light_frustum");
+}
+
+void deferred_renderer::screenshot(camera::const_ptr cam, const fs::path& filepath) {
+    int w = cam->width();
+    int h = cam->height();
+    GLubyte* pixels = new GLubyte[4*w*h];
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+    png::image<png::rgb_pixel> image(w, h);
+    for (int j = 0; j < h; ++j) {
+        for (int i = 0; i < w; ++i) {
+            image[h-j-1][i] = png::rgb_pixel(
+                pixels[4*j*w + 4*i + 0],
+                pixels[4*j*w + 4*i + 1],
+                pixels[4*j*w + 4*i + 2]
+            );
+        }
+    }
+    image.write(filepath.string());
+
+    delete [] pixels;
 }
 
 void deferred_renderer::render_geometry_(shader_program::ptr program, pass_type_t type, geometry_visibility_t visibility) {

@@ -46,6 +46,8 @@ class renderable {
         renderable(bool casts_shadows = true);
         virtual ~renderable();
 
+        static renderable::ptr_t reconstruct(std::istream& s);
+
         virtual void compute_vertex_data() = 0;
 
         void init();
@@ -57,6 +59,8 @@ class renderable {
         void update_geometry(const vertex_data_t& vertex_data, bool ignore_colors = false);
 
         vertex_data_t get_geometry();
+
+        void dump(std::ostream& s) const;
 
         Eigen::Map<map_matrix_t> eigen_map_display_buffer();
         Eigen::Map<map_matrix_t> eigen_map_shadow_buffer();

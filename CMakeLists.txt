@@ -93,7 +93,11 @@ if (GLEW_FOUND AND EIGEN_FOUND)
     find_package(Boost COMPONENTS system regex)
 	add_library(harmont SHARED ${obj})
     set_property(TARGET harmont PROPERTY CXX_STANDARD 17)
-	target_link_libraries(harmont ${Boost_LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} ${CARTAN_LIBRARIES} ${PCL_LIBRARIES} ${RGBE_LIBRARIES} "dl")
+	target_link_libraries(harmont ${Boost_LIBRARIES} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} ${CARTAN_LIBRARIES} ${PCL_LIBRARIES} ${RGBE_LIBRARIES} "dl" "stdc++fs")
+
+    add_executable(simple_application EXCLUDE_FROM_ALL "${PROJECT_SOURCE_DIR}/examples/simple_application/simple_application.cpp")
+    set_property(TARGET simple_application PROPERTY CXX_STANDARD 17)
+    target_link_libraries(simple_application harmont ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} ${Boost_LIBRARIES} "GL")
 
 	# install binary
     if (WIN32)

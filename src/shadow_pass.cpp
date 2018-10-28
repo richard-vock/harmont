@@ -82,36 +82,27 @@ void shadow_pass::render(const geometry_callback_t& render_callback, int width, 
 }
 
 std::vector<Eigen::Vector3f> shadow_pass::update(const bounding_box_t& bbox, const std::vector<Eigen::Vector3f>& frustum_corners, const Eigen::Vector3f& light_dir) {
-    //const float margin = 0;//0.01f;
+    //const float margin = 0.01f;
     //Eigen::Vector3f center = bbox.center();
     //float radius = (bbox.max() - center).norm();
 
-    // Z
-    Eigen::Vector3f forward = light_dir.normalized();
-
-    // Y
-    Eigen::Vector3f up = Eigen::Vector3f::UnitZ();
-    if (fabs(up.dot(forward)) + Eigen::NumTraits<float>::dummy_precision() > 1.f) {
-        up = Eigen::Vector3f::UnitY();
+    Eigen::Vector3f w = -light_dir.normalized();
+    Eigen::Vector3f v = Eigen::Vector3f::UnitZ();
+    if (fabs(v.dot(w)) + Eigen::NumTraits<float>::dummy_precision() > 1.f) {
+        v = Eigen::Vector3f::UnitY();
     }
-    up -= up.dot(forward) * forward;
-    up.normalize();
-
-    // X
-    Eigen::Vector3f right = up.cross(forward);
+    v -= v.dot(w) * w;
+    v.normalize();
+    Eigen::Vector3f u = w.cross(v);
 
     mat_view_ = Eigen::Matrix4f::Identity();
 
     // linear part is to local light base
     Eigen::Matrix3f local;
     local <<
-        right.transpose(),
-        up.transpose(),
-        forward.transpose();
-
-    //local = Eigen::Matrix4f::Identity();
-    local = Eigen::AngleAxisf(0.25f * M_PI, Eigen::Vector3f::UnitX()).matrix();
-    //std::cout << local << "\n";
+        u.transpose(),
+        v.transpose(),
+        w.transpose();
 
     // create light-local bounding boxes of scene bbox as well as frustum corners
     // intersection then yields orthographic camera parameters
@@ -130,7 +121,14 @@ std::vector<Eigen::Vector3f> shadow_pass::update(const bounding_box_t& bbox, con
     //std::cout << "min: " << lbb_min.transpose() << "\n";
     //std::cout << "max: " << lbb_max.transpose() << "\n";
     //mat_proj_ = ortho(-radius, radius, -radius, radius, margin, 2.f * radius + 2.f * margin);
-    mat_proj_ = ortho(lbb_min[0], lbb_max[0], lbb_min[1], lbb_max[1], lbb_min[2], lbb_max[2]);
+
+    Eigen::Matrix3f math_to_opengl;
+    math_to_opengl <<  1.f, 0.f, 0.f,
+                       0.f, 0.f, 1.f,
+                       0.f, -1.f, 0.f;
+    Eigen::Vector3f gl_min = math_to_opengl * lbb_min;
+    Eigen::Vector3f gl_max = math_to_opengl * lbb_max;
+    mat_proj_ = ortho(gl_min[0], gl_max[0], gl_min[1], gl_max[1], gl_min[2], gl_max[2]);
 
     std::vector<Eigen::Vector3f> debug(8);
     debug[0] = local.transpose() * Eigen::Vector3f(lbb_min[0], lbb_min[1], lbb_min[2]);
@@ -141,7 +139,6 @@ std::vector<Eigen::Vector3f> shadow_pass::update(const bounding_box_t& bbox, con
     debug[5] = local.transpose() * Eigen::Vector3f(lbb_max[0], lbb_max[1], lbb_min[2]);
     debug[6] = local.transpose() * Eigen::Vector3f(lbb_max[0], lbb_max[1], lbb_max[2]);
     debug[7] = local.transpose() * Eigen::Vector3f(lbb_min[0], lbb_max[1], lbb_max[2]);
-
     mat_view_.topLeftCorner<3,3>() = local;
 
     far_ = lbb_max[2];

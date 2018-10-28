@@ -11,7 +11,7 @@ float camera_model::scale() const {
 }
 
 camera_model::vec3_t camera_model::forward() const {
-    return opengl_to_math_.block<3,3>(0, 0) * trans_.block<1,3>(2, 0).transpose().normalized();
+    return opengl_to_math_.block<3,3>(0, 0) * (-trans_.block<1,3>(2, 0).transpose().normalized());
 }
 
 camera_model::vec3_t camera_model::up() const {

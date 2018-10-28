@@ -3,33 +3,73 @@
 
 namespace harmont {
 
+namespace detail {
+
+class dumped_renderable : public renderable {
+public:
+    dumped_renderable(std::istream& s) {
+        s.read((char*) &element_type_, sizeof(element_type_t));
+        s.read((char*) &element_mode_, sizeof(GLenum));
+
+        s.read((char*) &active_, sizeof(bool));
+        s.read((char*) &bbox_valid_, sizeof(bool));
+        s.read((char*) &casts_shadows_, sizeof(bool));
+        s.read((char*) &clipping_, sizeof(bool));
+        s.read((char*) &clipping_height_, sizeof(float));
+        s.read((char*) clipping_normal_.data(), 3*sizeof(float));
+        s.read((char*) &invert_clipping_, sizeof(bool));
+        s.read((char*) transform_.data(), 16*sizeof(float));
+        s.read((char*) bbox_.min().data(), 3*sizeof(float));
+        s.read((char*) bbox_.max().data(), 3*sizeof(float));
+
+        int vrows, vcols, irows;
+        s.read((char*) &vrows, sizeof(int));
+        s.read((char*) &vcols, sizeof(int));
+        s.read((char*) &irows, sizeof(int));
+
+        vertex_data_ = vertex_data_t::Zero(vrows, vcols);
+        index_data_ = index_data_t::Zero(irows);
+        s.read((char*) vertex_data_.data(), vrows*vcols*sizeof(float));
+        s.read((char*) index_data_.data(), irows*sizeof(uint32_t));
+    }
+
+    void compute_vertex_data() {
+    }
+
+    element_type_t element_type() const {
+        return element_type_;
+    }
+
+protected:
+    void compute_bounding_box_() {
+    }
+
+    GLenum gl_element_mode_() const {
+        return element_mode_;
+    }
+
+    element_type_t element_type_;
+    GLenum element_mode_;
+};
+
+} // detail
+
 renderable::renderable(bool casts_shadows) : active_(true), transparent_(false), bbox_valid_(false), casts_shadows_(casts_shadows), clipping_(false), clipping_height_(0.5f), clipping_normal_(0.f, 0.f, 1.f), invert_clipping_(false), num_elements_(0), transform_(transformation_t::Identity()), initialized_(false) {
 }
 
 renderable::~renderable() {
 }
 
+renderable::ptr_t
+renderable::reconstruct(std::istream& s) {
+    auto dumped = std::make_shared<detail::dumped_renderable>(s);
+    dumped->init();
+    return std::dynamic_pointer_cast<renderable>(dumped);
+}
+
 void renderable::init() {
     compute_vertex_data();
     init_(vertex_data_, index_data_);
-}
-
-void renderable::update_geometry(const vertex_data_t& vertex_data, bool ignore_colors) {
-    if (vertex_data.rows() != num_elements_) throw std::runtime_error("renderable::update_geometry(): Vertex data size does not match prior element count"+SPOT);
-    vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
-    if (!ignore_colors) {
-        initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
-        current_color_data_ = initial_color_data_;
-    }
-    //shadow_buffer_->set_data(vertex_data);
-    shadow_buffer_->set_data(pos_data);
-    display_buffer_->set_data(vertex_data);
-}
-
-renderable::vertex_data_t renderable::get_geometry() {
-    vertex_data_t data(num_elements_, 9);
-    display_buffer_->get_data(data);
-    return data;
 }
 
 Eigen::Map<renderable::map_matrix_t> renderable::eigen_map_display_buffer() {
@@ -107,6 +147,50 @@ void renderable::pre_render(shader_program::ptr program, pass_type_t type) {
 }
 
 void renderable::post_render(shader_program::ptr program, pass_type_t type) {
+}
+
+void renderable::update_geometry(const vertex_data_t& vertex_data, bool ignore_colors) {
+    if (vertex_data.rows() != num_elements_) throw std::runtime_error("renderable::update_geometry(): Vertex data size does not match prior element count"+SPOT);
+    vertex_data_t pos_data = vertex_data.block(0, 0, vertex_data.rows(), 3);
+    if (!ignore_colors) {
+        initial_color_data_ = vertex_data.block(0, 3, vertex_data.rows(), 1);
+        current_color_data_ = initial_color_data_;
+    }
+    //shadow_buffer_->set_data(vertex_data);
+    shadow_buffer_->set_data(pos_data);
+    display_buffer_->set_data(vertex_data);
+}
+
+renderable::vertex_data_t renderable::get_geometry() {
+    vertex_data_t data(num_elements_, 9);
+    display_buffer_->get_data(data);
+    return data;
+}
+
+void renderable::dump(std::ostream& s) const {
+    element_type_t etype = this->element_type();
+    GLenum emode = this->gl_element_mode_();
+    s.write((const char*) &etype, sizeof(element_type_t));
+    s.write((const char*) &emode, sizeof(GLenum));
+    s.write((const char*) &active_, sizeof(bool));
+    s.write((const char*) &bbox_valid_, sizeof(bool));
+    s.write((const char*) &casts_shadows_, sizeof(bool));
+    s.write((const char*) &clipping_, sizeof(bool));
+    s.write((const char*) &clipping_height_, sizeof(float));
+    s.write((const char*) clipping_normal_.data(), 3*sizeof(float));
+    s.write((const char*) &invert_clipping_, sizeof(bool));
+    s.write((const char*) transform_.data(), 16*sizeof(float));
+    s.write((const char*) bbox_.min().data(), 3*sizeof(float));
+    s.write((const char*) bbox_.max().data(), 3*sizeof(float));
+
+    int vrows = vertex_data_.rows();
+    int vcols = vertex_data_.cols();
+    int irows = index_data_.rows();
+    s.write((const char*) &vrows, sizeof(int));
+    s.write((const char*) &vcols, sizeof(int));
+    s.write((const char*) &irows, sizeof(int));
+    s.write((const char*) vertex_data_.data(), vrows*vcols*sizeof(float));
+    s.write((const char*) index_data_.data(), irows*sizeof(uint32_t));
 }
 
 void renderable::reset_colors() {

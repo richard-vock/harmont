@@ -60,6 +60,9 @@ void box_object::compute_vertex_data() {
     index_data_ = index_data_t(cols.size(), 1);
     for (uint32_t i = 0; i < cols.size(); ++i) {
         vertex_data_.block(i, 0, 1, 3) = vertices_[i].transpose();
+        if (!as_lines_) {
+            vertex_data_.block(i, 4, 1, 3) = normals_[i].transpose();
+        }
         //vertex_data_.block(i, 4, 1, 3) = Eigen::RowVector3f::UnitZ();
         vertex_data_(i, 3) = cols[i];
         index_data_(i, 0) = i;
@@ -109,6 +112,8 @@ GLenum box_object::gl_element_mode_() const {
 
 void box_object::setup_from_corners_() {
     std::vector<Eigen::Vector3f> vs(as_lines_ ? 24 : 36);
+    std::vector<Eigen::Vector3f> ns;
+    if (!as_lines_) ns.resize(36);
     if (as_lines_) {
         vs[ 0] = vertices_[0];
         vs[ 1] = vertices_[1];
@@ -171,9 +176,47 @@ void box_object::setup_from_corners_() {
         vs[33] = vertices_[4];
         vs[34] = vertices_[7];
         vs[35] = vertices_[6];
+
+        ns[ 0] = -Eigen::Vector3f::UnitY();
+        ns[ 1] = -Eigen::Vector3f::UnitY();
+        ns[ 2] = -Eigen::Vector3f::UnitY();
+        ns[ 3] = -Eigen::Vector3f::UnitY();
+        ns[ 4] = -Eigen::Vector3f::UnitY();
+        ns[ 5] = -Eigen::Vector3f::UnitY();
+        ns[ 6] =  Eigen::Vector3f::UnitX();
+        ns[ 7] =  Eigen::Vector3f::UnitX();
+        ns[ 8] =  Eigen::Vector3f::UnitX();
+        ns[ 9] =  Eigen::Vector3f::UnitX();
+        ns[10] =  Eigen::Vector3f::UnitX();
+        ns[11] =  Eigen::Vector3f::UnitX();
+        ns[12] =  Eigen::Vector3f::UnitZ();
+        ns[13] =  Eigen::Vector3f::UnitZ();
+        ns[14] =  Eigen::Vector3f::UnitZ();
+        ns[15] =  Eigen::Vector3f::UnitZ();
+        ns[16] =  Eigen::Vector3f::UnitZ();
+        ns[17] =  Eigen::Vector3f::UnitZ();
+        ns[18] = -Eigen::Vector3f::UnitX();
+        ns[19] = -Eigen::Vector3f::UnitX();
+        ns[20] = -Eigen::Vector3f::UnitX();
+        ns[21] = -Eigen::Vector3f::UnitX();
+        ns[22] = -Eigen::Vector3f::UnitX();
+        ns[23] = -Eigen::Vector3f::UnitX();
+        ns[24] = -Eigen::Vector3f::UnitZ();
+        ns[25] = -Eigen::Vector3f::UnitZ();
+        ns[26] = -Eigen::Vector3f::UnitZ();
+        ns[27] = -Eigen::Vector3f::UnitZ();
+        ns[28] = -Eigen::Vector3f::UnitZ();
+        ns[29] = -Eigen::Vector3f::UnitZ();
+        ns[30] =  Eigen::Vector3f::UnitY();
+        ns[31] =  Eigen::Vector3f::UnitY();
+        ns[32] =  Eigen::Vector3f::UnitY();
+        ns[33] =  Eigen::Vector3f::UnitY();
+        ns[34] =  Eigen::Vector3f::UnitY();
+        ns[35] =  Eigen::Vector3f::UnitY();
     }
 
     vertices_ = vs;
+    normals_ = ns;
     auto col = colors_[0];
     colors_ = colors_t(vs.size(), col);
 }

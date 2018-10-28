@@ -59,7 +59,7 @@ void render_geometry(shader_program::ptr) {
 void render(camera::ptr cam) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     main_pass->set_uniform("modelview_matrix", cam->view_matrix());
-    main_pass->render(&render_geometry);
+    main_pass->render(&render_geometry, render_pass::depth_params_t{ true, true, true });
 }
 
 void reshape(camera::ptr cam) {

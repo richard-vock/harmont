@@ -93,6 +93,7 @@ void fly_camera_model::rot_(vec3_t delta) {
 
 void fly_camera_model::determine_matrix_() {
     Eigen::Affine3f t;
+    // note that this is the inverted matrix
     t = Eigen::AngleAxisf(-theta_, vec3_t::UnitX())
       * Eigen::AngleAxisf(-phi_,   vec3_t::UnitY())
       * Eigen::Translation<float,3>(-pos_);
@@ -101,10 +102,8 @@ void fly_camera_model::determine_matrix_() {
 
 std::tuple<float, float, float> fly_camera_model::angles_from_forward_(const vec3_t& forward) {
     vec3_t f = math_to_opengl_.block<3,3>(0,0) * forward;
-    float theta = acos(f[1]) - 0.5f * M_PI;
-    vec3_t proj(f[0], 0.f, f[2]);
-    proj.normalize();
-    float phi = atan2(-proj[0], -proj[2]);
+    float theta = asin(f[1]);//acos(f[1]) - 0.5f * M_PI;
+    float phi = atan2(-f[0], -f[2]);
     // TODO
     float psi = 0.f;
     return std::make_tuple(phi, theta, psi);

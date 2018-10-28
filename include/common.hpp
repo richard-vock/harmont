@@ -21,6 +21,9 @@
 #include <numeric>
 #include <vector>
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 // common includes
 #ifndef OMIT_GLEW
 #include <GL/glew.h>

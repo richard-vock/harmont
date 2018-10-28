@@ -41,6 +41,7 @@ class box_object : public  renderable {
         bool                       as_lines_;
         float                      line_width_;
 		vertices_t                 vertices_;
+		vertices_t                 normals_;
         colors_t                   colors_;
 };
 

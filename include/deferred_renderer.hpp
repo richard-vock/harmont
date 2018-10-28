@@ -77,11 +77,16 @@ class deferred_renderer {
         void add_object(std::string identifier, renderable::ptr_t object);
         void remove_object(std::string identifier);
 
+        void dump_objects(const fs::path& filepath) const;
+        void reconstruct_objects(const fs::path& filepath);
+
 		void render(camera::ptr cam);
 		void reshape(camera::ptr cam);
 
-        //void light_debug_add();
+        void light_debug_add();
         void light_debug_rem();
+
+        void screenshot(camera::const_ptr cam, const fs::path& filepath);
 
 	protected:
         typedef enum {OPAQUE, TRANSPARENT, BOTH} geometry_visibility_t;
