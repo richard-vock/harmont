@@ -6,7 +6,9 @@ layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec4 in_color;
 layout(location = 2) in vec3 in_normal;
 layout(location = 3) in vec2 in_tex_coords;
+layout(location = 4) in float in_splat_radius;
 
+layout(location = 2) uniform mat4 projection_matrix;
 layout(location = 6) uniform mat3 normal_matrix;
 layout(location = 7) uniform bool two_sided;
 layout(location = 8) uniform bool has_texture;
@@ -44,6 +46,15 @@ void main() {
     uint final_g = packSnorm4x8(vec4(normal, mat_roughness));
     uint final_b = packSnorm4x8(vec4(frag_color, spec_ycbcr.x));
     out_color = uvec3(final_r, final_g, final_b);
+
+    float u = 2.0 * gl_PointCoord.x - 1.0;
+    float v = 2.0 * gl_PointCoord.y - 1.0;
+    float w = 1.0 - ( u*u + v*v );
+    vec4 pos = vec4(in_position, 1.0);
+    pos.z += w * in_splat_radius;
+    pos = projection_matrix * pos;
+    pos /= pos.w;
+    gl_FragDepth = (pos.z + 1.0) / 2.0;
 }
 
 vec3 rgb_to_ycbcr(vec3 rgb) {

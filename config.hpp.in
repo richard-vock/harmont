@@ -8,7 +8,8 @@
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
 #define GLSL_PREFIX "glsl/"
 #else
-#define GLSL_PREFIX "@CMAKE_INSTALL_PREFIX@/include/harmont/glsl/"
+#define GLSL_PREFIX "@PROJECT_SOURCE_DIR@/glsl/"
+#define HDR_PREFIX "@PROJECT_SOURCE_DIR@/hdr/"
 #endif
 
 #endif // CMAKE_CONFIG_HPP

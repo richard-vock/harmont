@@ -323,6 +323,8 @@ void deferred_renderer::render(camera::ptr cam) {
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
     float vp_ratio = -2.f * point_size_ * cam->near() * height / (cam->frustum_height() * 100.f);
     geom_pass_->set_uniform("vp_ratio", vp_ratio);
+    geom_pass_->set_uniform("fov", cam->fov());
+    geom_pass_->set_uniform("screen_height", static_cast<float>(height));
 
     // update compose pass
     auto eye = cam->forward().normalized();

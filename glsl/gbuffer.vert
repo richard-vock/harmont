@@ -11,11 +11,14 @@ layout(location = 2) uniform mat4  projection_matrix;
 layout(location = 3) uniform vec3  clip_normal;
 layout(location = 4) uniform float clip_distance;
 layout(location = 5) uniform float vp_ratio;
+layout(location = 10) uniform float fov;
+layout(location = 11) uniform float screen_height;
 
 layout(location = 0) out vec3 out_position;
 layout(location = 1) out vec4 out_color;
 layout(location = 2) out vec3 out_normal;
 layout(location = 3) out vec2 out_tex_coords;
+layout(location = 4) out float out_splat_radius;
 
 void main() {
     out_position = (view_matrix * model_matrix * vec4(position, 1.0)).xyz;
@@ -38,4 +41,8 @@ void main() {
 
     gl_ClipDistance[0] = -dot((model_matrix * vec4(position, 1.0)).xyz, clip_normal) + clip_distance;
     gl_PointSize = max(0.1, vp_ratio / out_position.z);
+    float f = 1.0 / tan(fov / 2.0);
+    f /= -out_position.z;
+    f *= screen_height / 2.0;
+    out_splat_radius = gl_PointSize / f;
 }
