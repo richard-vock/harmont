@@ -232,8 +232,9 @@ void deferred_renderer::render(camera::ptr cam) {
 
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
-    glHint(GL_POINT_SMOOTH, GL_NICEST);
-    glEnable(GL_POINT_SMOOTH);
+    glEnable(GL_POINT_SPRITE);
+    //glHint(GL_POINT_SMOOTH, GL_NICEST);
+    //glEnable(GL_POINT_SMOOTH);
 
     // compute bounding box
     bbox_ = bbox_t();
@@ -275,10 +276,14 @@ void deferred_renderer::render(camera::ptr cam) {
     geom_pass_->set_uniform("view_matrix", cam->view_matrix());
     geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
-    float vp_ratio = -2.f * point_size_ * cam->near() * height / (cam->frustum_height() * 100.f);
-    geom_pass_->set_uniform("vp_ratio", vp_ratio);
-    geom_pass_->set_uniform("fov", cam->fov());
+    std::cout << (0.01f * point_size_) << "\n";
+    geom_pass_->set_uniform("radius", 0.01f * point_size_);
+    geom_pass_->set_uniform("near", -cam->near());
+    geom_pass_->set_uniform("screen_width", static_cast<float>(width));
     geom_pass_->set_uniform("screen_height", static_cast<float>(height));
+    geom_pass_->set_uniform("frustum_height", static_cast<float>(cam->frustum_height()));
+    Eigen::Matrix4f pr_inv = cam->projection_matrix().inverse();
+    geom_pass_->set_uniform("pr_inv", pr_inv);
 
     // update compose pass
     auto eye = cam->forward().normalized();
@@ -304,9 +309,9 @@ void deferred_renderer::render(camera::ptr cam) {
 
     clear_pass_->render([&] (shader_program::ptr) { });
 
-    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    //glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glEnable(GL_PROGRAM_POINT_SIZE);
-    shadow_pass_->render([&] (shader_program::ptr program, pass_type_t type) { render_geometry_(program, type, OPAQUE); }, cam->width(), cam->height(), vp_ratio);
+    //shadow_pass_->render([&] (shader_program::ptr program, pass_type_t type) { render_geometry_(program, type, OPAQUE); }, cam->width(), cam->height(), vp_ratio);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     if (has_opaque) {
@@ -315,7 +320,7 @@ void deferred_renderer::render(camera::ptr cam) {
         depth_params.clear_depth = true;
         geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, OPAQUE); }, depth_params);
     }
-    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    //glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glDisable(GL_PROGRAM_POINT_SIZE);
 
 
@@ -327,11 +332,11 @@ void deferred_renderer::render(camera::ptr cam) {
         transp_geom_pass_->set_uniform("view_matrix", cam->view_matrix());
         transp_geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
         transp_geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
-        transp_geom_pass_->set_uniform("vp_ratio", vp_ratio);
+        //transp_geom_pass_->set_uniform("vp_ratio", vp_ratio);
         transp_geom_pass_->set_uniform("light_dir", light_dir_vec);
         transp_geom_pass_->set_uniform("eye_dir", eye_dir);
 
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+        //glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
         glEnable(GL_PROGRAM_POINT_SIZE);
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
@@ -342,13 +347,13 @@ void deferred_renderer::render(camera::ptr cam) {
         transp_geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, TRANSPARENT); }, depth_params);
         glDisable(GL_BLEND);
         glDisable(GL_PROGRAM_POINT_SIZE);
-        glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+        //glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
         transp_compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
         transp_compose_pass_->render({{transp_accum_tex_, "map_accum"}, {transp_count_tex_, "map_count"}, {compose_tex_, "map_opaque"}});
     }
 
-    glDisable(GL_POINT_SMOOTH);
+    //glDisable(GL_POINT_SMOOTH);
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {

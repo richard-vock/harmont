@@ -6,13 +6,17 @@ layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec4 in_color;
 layout(location = 2) in vec3 in_normal;
 layout(location = 3) in vec2 in_tex_coords;
-layout(location = 4) in float in_splat_radius;
 
 layout(location = 2) uniform mat4 projection_matrix;
+layout(location = 5) uniform float near;
 layout(location = 6) uniform mat3 normal_matrix;
 layout(location = 7) uniform bool two_sided;
 layout(location = 8) uniform bool has_texture;
 layout(location = 9) uniform sampler2D map_tex;
+layout(location = 11) uniform float screen_width;
+layout(location = 12) uniform float screen_height;
+layout(location = 14) uniform float radius;
+layout(location = 15) uniform mat4 pr_inv;
 
 // material parameters
 vec3  mat_specular = vec3(0.1, 0.1, 0.1);
@@ -47,14 +51,21 @@ void main() {
     uint final_b = packSnorm4x8(vec4(frag_color, spec_ycbcr.x));
     out_color = uvec3(final_r, final_g, final_b);
 
-    float u = 2.0 * gl_PointCoord.x - 1.0;
-    float v = 2.0 * gl_PointCoord.y - 1.0;
-    float w = 1.0 - ( u*u + v*v );
-    vec4 pos = vec4(in_position, 1.0);
-    pos.z += w * in_splat_radius;
-    pos = projection_matrix * pos;
-    pos /= pos.w;
-    gl_FragDepth = (pos.z + 1.0) / 2.0;
+
+    vec3 eye_nrm = normalize(normal_matrix * normal);
+    vec4 p_ndc = vec4(2.0 * gl_FragCoord.xy
+        / vec2(screen_width, screen_height) - 1.0, -1.0, 1.0);
+    vec4 p_eye = pr_inv * p_ndc;
+    vec3 qn = p_eye.xyz / p_eye.w;
+
+    vec3 q = qn * dot(in_position, eye_nrm) / dot(qn, eye_nrm);
+    vec3 d = q - in_position;
+    float dist = length(d);
+    if (length(d) > radius) discard;
+    float zval = q.z;
+    float depth = -projection_matrix[3][2] * (1.0 / zval) -
+        projection_matrix[2][2];
+    gl_FragDepth = (depth + 1.0) / 2.0;
 }
 
 vec3 rgb_to_ycbcr(vec3 rgb) {
