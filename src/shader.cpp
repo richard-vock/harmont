@@ -110,9 +110,9 @@ std::string shader<Stage>::load_file_(const std::string& filename) {
 template <int Stage>
 std::string shader<Stage>::render_source_(const std::string& source, const parameters_t& params) {
     std::string tmpl = source;
-    for (auto && [var,value] : params) {
-        std::regex re_var("\\{\\{\\s*" + var + "\\s*\\}\\}", std::regex::ECMAScript | std::regex::icase);
-        tmpl = std::regex_replace(tmpl, re_var, value);
+    for (const auto & param : params) {
+        std::regex re_var("\\{\\{\\s*" + param.first + "\\s*\\}\\}", std::regex::ECMAScript | std::regex::icase);
+        tmpl = std::regex_replace(tmpl, re_var, param.second);
     }
     return tmpl;
 }

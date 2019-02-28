@@ -9,11 +9,9 @@ layout(location = 3) in vec2 in_tex_coords;
 
 layout(location = 6) uniform mat3 normal_matrix;
 layout(location = 7) uniform bool two_sided;
-layout(location = 8) uniform bool has_texture;
-layout(location = 9) uniform sampler2D map_tex;
-layout(location = 10) uniform sampler2D map_hdr;
-layout(location = 11) uniform vec3 eye_dir;
-layout(location = 12) uniform vec3 light_dir;
+layout(location = 8) uniform sampler2D map_tex;
+layout(location = 9) uniform vec3 eye_dir;
+layout(location = 10) uniform vec3 light_dir;
 
 vec3  mat_specular = vec3(0.2, 0.2, 0.2);
 float mat_roughness  = 0.7;
@@ -23,7 +21,6 @@ out vec4 out_accum;
 out float out_count;
 
 
-vec3 sample_hdr(in vec3 dir, in sampler2D map_environment);
 vec3 specular(float roughness, vec3 ks, vec3 n, vec3 v, vec3 l);
 
 
@@ -38,14 +35,8 @@ void main() {
         normal *= -1.0;
     }
 
-    vec3 frag_color = in_color.rgb;
-    if (has_texture) {
-        frag_color *= texture(map_tex, in_tex_coords).rgb;
-    }
-
-    vec3 diff = 0.6 * frag_color * sample_hdr(normal, map_hdr);
-    vec3 spec = specular(mat_roughness, mat_specular, normal, eye_dir, light_dir) * light_emission;
-    float alpha = in_color.a;
-    out_accum = vec4(alpha * (diff + spec), alpha);
+    vec4 frag_color = in_color;
+    frag_color.rgb *= frag_color.a;
+    out_accum = frag_color;
     out_count = 1.0;
 }

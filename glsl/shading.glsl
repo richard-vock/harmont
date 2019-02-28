@@ -48,14 +48,6 @@ vec3 specular(float roughness, vec3 ks, vec3 n, vec3 v, vec3 l) {
     return sd * sf * sg / (4.0 * nl * nv);
 }
 
-vec3 sample_hdr(in vec3 dir, in sampler2D map_environment) {
-    vec2 uv;
-	if (dot(dir, vec3(0,0,1)) >=  0.9999999) uv = vec2(1.0, 0.0);
-    else if (dot(dir, vec3(0,0,1)) <= -0.9999999) uv = vec2(1.0, 1.0);
-    else uv = clamp(vec2(0.5f*(1.f + atan(dir.x,-dir.y) / pi), acos(dir.z) / pi), 0.f, 1.f);
-    return texture(map_environment, uv).rgb;
-}
-
 vec3 filmic_map(vec3 x) {
     float a = shoulder_s;
     float b = linear_s;

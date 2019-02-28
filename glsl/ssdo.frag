@@ -28,7 +28,6 @@ vec3 view_project(in vec3 pos, in mat4 projection_matrix, in mat4 view_matrix);
 vec3 inverse_view_project(in vec3 pos, in mat4 inv_view_proj_matrix);
 float linearize_depth(in float z, in float near, in float far);
 int argmax(vec3 vec);
-vec3 sample_hdr(in vec3 dir, in sampler2D map_environment);
 
 // compute indirect lighting term given a position, the local frame and diffuse material properties
 vec3 ssdo(mat3 local, vec3 pos, vec3 kd);

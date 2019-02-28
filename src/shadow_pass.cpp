@@ -1,7 +1,5 @@
 #include <shadow_pass.hpp>
 
-#ifdef BUILD_DEFERRED_RENDERER
-
 #include <chrono>
 #include <list>
 #include <random>
@@ -236,5 +234,3 @@ std::vector<float> shadow_pass::poisson_disk_(uint32_t n, float radius, uint32_t
 }
 
 } // harmont
-
-#endif // BUILD_DEFERRED_RENDERER

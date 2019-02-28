@@ -1,17 +1,12 @@
 #include <deferred_renderer.hpp>
 
 
-#ifdef BUILD_DEFERRED_RENDERER
-
 #include <limits>
+#include <fstream>
 #include "box_object.hpp"
 
-#include <png++/png.hpp>
-#include <png++/rgb_pixel.hpp>
-
-extern "C" {
-#include <rgbe/rgbe.h>
-}
+//#include <png++/png.hpp>
+//#include <png++/rgb_pixel.hpp>
 
 namespace harmont {
 
@@ -27,11 +22,6 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
         shadow_parameters.resolution,
         shadow_parameters.sample_count
     );
-
-    ssdo_pass_ = std::make_shared<ssdo>(4, 40, 0.7f);
-    ssdo_pass_->init(width, height);
-
-    load_hdr_map_(render_parameters.hdr_map);
 
     depth_tex_ = texture::depth_texture<float>(width, height);
     gbuffer_tex_ = texture::texture_2d<unsigned int>(width, height, 3);
@@ -53,9 +43,7 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     fragment_shader::ptr transp_geom_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"transp_geom.frag");
     fragment_shader::ptr transp_compose_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"transp_compose.frag");
 
-    auto ssdo_clear_textures = ssdo_pass_->clear_textures();
     render_pass::textures clear_textures({gbuffer_tex_, transp_accum_tex_, transp_count_tex_});
-    clear_textures.insert(clear_textures.end(), ssdo_clear_textures.begin(), ssdo_clear_textures.end());
     clear_pass_ = std::make_shared<render_pass_2d>(full_quad_vert, clear_frag, clear_textures);
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, shading_glsl, utility_glsl, shadow_glsl}));
@@ -112,42 +100,6 @@ void deferred_renderer::set_two_sided(bool two_sided) {
 
 void deferred_renderer::toggle_two_sided() {
     two_sided_ = !!two_sided_;
-}
-
-float deferred_renderer::ssdo_radius() const {
-    return ssdo_pass_->radius();
-}
-
-void deferred_renderer::set_ssdo_radius(float radius) {
-    ssdo_pass_->set_radius(radius);
-}
-
-void deferred_renderer::delta_ssdo_radius(float delta) {
-    ssdo_pass_->delta_radius(delta);
-}
-
-float deferred_renderer::ssdo_exponent() const {
-    return ssdo_pass_->exponent();
-}
-
-void deferred_renderer::set_ssdo_exponent(float exponent) {
-    ssdo_pass_->set_exponent(exponent);
-}
-
-void deferred_renderer::delta_ssdo_exponent(float delta) {
-    ssdo_pass_->delta_exponent(delta);
-}
-
-float deferred_renderer::ssdo_reflective_albedo() const {
-    return ssdo_pass_->reflective_albedo();
-}
-
-void deferred_renderer::set_ssdo_reflective_albedo(float reflective_albedo) {
-    ssdo_pass_->set_reflective_albedo(reflective_albedo);
-}
-
-void deferred_renderer::delta_ssdo_reflective_albedo(float delta) {
-    ssdo_pass_->delta_reflective_albedo(delta);
 }
 
 float deferred_renderer::point_size() const {
@@ -218,8 +170,9 @@ void deferred_renderer::remove_object(std::string identifier) {
     objects_.erase(find_iter);
 }
 
-void deferred_renderer::dump_objects(const fs::path& filepath) const {
-    if (std::ofstream out(filepath.string(), std::ios_base::out | std::ios_base::binary); out.good()) {
+void deferred_renderer::dump_objects(const std::string& filepath) const {
+    std::ofstream out(filepath, std::ios_base::out | std::ios_base::binary);
+    if (out.good()) {
         // for potential backwards compat in future versions
         int version = 1;
         out.write((const char*) &version, sizeof(int));
@@ -236,8 +189,9 @@ void deferred_renderer::dump_objects(const fs::path& filepath) const {
     }
 }
 
-void deferred_renderer::reconstruct_objects(const fs::path& filepath) {
-    if (std::ifstream in(filepath.string(), std::ios_base::in | std::ios_base::binary); in.good()) {
+void deferred_renderer::reconstruct_objects(const std::string& filepath) {
+    std::ifstream in(filepath, std::ios_base::in | std::ios_base::binary);
+    if (in.good()) {
         // for potential backwards compat in future versions
         int version = 1;
         in.read((char*) &version, sizeof(int));
@@ -331,22 +285,22 @@ void deferred_renderer::render(camera::ptr cam) {
     std::vector<float> eye_dir = { eye[0], eye[1], eye[2] };
     std::vector<float> light_dir_vec(light_dir_.data(), light_dir_.data()+3);
     std::vector<float> bg_col_vec(background_color_.data(), background_color_.data()+3);
-    compose_pass_->set_uniform("light_dir", light_dir_vec);
-    compose_pass_->set_uniform("eye_dir", eye_dir);
-    compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
-    compose_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
-    compose_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
-	compose_pass_->set_uniform("shadow_bias", shadow_bias_);
+    //compose_pass_->set_uniform("light_dir", light_dir_vec);
+    //compose_pass_->set_uniform("eye_dir", eye_dir);
+    //compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
+    //compose_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
+    //compose_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
+	//compose_pass_->set_uniform("shadow_bias", shadow_bias_);
 	compose_pass_->set_uniform("background_color", bg_col_vec);
-	compose_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
-    compose_tex_pass_->set_uniform("light_dir", light_dir_vec);
-    compose_tex_pass_->set_uniform("eye_dir", eye_dir);
-    compose_tex_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
-    compose_tex_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
-    compose_tex_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
-	compose_tex_pass_->set_uniform("shadow_bias", shadow_bias_);
+	//compose_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
+    //compose_tex_pass_->set_uniform("light_dir", light_dir_vec);
+    //compose_tex_pass_->set_uniform("eye_dir", eye_dir);
+    //compose_tex_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
+    //compose_tex_pass_->set_uniform("shadow_matrix", shadow_pass_->transform());
+    //compose_tex_pass_->set_uniform("inv_view_proj_matrix", cam->inverse_view_projection_matrix());
+	//compose_tex_pass_->set_uniform("shadow_bias", shadow_bias_);
 	compose_tex_pass_->set_uniform("background_color", bg_col_vec);
-	compose_tex_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
+	//compose_tex_pass_->set_uniform("poisson_disk[0]", shadow_pass_->poisson_disk());
 
     clear_pass_->render([&] (shader_program::ptr) { });
 
@@ -365,14 +319,10 @@ void deferred_renderer::render(camera::ptr cam) {
     glDisable(GL_PROGRAM_POINT_SIZE);
 
 
-    if (has_opaque) {
-        ssdo_pass_->compute(gbuffer_tex_, diff_tex_, cam, 1);
-    }
-
     if (!has_transp) {
-        compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
+        compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
     } else {
-        compose_tex_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}, {shadow_pass_->shadow_texture(), "map_shadow"}, {ssdo_pass_->ssdo_texture(), "map_ssdo"}});
+        compose_tex_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
         transp_geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
         transp_geom_pass_->set_uniform("view_matrix", cam->view_matrix());
         transp_geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
@@ -389,7 +339,7 @@ void deferred_renderer::render(camera::ptr cam) {
         depth_params.write_depth = false;
         depth_params.test_depth = has_opaque;
         depth_params.clear_depth = !has_opaque;
-        transp_geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, TRANSPARENT); }, depth_params, {{diff_tex_, "map_hdr"}});
+        transp_geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, TRANSPARENT); }, depth_params);
         glDisable(GL_BLEND);
         glDisable(GL_PROGRAM_POINT_SIZE);
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
@@ -411,7 +361,6 @@ void deferred_renderer::reshape(camera::ptr cam) {
     compose_tex_->resize(width, height);
     transp_accum_tex_->resize(width, height);
     transp_count_tex_->resize(width, height);
-    ssdo_pass_->reshape(width, height);
 }
 
 void deferred_renderer::light_debug_add() {
@@ -424,27 +373,27 @@ void deferred_renderer::light_debug_rem() {
     remove_object("light_frustum");
 }
 
-void deferred_renderer::screenshot(camera::const_ptr cam, const fs::path& filepath) {
-    int w = cam->width();
-    int h = cam->height();
-    GLubyte* pixels = new GLubyte[4*w*h];
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+//void deferred_renderer::screenshot(camera::const_ptr cam, const std::string& filepath) {
+    //int w = cam->width();
+    //int h = cam->height();
+    //GLubyte* pixels = new GLubyte[4*w*h];
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    //glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-    png::image<png::rgb_pixel> image(w, h);
-    for (int j = 0; j < h; ++j) {
-        for (int i = 0; i < w; ++i) {
-            image[h-j-1][i] = png::rgb_pixel(
-                pixels[4*j*w + 4*i + 0],
-                pixels[4*j*w + 4*i + 1],
-                pixels[4*j*w + 4*i + 2]
-            );
-        }
-    }
-    image.write(filepath.string());
+    //png::image<png::rgb_pixel> image(w, h);
+    //for (int j = 0; j < h; ++j) {
+        //for (int i = 0; i < w; ++i) {
+            //image[h-j-1][i] = png::rgb_pixel(
+                //pixels[4*j*w + 4*i + 0],
+                //pixels[4*j*w + 4*i + 1],
+                //pixels[4*j*w + 4*i + 2]
+            //);
+        //}
+    //}
+    //image.write(filepath);
 
-    delete [] pixels;
-}
+    //delete [] pixels;
+//}
 
 void deferred_renderer::render_geometry_(shader_program::ptr program, pass_type_t type, geometry_visibility_t visibility) {
     for (const auto& obj : objects_) {
@@ -456,25 +405,6 @@ void deferred_renderer::render_geometry_(shader_program::ptr program, pass_type_
             }
         }
     }
-}
-
-void deferred_renderer::load_hdr_map_(std::string filename) {
-	FILE *f;
-
-	f = fopen(filename.c_str(), "rb");
-	if (f == NULL) {
-        std::cout << "Cannot open hdr file \"" << filename << "\" for reading." << "\n";
-        exit(1);
-	}
-
-	rgbe_header_info header;
-    int width, height;
-	RGBE_ReadHeader(f, &width, &height, &header);
-    float* data = new float[width*height*3];
-	RGBE_ReadPixels_RLE(f, data, width, height);
-	fclose(f);
-    diff_tex_ = texture::texture_2d(width, height, 3, data, GL_RGB, GL_LINEAR, GL_LINEAR);
-    delete [] data;
 }
 
 std::pair<float, float> deferred_renderer::get_near_far_(camera::const_ptr cam, const bounding_box_t& bbox) {
@@ -516,5 +446,3 @@ std::pair<bool, bool> deferred_renderer::object_predicates_() const {
 
 
 } // harmont
-
-#endif // BUILD_DEFERRED_RENDERER

@@ -1,64 +1,35 @@
 harmont
 =======
 
-c++ opengl wrapper library
-
-### Why ###
-
-Because I need a sophisticated, modern opengl wrapper library.
-Sophisticated in the sense that it supports everything I need for graphene (https://github.com/paulhilbert/graphene);
-modern in the sense that this whole fixed-function pipeline crap is not part of it.
-
-### Does it compile/run under Windows? ###
-
-No. Well it probably does. And probably I made sure it does. But I don't like your "operating system"; so no, it doesn't.
+This branch is not for public use but instead used as a lightweight point cloud renderer for Wavefront obj files with added RGB values (as read by Meshlab).
 
 ### Dependencies ###
 
-For the bare wrapper library (without helper classes) the dependencies are
+A C++17 compiler is expected (with filesystem support).
 
-- Eigen 3 (http://eigen.tuxfamily.org). Yes, Eigen. Eigen is mandatory for *everything*. Please folks, stop writing your own miserable linear algebra code.
+- Eigen 3 (http://eigen.tuxfamily.org). A recent version please.
 - OpenGL (GL + GLU)
 - GLEW (http://glew.sourceforge.net/)
 
-Optional dependencies are:
+Already included are versions of the nanoflann library as well as the RGBE file reader library.
 
-- plustache (https://github.com/mrtazz/plustache)
-  for shader preprocessor support, necessary for deferred_renderer/shadow_pass helper.
-- RGBE library (https://github.com/paulhilbert/rgbe)
-  for HDR loading capabilities, necessary for deferred_renderer helper.
-- freeglut library (http://freeglut.sourceforge.net/)
-  for freeglut_application helper, necessary for all examples.
-- cartan library (https://github.com/paulhilbert/cartan)
-  for geometric traits helper, necessary for mesh_deferred example.
-- PCL library (http://pointclouds.org/)
-  for pcl_traits helper, necessary for pcl_deferred example.
+### Compiling ###
 
+In short:
 
-### Compilation/Installation ###
+mkdir build
+cd build
+cmake ..
+make
 
-Read the *Dependencies* section above first!
+### Running ###
 
-To compile
+The built cloud_renderer executable is used as follows:
 
-    mkdir ./build && cd build
-    cmake ..
-    make
+    cloud_renderer <input_file> [hdr_name]
 
-to install
+Where <input_file> is an obj file with RGB and radius information embedded in the vertex spec like in this example:
 
-    make install
+    v foo/bar
 
-To build the examples run (still in build folder)
-
-    (for mesh render example)
-    make mesh_deferred
-    (for pointcloud render example)
-    make pcl_deferred
-
-Keep in mind that the pisa_diffuse.hdr file must be in the folder you execute the examples from.
-
-
-### Documention ###
-
-I will supply a Doxygen based documentation as soon as I tested all features.
+[hdr_name] is an optional name for a different HDR environment map. Available maps can be seen in the hdr folder where the "\_diffuse.hdr" part is to be ignored, so for example to use the "grace_diffuse.hdr" map use "grace" as the optional parameter.

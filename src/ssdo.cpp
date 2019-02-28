@@ -1,7 +1,5 @@
 #include <ssdo.hpp>
 
-#ifdef BUILD_DEFERRED_RENDERER
-
 #include <random>
 #include <chrono>
 
@@ -196,5 +194,3 @@ void ssdo::init_noise_() {
 
 
 } // harmont
-
-#endif // BUILD_DEFERRED_RENDERER

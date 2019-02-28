@@ -3,7 +3,6 @@
 
 #include "harmont.hpp"
 #include "shadow_pass.hpp"
-#include "ssdo.hpp"
 #include "renderable.hpp"
 
 namespace harmont {
@@ -25,7 +24,6 @@ class deferred_renderer {
 			float exposure;
 			float shadow_bias;
             bool two_sided;
-			std::string hdr_map;
 		};
 
 		struct shadow_parameters_t {
@@ -52,18 +50,6 @@ class deferred_renderer {
         void set_two_sided(bool two_sided);
         void toggle_two_sided();
 
-		float ssdo_radius() const;
-		void  set_ssdo_radius(float radius);
-		void  delta_ssdo_radius(float delta);
-
-		float ssdo_exponent() const;
-		void  set_ssdo_exponent(float exponent);
-		void  delta_ssdo_exponent(float delta);
-
-		float ssdo_reflective_albedo() const;
-		void  set_ssdo_reflective_albedo(float reflective_albedo);
-		void  delta_ssdo_reflective_albedo(float delta);
-
         float point_size() const;
         void set_point_size(float point_size);
         void delta_point_size(float delta);
@@ -77,8 +63,8 @@ class deferred_renderer {
         void add_object(std::string identifier, renderable::ptr_t object);
         void remove_object(std::string identifier);
 
-        void dump_objects(const fs::path& filepath) const;
-        void reconstruct_objects(const fs::path& filepath);
+        void dump_objects(const std::string& filepath) const;
+        void reconstruct_objects(const std::string& filepath);
 
 		void render(camera::ptr cam);
 		void reshape(camera::ptr cam);
@@ -86,7 +72,7 @@ class deferred_renderer {
         void light_debug_add();
         void light_debug_rem();
 
-        void screenshot(camera::const_ptr cam, const fs::path& filepath);
+        //void screenshot(camera::const_ptr cam, const std::string& filepath);
 
 	protected:
         typedef enum {OPAQUE, TRANSPARENT, BOTH} geometry_visibility_t;
@@ -107,11 +93,9 @@ class deferred_renderer {
 		texture::ptr         depth_tex_;
 		texture::ptr         gbuffer_tex_;
 		texture::ptr         compose_tex_;
-		texture::ptr         diff_tex_;
 		texture::ptr         transp_accum_tex_;
 		texture::ptr         transp_count_tex_;
 		shadow_pass::ptr_t   shadow_pass_;
-		ssdo::ptr_t          ssdo_pass_;
 		Eigen::Vector3f      light_dir_;
 		Eigen::Vector3f      background_color_;
 		float                exposure_;

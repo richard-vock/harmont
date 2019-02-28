@@ -9,7 +9,6 @@
 #define GLSL_PREFIX "glsl/"
 #else
 #define GLSL_PREFIX "@PROJECT_SOURCE_DIR@/glsl/"
-#define HDR_PREFIX "@PROJECT_SOURCE_DIR@/hdr/"
 #endif
 
 #endif // CMAKE_CONFIG_HPP
