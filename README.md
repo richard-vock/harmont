@@ -35,4 +35,4 @@ Where <input_file> is an obj file with RGB and radius information embedded in th
 
 Color channel data is assumed to be in [0,1]; normals are assumed to be normalized.
 
-You can use the '+' and '-' keys to change the size factor of rendered splats.
+You can use the '+' and '-' keys to change the size factor of rendered splats. Right mouse drag rotates the view, middle mouse drag pans and scrolling zooms in/out.
