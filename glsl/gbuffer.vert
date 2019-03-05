@@ -4,6 +4,7 @@ in vec3  position;
 in float color;
 in vec3  normal;
 in vec2  tex_coords;
+in float radius;
 
 layout(location = 0) uniform mat4  model_matrix;
 layout(location = 1) uniform mat4  view_matrix;
@@ -15,12 +16,13 @@ layout(location = 10) uniform float fov;
 layout(location = 11) uniform float screen_width;
 layout(location = 12) uniform float screen_height;
 layout(location = 13) uniform float frustum_height;
-layout(location = 14) uniform float radius;
+layout(location = 15) uniform float radius_factor;
 
 layout(location = 0) out vec3 out_position;
 layout(location = 1) out vec4 out_color;
 layout(location = 2) out vec3 out_normal;
 layout(location = 3) out vec2 out_tex_coords;
+layout(location = 4) out float out_radius;
 
 void main() {
     out_position = (view_matrix * model_matrix * vec4(position, 1.0)).xyz;
@@ -42,5 +44,6 @@ void main() {
     out_tex_coords = tex_coords;
 
     gl_ClipDistance[0] = -dot((model_matrix * vec4(position, 1.0)).xyz, clip_normal) + clip_distance;
-    gl_PointSize = 2.f * radius * (near / out_position.z) * screen_height / frustum_height;
+    gl_PointSize = 2.f * radius * radius_factor * (near / out_position.z) * screen_height / frustum_height;
+    out_radius = radius;
 }

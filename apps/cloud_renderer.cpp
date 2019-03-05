@@ -46,6 +46,8 @@ class obj_object : public renderable {
             std::ifstream in(input_file);
             if (in.good()) {
                 std::string line;
+                float max_radius = 0.f;
+                float min_radius = 100000.f;
                 while (std::getline(in, line)) {
                     trim(line);
                     if (line == "") continue;
@@ -58,6 +60,9 @@ class obj_object : public renderable {
                     centroid += (pos_.back() - centroid) / pos_.size();
                     nrm_.push_back(correct * nrm);
                     col_.push_back(rgb);
+                    radii_.push_back(radius);
+                    min_radius = std::min(min_radius, radius);
+                    max_radius = std::max(max_radius, radius);
                 }
             } else {
                 throw std::runtime_error("Unable to open file \"" + input_file + "\" for reading.");
@@ -71,7 +76,7 @@ class obj_object : public renderable {
         }
 
 		void compute_vertex_data() {
-            vertex_data_ = renderable::vertex_data_t(point_count_, 9);
+            vertex_data_ = renderable::vertex_data_t(point_count_, 10);
 
             // indices
             index_data_ = index_data_t(point_count_, 1);
@@ -84,6 +89,7 @@ class obj_object : public renderable {
                 vertex_data_.block(i, 0, 1, 3) = pos_[i].transpose();
                 vertex_data_(i, 3) = renderable::color_to_rgba(col_[i].homogeneous());
                 vertex_data_.block(i, 4, 1, 3) = nrm_[i].transpose();
+                vertex_data_(i, 9) = radii_[i];
             }
         }
 
@@ -111,6 +117,7 @@ class obj_object : public renderable {
         std::vector<Eigen::Vector3f> pos_;
         std::vector<Eigen::Vector3f> nrm_;
         std::vector<Eigen::Vector3f> col_;
+        std::vector<float> radii_;
         uint32_t point_count_;
 };
 

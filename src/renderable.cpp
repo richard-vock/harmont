@@ -73,7 +73,7 @@ void renderable::init() {
 }
 
 Eigen::Map<renderable::map_matrix_t> renderable::eigen_map_display_buffer() {
-    return display_buffer_->eigen_map<Eigen::RowMajor>(num_elements_, 9);
+    return display_buffer_->eigen_map<Eigen::RowMajor>(num_elements_, 10);
 }
 
 Eigen::Map<renderable::map_matrix_t> renderable::eigen_map_shadow_buffer() {

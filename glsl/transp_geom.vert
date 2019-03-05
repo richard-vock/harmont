@@ -4,6 +4,7 @@ in vec3  position;
 in float color;
 in vec3  normal;
 in vec2  tex_coords;
+in float  radius;
 
 layout(location = 0) uniform mat4  model_matrix;
 layout(location = 1) uniform mat4  view_matrix;

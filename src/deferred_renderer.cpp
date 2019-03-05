@@ -36,11 +36,9 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     fragment_shader::ptr shadow_glsl = fragment_shader::from_file(std::string(GLSL_PREFIX)+"shadow.glsl", params);
     vertex_shader::ptr full_quad_vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"full_quad.vert");
     vertex_shader::ptr   gbuffer_vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"gbuffer.vert");
-    vertex_shader::ptr   transp_geom_vert = vertex_shader::from_file(std::string(GLSL_PREFIX)+"transp_geom.vert");
     fragment_shader::ptr clear_frag   = fragment_shader::from_file(std::string(GLSL_PREFIX)+"clear.frag");
     fragment_shader::ptr gbuffer_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"gbuffer.frag");
     fragment_shader::ptr compose_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"compose.frag", params);
-    fragment_shader::ptr transp_geom_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"transp_geom.frag");
     fragment_shader::ptr transp_compose_frag = fragment_shader::from_file(std::string(GLSL_PREFIX)+"transp_compose.frag");
 
     render_pass::textures clear_textures({gbuffer_tex_, transp_accum_tex_, transp_count_tex_});
@@ -48,7 +46,6 @@ deferred_renderer::deferred_renderer(const render_parameters_t& render_parameter
     geom_pass_ = std::make_shared<render_pass>(gbuffer_vert, gbuffer_frag, render_pass::textures({gbuffer_tex_}), depth_tex_);
     compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, shading_glsl, utility_glsl, shadow_glsl}));
     compose_tex_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {compose_frag, gbuffer_glsl, shading_glsl, utility_glsl, shadow_glsl}, render_pass::textures({compose_tex_})));
-    transp_geom_pass_ = render_pass::ptr(new render_pass({transp_geom_vert}, {transp_geom_frag, shading_glsl, shadow_glsl}, render_pass::textures({transp_accum_tex_, transp_count_tex_}), depth_tex_));
     transp_compose_pass_ = render_pass_2d::ptr(new render_pass_2d({full_quad_vert}, {transp_compose_frag, shading_glsl}));
 }
 
@@ -155,10 +152,9 @@ void deferred_renderer::add_object(std::string identifier, renderable::ptr_t obj
     object->shadow_vertex_array()->release();
 
     // display pass
-    vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}, {"tex_coords", 2}};
+    vbo_layout = {{"position", 3}, {"color", 1}, {"normal", 3}, {"tex_coords", 2}, {"radius", 1}};
     object->display_vertex_array()->bind();
     object->display_vertex_buffer()->bind_to_array(vbo_layout, geom_pass_->program());
-    object->display_vertex_buffer()->bind_to_array(vbo_layout, transp_geom_pass_->program());
     object->display_vertex_array()->release();
 }
 
@@ -276,14 +272,14 @@ void deferred_renderer::render(camera::ptr cam) {
     geom_pass_->set_uniform("view_matrix", cam->view_matrix());
     geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
     geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
-    std::cout << (0.01f * point_size_) << "\n";
-    geom_pass_->set_uniform("radius", 0.01f * point_size_);
+    //geom_pass_->set_uniform("radius", 0.01f * point_size_);
     geom_pass_->set_uniform("near", -cam->near());
     geom_pass_->set_uniform("screen_width", static_cast<float>(width));
     geom_pass_->set_uniform("screen_height", static_cast<float>(height));
     geom_pass_->set_uniform("frustum_height", static_cast<float>(cam->frustum_height()));
     Eigen::Matrix4f pr_inv = cam->projection_matrix().inverse();
     geom_pass_->set_uniform("pr_inv", pr_inv);
+    geom_pass_->set_uniform("radius_factor", point_size_);
 
     // update compose pass
     auto eye = cam->forward().normalized();
@@ -323,44 +319,13 @@ void deferred_renderer::render(camera::ptr cam) {
     //glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glDisable(GL_PROGRAM_POINT_SIZE);
 
-
-    if (!has_transp) {
-        compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
-    } else {
-        compose_tex_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
-        transp_geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
-        transp_geom_pass_->set_uniform("view_matrix", cam->view_matrix());
-        transp_geom_pass_->set_uniform("normal_matrix", cam->view_normal_matrix());
-        transp_geom_pass_->set_uniform("two_sided", static_cast<int>(two_sided_));
-        //transp_geom_pass_->set_uniform("vp_ratio", vp_ratio);
-        transp_geom_pass_->set_uniform("light_dir", light_dir_vec);
-        transp_geom_pass_->set_uniform("eye_dir", eye_dir);
-
-        //glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-        glEnable(GL_PROGRAM_POINT_SIZE);
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_ONE, GL_ONE);
-        depth_params.write_depth = false;
-        depth_params.test_depth = has_opaque;
-        depth_params.clear_depth = !has_opaque;
-        transp_geom_pass_->render([&] (shader_program::ptr program) { render_geometry_(program, DISPLAY_GEOMETRY, TRANSPARENT); }, depth_params);
-        glDisable(GL_BLEND);
-        glDisable(GL_PROGRAM_POINT_SIZE);
-        //glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
-
-        transp_compose_pass_->set_uniform("l_white", 1.f / exposure_ - 1.f);
-        transp_compose_pass_->render({{transp_accum_tex_, "map_accum"}, {transp_count_tex_, "map_count"}, {compose_tex_, "map_opaque"}});
-    }
-
-    //glDisable(GL_POINT_SMOOTH);
+    compose_pass_->render([&] (shader_program::ptr) { }, {{gbuffer_tex_, "map_gbuffer"}});
 }
 
 void deferred_renderer::reshape(camera::ptr cam) {
     int width = cam->width();
     int height = cam->height();
     geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
-    transp_geom_pass_->set_uniform("projection_matrix", cam->projection_matrix());
     depth_tex_->resize(width, height);
     gbuffer_tex_->resize(width, height);
     compose_tex_->resize(width, height);

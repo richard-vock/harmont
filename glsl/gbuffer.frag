@@ -6,6 +6,7 @@ layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec4 in_color;
 layout(location = 2) in vec3 in_normal;
 layout(location = 3) in vec2 in_tex_coords;
+layout(location = 4) in float radius;
 
 layout(location = 2) uniform mat4 projection_matrix;
 layout(location = 5) uniform float near;
@@ -15,8 +16,8 @@ layout(location = 8) uniform bool has_texture;
 layout(location = 9) uniform sampler2D map_tex;
 layout(location = 11) uniform float screen_width;
 layout(location = 12) uniform float screen_height;
-layout(location = 14) uniform float radius;
-layout(location = 15) uniform mat4 pr_inv;
+layout(location = 14) uniform mat4 pr_inv;
+layout(location = 15) uniform float radius_factor;
 
 // material parameters
 vec3  mat_specular = vec3(0.1, 0.1, 0.1);
@@ -61,7 +62,7 @@ void main() {
     vec3 q = qn * dot(in_position, eye_nrm) / dot(qn, eye_nrm);
     vec3 d = q - in_position;
     float dist = length(d);
-    if (length(d) > radius) discard;
+    if (length(d) > (radius * radius_factor)) discard;
     float zval = q.z;
     float depth = -projection_matrix[3][2] * (1.0 / zval) -
         projection_matrix[2][2];
